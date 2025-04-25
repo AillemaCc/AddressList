@@ -1,7 +1,7 @@
-package org.AList.mapper;
+package org.AList.domain.dao.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import org.AList.domain.entity.Test;
+import org.AList.domain.dao.entity.Test;
 
 public interface TestMapper extends BaseMapper<Test> {
 }

@@ -1,7 +1,7 @@
 package org.AList.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import org.AList.domain.entity.Test;
+import org.AList.domain.dao.entity.Test;
 
 /**
  * (Test)表服务接口

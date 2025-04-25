@@ -1,4 +1,4 @@
-package org.AList.domain.entity;
+package org.AList.domain.dao.entity;
 
 
 import java.io.Serializable;

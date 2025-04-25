@@ -1,7 +1,7 @@
 package org.AList.controller;
 
 import lombok.AllArgsConstructor;
-import org.AList.domain.entity.Test;
+import org.AList.domain.dao.entity.Test;
 import org.AList.service.TestService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
