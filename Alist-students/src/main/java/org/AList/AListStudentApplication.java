@@ -7,7 +7,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication
 @EnableScheduling
-@MapperScan("org.AList.mapper")
+@MapperScan("org.AList.domain.dao.mapper")
 public class AListStudentApplication {
     public static void main(String[] args) {
         SpringApplication.run(AListStudentApplication.class, args);
