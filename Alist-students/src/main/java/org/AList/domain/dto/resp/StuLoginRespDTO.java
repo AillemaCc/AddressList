@@ -11,5 +11,8 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class StuLoginRespDTO {
+    /**
+     * 分配的token
+     */
     private String token;
 }

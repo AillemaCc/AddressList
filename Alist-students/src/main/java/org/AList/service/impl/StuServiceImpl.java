@@ -11,7 +11,6 @@ import org.AList.domain.dao.mapper.StudentMapper;
 import org.AList.domain.dto.req.StuLoginReqDTO;
 import org.AList.domain.dto.resp.StuLoginRespDTO;
 import org.AList.service.StuService;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
@@ -26,12 +25,10 @@ import java.util.concurrent.TimeUnit;
 public class StuServiceImpl extends ServiceImpl<StudentMapper,StudentDO> implements StuService {
     private final StudentMapper studentMapper;
     private final StringRedisTemplate stringRedisTemplate;
-    @Value("${jwt.secret}")  // 自动注入配置值
-    private String secretKey;
     /**
      * 用户登录接口实现类
-     * @param requestParam
-     * @return
+     * @param requestParam 用户登录请求实体
+     * @return 用户登录响应实体--token
      */
     @Override
     public StuLoginRespDTO login(StuLoginReqDTO requestParam) {
@@ -44,6 +41,9 @@ public class StuServiceImpl extends ServiceImpl<StudentMapper,StudentDO> impleme
         if(studentDO==null){
             throw new ClientException("学生不存在");
         }
+        if(Boolean.TRUE.equals(stringRedisTemplate.hasKey("login:student:"+requestParam.getStudentId()))){
+            throw new ClientException("学生已登录");
+        }
         String uuid= UUID.randomUUID().toString();
         // 生成的uuid作为用户登录信息传入redis
         // 更清晰的键设计（使用冒号分隔）
@@ -51,5 +51,30 @@ public class StuServiceImpl extends ServiceImpl<StudentMapper,StudentDO> impleme
         stringRedisTemplate.opsForHash().put(redisKey, uuid, JSON.toJSONString(studentDO));
         stringRedisTemplate.expire(redisKey, 30, TimeUnit.MINUTES);
         return new StuLoginRespDTO(uuid);
+    }
+
+    /**
+     * 检查用户是否登录
+     * @param studentId 学号
+     * @param token 登录生成的token
+     * @return 是否登录的结果
+     */
+    @Override
+    public Boolean checkLogin(String studentId, String token) {
+        return stringRedisTemplate.opsForHash().get("login:student:"+studentId,token)!=null;
+    }
+
+    /**
+     * 用户登出
+     * @param studentId 学号
+     * @param token 用户登录产生的token
+     */
+    @Override
+    public void logout(String studentId, String token) {
+        if(checkLogin(studentId,token)){
+            stringRedisTemplate.delete("login:student:"+studentId);
+            return;
+        }
+        throw new ClientException("用户token不存在或者用户未登录");
     }
 }
