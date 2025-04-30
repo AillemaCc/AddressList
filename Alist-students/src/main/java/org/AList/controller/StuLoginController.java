@@ -19,6 +19,12 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class StuLoginController {
     private final StuService stuService;
+
+    /**
+     * 学生登录接口
+     * @param requestParam
+     * @return
+     */
     @PostMapping("/login")
     public Result<StuLoginRespDTO> login(@RequestBody StuLoginReqDTO requestParam) {
         StuLoginRespDTO userLoginRespDTO= stuService.login(requestParam);
