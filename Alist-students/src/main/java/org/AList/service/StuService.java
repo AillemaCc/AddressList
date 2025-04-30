@@ -9,8 +9,23 @@ import org.AList.domain.dto.resp.StuLoginRespDTO;
 public interface StuService {
     /**
      * 用户登录接口
-     * @param requestParam
-     * @return
+     * @param requestParam 用户登录请求实体
+     * @return 用户登录响应实体--token
      */
     StuLoginRespDTO login(StuLoginReqDTO requestParam);
+
+    /**
+     * 检查用户是否登录
+     * @param studentId 用户名
+     * @param token 用户登录产生的token
+     * @return 是否登录的结果
+     */
+    Boolean checkLogin(String studentId, String token);
+
+    /**
+     * 用户登出
+     * @param studentId 学号
+     * @param token 用户登录产生的token
+     */
+    void logout(String studentId, String token);
 }
