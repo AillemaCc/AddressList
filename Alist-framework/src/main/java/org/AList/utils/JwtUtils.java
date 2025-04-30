@@ -4,7 +4,6 @@ import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtBuilder;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
-import org.jetbrains.annotations.NotNull;
 
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
@@ -98,7 +97,6 @@ public class JwtUtils {
     /**
      * 生成加密后的密钥
      */
-    @NotNull
     private SecretKey generateSecretKey() {
         byte[] decodedKey = Base64.getDecoder().decode(SECRET_KEY);
         return new SecretKeySpec(decodedKey, 0, decodedKey.length, "HmacSHA256");
