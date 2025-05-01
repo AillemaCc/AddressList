@@ -23,7 +23,6 @@ import java.util.concurrent.TimeUnit;
 @Service
 @RequiredArgsConstructor
 public class AdministerServiceImpl extends ServiceImpl<AdministerMapper, AdministerDO> implements AdministerService {
-    private final AdministerMapper administerMapper;
     private final StringRedisTemplate stringRedisTemplate;
     /**
      * 管理员登录实现方法
@@ -40,13 +39,40 @@ public class AdministerServiceImpl extends ServiceImpl<AdministerMapper, Adminis
         if(administerDO==null){
             throw new ClientException("管理员账户不存在");
         }
-        if(Boolean.TRUE.equals(stringRedisTemplate.hasKey("login:administer"+requestParam.getUsername()))){
+        if(Boolean.TRUE.equals(stringRedisTemplate.hasKey("login:administer:"+requestParam.getUsername()))){
             throw new ClientException("管理员已登录");
         }
-        String redisKey="login:administer"+requestParam.getUsername();
+        String redisKey="login:administer:"+requestParam.getUsername();
         String uuid= UUID.randomUUID().toString();
         stringRedisTemplate.opsForHash().put(redisKey,uuid, JSON.toJSONString(administerDO));
         stringRedisTemplate.expire(redisKey,30, TimeUnit.MINUTES);
         return new AdminLoginRespDTO(uuid);
+    }
+
+    /**
+     * 检查管理员登录状态实现类
+     *
+     * @param username 管理员username
+     * @param token    管理员登录返回token
+     * @return 管理员是否登录
+     */
+    @Override
+    public Boolean checkLogin(String username, String token) {
+        return stringRedisTemplate.opsForHash().get("login:administer:"+username,token)!=null;
+    }
+
+    /**
+     * 管理员登出实现类
+     *
+     * @param username 管理员username
+     * @param token    管理员登录返回token
+     */
+    @Override
+    public void logout(String username, String token) {
+        if(checkLogin(username,token)){
+            stringRedisTemplate.delete("login:administer:"+username);
+            return;
+        }throw new ClientException("管理员token不存在或者用户未登录");
+
     }
 }

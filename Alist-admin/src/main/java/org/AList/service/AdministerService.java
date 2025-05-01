@@ -13,4 +13,19 @@ public interface AdministerService {
      * @return 管理员登录响应实体
      */
     AdminLoginRespDTO login(AdminLoginReqDTO requestParam);
+
+    /**
+     * 检查管理员登录状态接口
+     * @param username 管理员username
+     * @param token 管理员登录返回token
+     * @return 管理员是否登录
+     */
+    Boolean checkLogin(String username, String token);
+
+    /**
+     * 管理员登出接口
+     * @param username 管理员username
+     * @param token 管理员登录返回token
+     */
+    void logout(String username, String token);
 }
