@@ -5,6 +5,8 @@ import java.util.Optional;
 
 /**
  * 用户学号上下文
+ * 在同一个线程（或跨线程）中安全地存储和传递学生ID信息，它基于 TransmittableThreadLocal（TTL）
+ * 也是一个可选方案
  */
 public class StuIdContext {
     /**
