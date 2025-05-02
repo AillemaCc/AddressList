@@ -9,7 +9,7 @@ import org.AList.service.StuService;
 import org.springframework.web.bind.annotation.*;
 
 /**
- * 学生用户端Controller层
+ * 学生用户端登录接口Controller层
  */
 @RestController
 @RequestMapping("/api/stu")
