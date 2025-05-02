@@ -6,6 +6,7 @@ import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.AList.common.database.BaseDO;
 
 
 import java.util.Date;
@@ -17,7 +18,7 @@ import java.util.Date;
 @AllArgsConstructor
 @NoArgsConstructor
 @TableName("t_admin_user")
-public class AdministerDO {
+public class AdministerDO extends BaseDO {
     @TableId(type = IdType.AUTO)
     /**
      * 主键ID
@@ -34,18 +35,4 @@ public class AdministerDO {
      */
     private String password;
 
-    /**
-     * 创建时间
-     */
-    private Date createTime;
-
-    /**
-     * 更新时间
-     */
-    private Date updateTime;
-
-    /**
-     * 删除标志
-     */
-    private String delFlag;
 }

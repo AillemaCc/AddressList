@@ -7,14 +7,15 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.AList.common.database.BaseDO;
+
 /**
- * 学生实体类
+ * 学生默认信息实体类
  */
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-@TableName("t_student_info")
-public class StudentDO extends BaseDO {
+@TableName("t_student_definfo")
+public class StudentDefaultInfoDO extends BaseDO {
     @TableId(type = IdType.AUTO)
     /**
      * 主键ID
@@ -60,20 +61,4 @@ public class StudentDO extends BaseDO {
      * 邮箱
      */
     private String email;
-
-    /**
-     * 加密密码
-     */
-    private String password;
-
-    /**
-     * 注册状态（0待审核，1通过，2拒绝）
-     */
-    private Integer status;
-
-    /**
-     * 注册凭证
-     */
-    private String registerToken;
-
 }

@@ -1,6 +1,7 @@
 package org.AList.service;
 
 import org.AList.domain.dto.req.StuLoginReqDTO;
+import org.AList.domain.dto.req.StuRegisterReqDTO;
 import org.AList.domain.dto.resp.StuLoginRespDTO;
 
 /**
@@ -28,4 +29,10 @@ public interface StuService {
      * @param token 用户登录产生的token
      */
     void logout(String studentId, String token);
+
+    /**
+     * 用户注册接口
+     * @param requestParam 用户注册请求实体
+     */
+    String register(StuRegisterReqDTO requestParam);
 }
