@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 import org.AList.common.database.BaseDO;
 
 /**
- * 学生默认信息实体类
+ * 学生学籍信息实体类
  */
 @Data
 @AllArgsConstructor

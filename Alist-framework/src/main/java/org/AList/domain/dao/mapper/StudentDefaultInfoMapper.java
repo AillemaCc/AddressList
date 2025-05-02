@@ -7,8 +7,14 @@ import org.AList.domain.dao.entity.StudentDefaultInfoDO;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * 学生学籍信息持久层
+ */
 public interface StudentDefaultInfoMapper extends BaseMapper<StudentDefaultInfoDO>{
-    // 在 StudentMapper.java 接口中添加
+    /**
+     * 选取所有学生ID
+     * @return 学生ID列表
+     */
     default List<String> selectAllStudentIds() {
         QueryWrapper<StudentDefaultInfoDO> wrapper = new QueryWrapper<>();
         wrapper.select("student_id");
