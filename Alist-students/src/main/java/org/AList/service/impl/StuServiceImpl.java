@@ -7,9 +7,11 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.AList.common.constant.RedisCacheConstant;
 import org.AList.common.convention.exception.ClientException;
+import org.AList.domain.dao.entity.LoginLogDO;
 import org.AList.domain.dao.entity.RegisterDO;
 import org.AList.domain.dao.entity.StudentDO;
 import org.AList.domain.dao.entity.StudentDefaultInfoDO;
+import org.AList.domain.dao.mapper.LoginLogMapper;
 import org.AList.domain.dao.mapper.RegisterMapper;
 import org.AList.domain.dao.mapper.StudentDefaultInfoMapper;
 import org.AList.domain.dao.mapper.StudentMapper;
@@ -18,12 +20,14 @@ import org.AList.domain.dto.req.StuRegisterReqDTO;
 import org.AList.domain.dto.resp.StuLoginRespDTO;
 import org.AList.service.StuService;
 import org.AList.service.bloom.StudentIdBloomFilterService;
+import org.AList.utils.LinkUtil;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
+import javax.servlet.http.HttpServletRequest;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -38,17 +42,20 @@ import static org.AList.common.enums.UserErrorCodeEnum.*;
 public class StuServiceImpl extends ServiceImpl<StudentMapper,StudentDO> implements StuService {
     private final StudentMapper studentMapper;
     private final RegisterMapper registerMapper;
+    private final LoginLogMapper loginLogMapper;
     private final StudentDefaultInfoMapper studentDefaultInfoMapper;
     private final StringRedisTemplate stringRedisTemplate;
     private final StudentIdBloomFilterService studentIdBloomFilterService;
     private final RedissonClient redissonClient;
     /**
      * 用户登录接口实现类
+     *
      * @param requestParam 用户登录请求实体
+     * @param request
      * @return 用户登录响应实体--token
      */
     @Override
-    public StuLoginRespDTO login(StuLoginReqDTO requestParam) {
+    public StuLoginRespDTO login(StuLoginReqDTO requestParam, HttpServletRequest request) {
         LambdaQueryWrapper<StudentDO> queryWrapper = Wrappers.lambdaQuery(StudentDO.class)
                 .eq(StudentDO::getStudentId, requestParam.getStudentId())
                 .eq(StudentDO::getPassword, requestParam.getPassword())
@@ -67,6 +74,7 @@ public class StuServiceImpl extends ServiceImpl<StudentMapper,StudentDO> impleme
         String redisKey = "login:student:" + requestParam.getStudentId();
         stringRedisTemplate.opsForHash().put(redisKey, uuid, JSON.toJSONString(studentDO));
         stringRedisTemplate.expire(redisKey, 30, TimeUnit.MINUTES);
+        recordLoginLog(request, requestParam.getStudentId());
         return new StuLoginRespDTO(uuid);
     }
 
@@ -152,6 +160,37 @@ public class StuServiceImpl extends ServiceImpl<StudentMapper,StudentDO> impleme
         }
         finally {
             rLock.unlock();
+        }
+    }
+
+    private void recordLoginLog(HttpServletRequest request, String studentId) {
+        // 获取客户端信息
+        String ip = LinkUtil.getActualIp(request);
+        String os = LinkUtil.getOs(request);
+        String browser = LinkUtil.getBrowser(request);
+
+        // 查询最后一条记录
+        LoginLogDO lastLog = loginLogMapper.selectLastLoginByStudentId(studentId);
+
+        if (lastLog == null) {
+            // 首次登录
+            LoginLogDO newLog = LoginLogDO.builder()
+                    .studentId(studentId)
+                    .ip(ip)
+                    .os(os)
+                    .browser(browser)
+                    .frequency(1)
+                    .build();
+            loginLogMapper.insert(newLog);
+        } else {
+            // 非首次登录
+            lastLog.setFrequency(lastLog.getFrequency() + 1);
+            lastLog.setIp(ip);
+            lastLog.setOs(os);
+            lastLog.setBrowser(browser);
+
+            // 使用自定义的更新方法
+            loginLogMapper.updateLoginLog(lastLog);
         }
     }
 }

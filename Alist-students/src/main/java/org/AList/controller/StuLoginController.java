@@ -8,6 +8,8 @@ import org.AList.domain.dto.resp.StuLoginRespDTO;
 import org.AList.service.StuService;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletRequest;
+
 /**
  * 学生用户端登录接口Controller层
  */
@@ -19,12 +21,14 @@ public class StuLoginController {
 
     /**
      * 学生登录接口
+     *
      * @param requestParam 学生登录请求体
+     * @param request
      * @return 学生登录响应体
      */
     @PostMapping("/login")
-    public Result<StuLoginRespDTO> login(@RequestBody StuLoginReqDTO requestParam) {
-        StuLoginRespDTO userLoginRespDTO= stuService.login(requestParam);
+    public Result<StuLoginRespDTO> login(@RequestBody StuLoginReqDTO requestParam, HttpServletRequest request) {
+        StuLoginRespDTO userLoginRespDTO= stuService.login(requestParam, request);
         return Results.success(userLoginRespDTO).setMessage("登录成功");
     }
 

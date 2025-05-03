@@ -4,16 +4,20 @@ import org.AList.domain.dto.req.StuLoginReqDTO;
 import org.AList.domain.dto.req.StuRegisterReqDTO;
 import org.AList.domain.dto.resp.StuLoginRespDTO;
 
+import javax.servlet.http.HttpServletRequest;
+
 /**
  * 学生客户端服务接口层
  */
 public interface StuService {
     /**
      * 用户登录接口
+     *
      * @param requestParam 用户登录请求实体
+     * @param request
      * @return 用户登录响应实体--token
      */
-    StuLoginRespDTO login(StuLoginReqDTO requestParam);
+    StuLoginRespDTO login(StuLoginReqDTO requestParam, HttpServletRequest request);
 
     /**
      * 检查用户是否登录
