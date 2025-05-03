@@ -18,7 +18,7 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 /**
- * 管理员服务接口实现层
+ * 管理员登录登出服务接口实现层
  */
 @Service
 @RequiredArgsConstructor

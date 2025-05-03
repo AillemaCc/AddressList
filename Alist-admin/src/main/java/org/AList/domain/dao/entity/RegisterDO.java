@@ -4,18 +4,20 @@ import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.AList.common.database.BaseDO;
 
-/**
- * 学生学籍信息实体类
- */
-@Data
 @AllArgsConstructor
 @NoArgsConstructor
-@TableName("t_student_definfo")
-public class StudentDefaultInfoDO extends BaseDO {
+@Data
+@Builder
+@TableName("t_student_register")
+/**
+ * 注册表实体类
+ */
+public class RegisterDO extends BaseDO {
     @TableId(type = IdType.AUTO)
     /**
      * 主键ID
@@ -33,26 +35,6 @@ public class StudentDefaultInfoDO extends BaseDO {
     private String name;
 
     /**
-     * 专业
-     */
-    private String major;
-
-    /**
-     * 班级
-     */
-    private String className;
-
-    /**
-     * 入学年份
-     */
-    private String enrollmentYear;
-
-    /**
-     * 毕业年份
-     */
-    private String graduationYear;
-
-    /**
      * 手机号
      */
     private String phone;
@@ -61,4 +43,24 @@ public class StudentDefaultInfoDO extends BaseDO {
      * 邮箱
      */
     private String email;
+
+    /**
+     * 加密密码
+     */
+    private String password;
+
+    /**
+     * 注册状态（0待审核，1通过，2拒绝）
+     */
+    private Integer status;
+
+    /**
+     * 拒绝备注
+     */
+    private String remark;
+
+    /**
+     * 注册凭证
+     */
+    private String registerToken;
 }

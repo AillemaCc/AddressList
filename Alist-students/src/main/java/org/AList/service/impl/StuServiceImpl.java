@@ -103,20 +103,27 @@ public class StuServiceImpl extends ServiceImpl<StudentMapper,StudentDO> impleme
      */
     @Override
     public String register(StuRegisterReqDTO requestParam) {
+        // 缓存全量学号的布隆过滤器提供快速错误机制 防止缓存穿透
         if(!studentIdBloomFilterService.contain(requestParam.getStudentId())){
             throw new ClientException(USER_NULL);
         }
+        // 布隆过滤器存在误判率，被误判为存在的请求，需要再去数据库查询一下。这时候需要查询的仍然是学籍库，也就是全量默认数据的查询
         LambdaQueryWrapper<StudentDefaultInfoDO> queryWrapper = Wrappers.lambdaQuery(StudentDefaultInfoDO.class)
                 .eq(StudentDefaultInfoDO::getStudentId, requestParam.getStudentId())
                 .eq(StudentDefaultInfoDO::getDelFlag, 0);
         if(Objects.isNull(studentDefaultInfoMapper.selectOne(queryWrapper))){
             throw new ClientException(USER_NULL);
         }
+        // 排除了误判的情况，创建分布式锁，防止并发情况。尽管在我们的场景当中，并发情况是很难出现的，但这种边界情况仍然需要考虑。
         RLock rLock=redissonClient.getLock(RedisCacheConstant.LOCK_STUDENT_REGISTER_KEY+requestParam.getStudentId());
+        // 无论临界区代码执行成功还是抛出异常，锁最终都会被释放
         try{
             if(rLock.tryLock()){
+                // 获取到锁之后才执行业务逻辑
                 try{
+                    // TODO 优化唯一key的产生方式，需要全局唯一无冲突，考虑雪花算法
                     String uuid= UUID.randomUUID().toString();
+                    // 构建注册实体
                     RegisterDO registerDO=RegisterDO.builder()
                             .studentId(requestParam.getStudentId())
                             .name(requestParam.getName())
@@ -126,16 +133,21 @@ public class StuServiceImpl extends ServiceImpl<StudentMapper,StudentDO> impleme
                             .status(0)
                             .registerToken(uuid)
                             .build();
+                    // 注册实体新增到创建的注册表单当中
                     int insert= registerMapper.insert(registerDO);
                     if (insert < 1) {
                         throw new ClientException(USER_SAVE_ERROR);
                     }
+                    // 插入成功之后，向注册的用户返回一个key，他可以用这个key查询自己的注册单审核的状态
+                    // 插入成功之后 管理员端审核
                     return uuid;
                 }catch (DuplicateKeyException e){
+                    // 防止重复注册
                     throw new ClientException(USER_EXIST);
                 }
 
             }
+            // 获取不到学号的分布式锁，自然是重复注册了
             throw new ClientException(USER_EXIST);
         }
         finally {

@@ -16,7 +16,9 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
+import java.nio.file.AccessDeniedException;
 import java.util.Optional;
 
 /**
@@ -54,6 +56,12 @@ public class GlobalExceptionHandler {
         }
         log.error("[{}] {} [ex] {}", request.getMethod(), request.getRequestURL().toString(), ex.toString());
         return Results.failure(ex);
+    }
+
+    @ExceptionHandler({ServletException.class, AccessDeniedException.class})
+    public Result handleAuthException(HttpServletRequest request, Exception ex) {
+        log.warn("[认证失败] {} - {}", request.getRequestURI(), ex.getMessage());
+        return Results.failure(BaseErrorCode.SIGN_IN_EXPIRED_ERROR.code(), ex.getMessage());
     }
 
     /**
