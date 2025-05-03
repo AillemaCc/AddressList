@@ -139,6 +139,7 @@ public class StuServiceImpl extends ServiceImpl<StudentMapper,StudentDO> impleme
                         throw new ClientException(USER_SAVE_ERROR);
                     }
                     // 插入成功之后，向注册的用户返回一个key，他可以用这个key查询自己的注册单审核的状态
+                    // 插入成功之后 管理员端审核
                     return uuid;
                 }catch (DuplicateKeyException e){
                     // 防止重复注册
