@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * 管理员信息操作控制层
+ * 管理员审核操作控制层
  */
 @RestController
 @RequestMapping("api/admin/info")
