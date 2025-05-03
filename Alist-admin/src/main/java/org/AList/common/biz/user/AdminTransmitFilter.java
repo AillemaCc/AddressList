@@ -20,7 +20,7 @@ public class AdminTransmitFilter implements Filter {
     // 管理员接口的放行路径
     private static final List<String> IGNORE_URL= Lists.newArrayList(
             "/api/admin/login",
-            "/api/stu/checkLogin"
+            "/api/admin/checkLogin"
     );
     /**
      * 拦截请求验证token Filter

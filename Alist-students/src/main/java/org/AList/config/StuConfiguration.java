@@ -7,7 +7,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.core.StringRedisTemplate;
 
 /**
- * 过滤器配置类（可选）
+ * 过滤器配置类 把过滤器注册为Bean
  */
 @Configuration
 public class StuConfiguration {

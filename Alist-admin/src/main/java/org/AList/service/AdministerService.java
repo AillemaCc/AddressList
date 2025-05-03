@@ -4,7 +4,7 @@ import org.AList.domain.dto.req.AdminLoginReqDTO;
 import org.AList.domain.dto.resp.AdminLoginRespDTO;
 
 /**
- * 管理员服务类接口层
+ * 管理员登录登出服务类接口层
  */
 public interface AdministerService {
     /**
