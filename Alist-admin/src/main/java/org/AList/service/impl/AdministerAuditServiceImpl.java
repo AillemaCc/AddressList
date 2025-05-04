@@ -10,12 +10,17 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.AList.common.convention.exception.ClientException;
 import org.AList.domain.dao.entity.RegisterDO;
+import org.AList.domain.dao.entity.StudentDO;
+import org.AList.domain.dao.entity.StudentDefaultInfoDO;
 import org.AList.domain.dao.mapper.RegisterMapper;
+import org.AList.domain.dao.mapper.StudentDefaultInfoMapper;
+import org.AList.domain.dao.mapper.StudentMapper;
 import org.AList.domain.dto.req.AccpetRegistrationReqDTO;
 import org.AList.domain.dto.req.RefuseRegistrationReqDTO;
 import org.AList.domain.dto.resp.AuditUserPageRespDTO;
 import org.AList.service.AdministerAuditService;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Objects;
 
@@ -25,7 +30,8 @@ import java.util.Objects;
 @Service
 @RequiredArgsConstructor
 public class AdministerAuditServiceImpl extends ServiceImpl<RegisterMapper, RegisterDO> implements AdministerAuditService {
-
+    private final StudentMapper studentMapper;
+    private final StudentDefaultInfoMapper studentDefaultInfoMapper;
     /**
      * @return 待审核用户列表
      */
@@ -43,14 +49,17 @@ public class AdministerAuditServiceImpl extends ServiceImpl<RegisterMapper, Regi
      * 通过注册
      * @param requestParam 通过注册请求实体类
      */
+    @Transactional(rollbackFor = Exception.class)
     @Override
     public void acceptRegistration(AccpetRegistrationReqDTO requestParam) {
         checkReviewStatus(requestParam.getStudentId());
+        // 从注册请求表当中拿一个符合条件的请求出来
         LambdaUpdateWrapper<RegisterDO> updateWrapper = Wrappers.lambdaUpdate(RegisterDO.class)
                 .eq(RegisterDO::getStatus, 0)
                 .eq(RegisterDO::getDelFlag, 0)
                 .eq(RegisterDO::getStudentId, requestParam.getStudentId());
-        if(Objects.isNull(baseMapper.selectOne(updateWrapper))){
+        RegisterDO aDo = baseMapper.selectOne(updateWrapper);
+        if(Objects.isNull(aDo)){
             throw new ClientException("审核操作失败，数据记录异常，请检查数据记录或者刷新重试");
         }
         RegisterDO registerDO=RegisterDO.builder()
@@ -60,6 +69,23 @@ public class AdministerAuditServiceImpl extends ServiceImpl<RegisterMapper, Regi
         if(update<1){
             throw new ClientException("审核操作失败，数据记录异常，请检查数据记录或者刷新重试");
         }
+        LambdaQueryWrapper<StudentDefaultInfoDO> infoDOLambdaQueryWrapper = Wrappers.lambdaQuery(StudentDefaultInfoDO.class)
+                .eq(StudentDefaultInfoDO::getStudentId, requestParam.getStudentId());
+        StudentDefaultInfoDO studentDefaultInfoDO = studentDefaultInfoMapper.selectOne(infoDOLambdaQueryWrapper);
+        StudentDO studentDO=StudentDO.builder()
+                .studentId(aDo.getStudentId())
+                .name(aDo.getName())
+                .major(studentDefaultInfoDO.getMajor())
+                .className(studentDefaultInfoDO.getClassName())
+                .enrollmentYear(studentDefaultInfoDO.getEnrollmentYear())
+                .graduationYear(studentDefaultInfoDO.getGraduationYear())
+                .phone(aDo.getPhone())
+                .email(aDo.getEmail())
+                .password(aDo.getPassword())
+                .status(1)
+                .registerToken(aDo.getRegisterToken())
+                .build();
+        studentMapper.insert(studentDO);
     }
 
     /**
