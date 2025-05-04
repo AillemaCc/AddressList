@@ -1,8 +1,10 @@
 package org.AList.service;
 
 import org.AList.domain.dto.req.StuLoginReqDTO;
+import org.AList.domain.dto.req.StuRegisterRemarkReqDTO;
 import org.AList.domain.dto.req.StuRegisterReqDTO;
 import org.AList.domain.dto.resp.StuLoginRespDTO;
+import org.AList.domain.dto.resp.StuRegisterRemarkRespDTO;
 
 import javax.servlet.http.HttpServletRequest;
 
@@ -39,4 +41,11 @@ public interface StuService {
      * @param requestParam 用户注册请求实体
      */
     String register(StuRegisterReqDTO requestParam);
+
+    /**
+     * 用户查询注册结果
+     * @param requestParam 用户查询注册结果请求体
+     * @return 用户查询注册结果响应体
+     */
+    StuRegisterRemarkRespDTO getReamrk(StuRegisterRemarkReqDTO requestParam);
 }

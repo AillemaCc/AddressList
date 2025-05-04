@@ -21,7 +21,8 @@ public class StuTransmitFilter implements Filter {
     private static final List<String> IGNORE_URL= Lists.newArrayList(
             "/api/stu/register",
             "/api/stu/login",
-            "/api/stu/checkLogin"
+            "/api/stu/checkLogin",
+            "/api/stu/getRemark"
     );
     /**
      * 拦截请求验证token Filter
@@ -63,7 +64,7 @@ public class StuTransmitFilter implements Filter {
         }
         try {
             // 这一步是真正执行过滤器链当中的请求，也就是那些需要鉴权的请求
-            //登录的请求也直接被放行，可以不携带token和studentId
+            // 登录的请求也直接被放行，可以不携带token和studentId
             filterChain.doFilter(servletRequest, servletResponse);
         }finally {
             StuIdContext.removeStudentId();

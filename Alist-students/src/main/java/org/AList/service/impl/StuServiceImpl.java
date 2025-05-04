@@ -16,8 +16,10 @@ import org.AList.domain.dao.mapper.RegisterMapper;
 import org.AList.domain.dao.mapper.StudentDefaultInfoMapper;
 import org.AList.domain.dao.mapper.StudentMapper;
 import org.AList.domain.dto.req.StuLoginReqDTO;
+import org.AList.domain.dto.req.StuRegisterRemarkReqDTO;
 import org.AList.domain.dto.req.StuRegisterReqDTO;
 import org.AList.domain.dto.resp.StuLoginRespDTO;
+import org.AList.domain.dto.resp.StuRegisterRemarkRespDTO;
 import org.AList.service.StuService;
 import org.AList.service.bloom.StudentIdBloomFilterService;
 import org.AList.utils.LinkUtil;
@@ -141,6 +143,7 @@ public class StuServiceImpl extends ServiceImpl<StudentMapper,StudentDO> impleme
                             .status(0)
                             .registerToken(uuid)
                             .build();
+
                     // 注册实体新增到创建的注册表单当中
                     int insert= registerMapper.insert(registerDO);
                     if (insert < 1) {
@@ -154,13 +157,42 @@ public class StuServiceImpl extends ServiceImpl<StudentMapper,StudentDO> impleme
                     throw new ClientException(USER_EXIST);
                 }
 
+            }else{
+                // 获取不到学号的分布式锁，自然是重复注册了
+                throw new ClientException(USER_EXIST);
             }
-            // 获取不到学号的分布式锁，自然是重复注册了
-            throw new ClientException(USER_EXIST);
+
         }
         finally {
             rLock.unlock();
         }
+    }
+
+    /**
+     * 用户查询注册结果
+     *
+     * @param requestParam 用户查询注册结果请求体
+     * @return 用户查询注册结果响应体
+     */
+    @Override
+    public StuRegisterRemarkRespDTO getReamrk(StuRegisterRemarkReqDTO requestParam) {
+        String studentId=requestParam.getStudentId();
+        String registerToken =requestParam.getRegisterToken();
+        LambdaQueryWrapper<RegisterDO> queryWrapper = Wrappers.lambdaQuery(RegisterDO.class)
+                .eq(RegisterDO::getStudentId, studentId)
+                .eq(RegisterDO::getRegisterToken, registerToken)
+                .eq(RegisterDO::getDelFlag, 0);
+        RegisterDO registerDO = registerMapper.selectOne(queryWrapper);
+        if(Objects.isNull(registerDO)){
+            throw new ClientException("注册记录不存在，请检查您输入的学号和token是否正确");
+        }
+        return StuRegisterRemarkRespDTO.builder()
+                .studentId(studentId)
+                .name(registerDO.getName())
+                .registerToken(registerToken)
+                .remark(registerDO.getRemark())
+                .status(registerDO.getStatus())
+                .build();
     }
 
     private void recordLoginLog(HttpServletRequest request, String studentId) {
