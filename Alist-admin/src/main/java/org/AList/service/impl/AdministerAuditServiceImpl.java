@@ -118,6 +118,7 @@ public class AdministerAuditServiceImpl extends ServiceImpl<RegisterMapper, Regi
      *
      * @param requestParam 拒绝注册请求实体类
      */
+    @Transactional(rollbackFor = Exception.class)
     @Override
     public void refuseRegistration(RefuseRegistrationReqDTO requestParam) {
         checkReviewStatus(requestParam.getStudentId());

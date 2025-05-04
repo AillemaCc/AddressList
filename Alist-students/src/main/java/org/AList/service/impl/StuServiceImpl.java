@@ -195,6 +195,11 @@ public class StuServiceImpl extends ServiceImpl<StudentMapper,StudentDO> impleme
                 .build();
     }
 
+    /**
+     * 记录登录日志
+     * @param request 网络请求
+     * @param studentId 登录的学号
+     */
     private void recordLoginLog(HttpServletRequest request, String studentId) {
         // 获取客户端信息
         String ip = LinkUtil.getActualIp(request);
