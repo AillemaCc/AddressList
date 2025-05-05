@@ -77,7 +77,12 @@
             <artifactId>redisson-spring-boot-starter</artifactId>
             <version>3.21.3</version>
         </dependency>
-<!--        <dependency>-->
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+            <version>3.14.0</version>
+        </dependency>
+        <!--        <dependency>-->
 <!--            <groupId>org.apache.shardingsphere</groupId>-->
 <!--            <artifactId>sharding-jdbc-spring-boot-starter</artifactId>-->
 <!--            <version>4.1.1</version>-->
@@ -87,6 +92,7 @@
 <!--            <artifactId>snakeyaml</artifactId>-->
 <!--            <version>1.33</version>-->
 <!--        </dependency>-->
+
 
     </dependencies>
 
