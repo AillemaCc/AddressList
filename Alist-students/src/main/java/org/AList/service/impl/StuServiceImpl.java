@@ -131,7 +131,6 @@ public class StuServiceImpl extends ServiceImpl<StudentMapper,StudentDO> impleme
             if(rLock.tryLock()){
                 // 获取到锁之后才执行业务逻辑
                 try{
-                    // TODO 优化唯一key的产生方式，需要全局唯一无冲突，考虑雪花算法
                     String uuid= UUID.randomUUID().toString();
                     // 构建注册实体
                     RegisterDO registerDO=RegisterDO.builder()
