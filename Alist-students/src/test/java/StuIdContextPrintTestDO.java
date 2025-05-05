@@ -12,7 +12,7 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * 测试获取并打印学生上下文ID
  */
-public class StuIdContextPrintTest {
+public class StuIdContextPrintTestDO {
 
     private final ExecutorService executor = Executors.newFixedThreadPool(1);
 

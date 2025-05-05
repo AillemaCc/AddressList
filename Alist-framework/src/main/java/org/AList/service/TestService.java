@@ -1,7 +1,7 @@
 package org.AList.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
-import org.AList.domain.dao.entity.Test;
+import org.AList.domain.dao.entity.TestDO;
 
 /**
  * (Test)表服务接口
@@ -9,7 +9,7 @@ import org.AList.domain.dao.entity.Test;
  * @author makejava
  * @since 2025-04-24 16:51:59
  */
-public interface TestService extends IService<Test> {
+public interface TestService extends IService<TestDO> {
 
 }
 
