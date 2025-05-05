@@ -7,6 +7,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.AList.annonation.EncryptField;
 import org.AList.common.database.BaseDO;
 @AllArgsConstructor
 @NoArgsConstructor
@@ -46,6 +47,7 @@ public class RegisterDO extends BaseDO {
     /**
      * 加密密码
      */
+    @EncryptField
     private String password;
 
     /**
