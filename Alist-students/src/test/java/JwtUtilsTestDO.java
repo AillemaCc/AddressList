@@ -12,7 +12,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest(classes = AListStudentApplication.class)  // 加载 Spring 测试上下文
 @TestPropertySource("classpath:application.yml")  // 指定测试配置文件
-public class JwtUtilsTest {
+public class JwtUtilsTestDO {
     @Value("${jwt.secret}")  // 自动注入配置值
     private String testKey;
 

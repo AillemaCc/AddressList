@@ -9,7 +9,7 @@ import java.util.concurrent.Executors;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
-class StuIdContextTest {
+class StuIdContextTestDO {
 
     @Test
     void testSyncContext() {
