@@ -1,12 +1,13 @@
 package org.AList.domain.dao.entity;
 
 
-import java.io.Serializable;
+import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableName;
+import org.AList.annonation.EncryptField;
+
 /**
  * (Test)表实体类
  *
@@ -18,10 +19,12 @@ import com.baomidou.mybatisplus.annotation.TableName;
 @AllArgsConstructor
 @NoArgsConstructor
 @TableName("test")
-public class Test  {
+@Builder
+public class TestDO {
 
     private Integer id;
 
+    @EncryptField
     private String name;
 
 }
