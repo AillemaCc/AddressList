@@ -87,4 +87,15 @@ public class AdministerAuditController {
         administerAuditService.banStudentById(requestParam);
         return Results.success();
     }
+
+    /**
+     * 根据学号unban通过审核的学生
+     * @param requestParam 学号
+     * @return null
+     */
+    @PostMapping("/unBan")
+    public Result<Void> unBanStudentById(@RequestBody BanStudentReqDTO requestParam){
+        administerAuditService.unBanStudentById(requestParam);
+        return Results.success();
+    }
 }

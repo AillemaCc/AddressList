@@ -51,4 +51,10 @@ public interface AdministerAuditService {
      * @param requestParam 学号请求体
      */
     void banStudentById(BanStudentReqDTO requestParam);
+
+    /**
+     * 根据学号unban学生
+     * @param requestParam 学号请求体
+     */
+    void unBanStudentById(BanStudentReqDTO requestParam);
 }

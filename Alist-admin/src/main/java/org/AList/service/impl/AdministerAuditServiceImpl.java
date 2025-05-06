@@ -30,6 +30,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Objects;
 
 import static org.AList.common.constant.RedisKeyConstant.LOCK_UPDATE_BAN_KEY;
+import static org.AList.common.constant.RedisKeyConstant.LOCK_UPDATE_UNBAN_KEY;
 
 /**
  * 管理员审核相关接口实现层
@@ -206,7 +207,52 @@ public class AdministerAuditServiceImpl extends ServiceImpl<RegisterMapper, Regi
         RegisterDO updateRegisterDO=RegisterDO.builder()
                 .status(3)
                 .build();
-        RReadWriteLock readWriteLock=redissonClient.getReadWriteLock(String.format(LOCK_UPDATE_BAN_KEY,requestParam.getStudentId()));
+        BanOrUnbanUpdate(requestParam, queryWrapper, registerDOLambdaQueryWrapper, updateStudentDO, updateRegisterDO, LOCK_UPDATE_BAN_KEY);
+    }
+
+    /**
+     * 根据学号unban学生
+     *
+     * @param requestParam 学号请求体
+     */
+    @Override
+    public void unBanStudentById(BanStudentReqDTO requestParam) {
+        LambdaQueryWrapper<StudentDO> queryWrapper = Wrappers.lambdaQuery(StudentDO.class)
+                .eq(StudentDO::getStudentId, requestParam.getStudentId())
+                .eq(StudentDO::getStatus, 3)
+                .eq(StudentDO::getDelFlag, 0);
+        StudentDO studentDO=studentMapper.selectOne(queryWrapper);
+
+        LambdaQueryWrapper<RegisterDO> registerDOLambdaQueryWrapper = Wrappers.lambdaQuery(RegisterDO.class)
+                .eq(RegisterDO::getStudentId, requestParam.getStudentId())
+                .eq(RegisterDO::getStatus, 3)
+                .eq(RegisterDO::getDelFlag, 0);
+        RegisterDO registerDO=registerMapper.selectOne(registerDOLambdaQueryWrapper);
+
+        if(Objects.isNull(studentDO)||Objects.isNull(registerDO)){
+            throw new ClientException("该学生信息不存在，请重新查询");
+        }
+
+        StudentDO updateStudentDO =StudentDO.builder()
+                .status(1)
+                .build();
+        RegisterDO updateRegisterDO=RegisterDO.builder()
+                .status(1)
+                .build();
+        BanOrUnbanUpdate(requestParam, queryWrapper, registerDOLambdaQueryWrapper, updateStudentDO, updateRegisterDO, LOCK_UPDATE_UNBAN_KEY);
+    }
+
+    /**
+     * 更新禁用和解禁的用户状态
+     * @param requestParam 学号请求体
+     * @param queryWrapper 审核通过的学生信息查询参数
+     * @param registerDOLambdaQueryWrapper 注册类学生信息查询参数
+     * @param updateStudentDO 更新学生信息实体
+     * @param updateRegisterDO 更新注册信息实体
+     * @param lockUpdateUnbanKey 读写锁key
+     */
+    private void BanOrUnbanUpdate(BanStudentReqDTO requestParam, LambdaQueryWrapper<StudentDO> queryWrapper, LambdaQueryWrapper<RegisterDO> registerDOLambdaQueryWrapper, StudentDO updateStudentDO, RegisterDO updateRegisterDO, String lockUpdateUnbanKey) {
+        RReadWriteLock readWriteLock=redissonClient.getReadWriteLock(String.format(lockUpdateUnbanKey,requestParam.getStudentId()));
         RLock rLock=readWriteLock.writeLock();
         if(!rLock.tryLock()){
             throw new ServiceException("该用户状态信息正在被其他管理员修改，请稍后再试...");
