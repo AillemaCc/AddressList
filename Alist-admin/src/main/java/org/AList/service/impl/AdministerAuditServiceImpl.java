@@ -69,6 +69,7 @@ public class AdministerAuditServiceImpl extends ServiceImpl<RegisterMapper, Regi
                 .eq(RegisterDO::getStatus, 0)
                 .eq(RegisterDO::getDelFlag, 0)
                 .eq(RegisterDO::getStudentId, requestParam.getStudentId());
+        // 拿到的注册请求的实体
         RegisterDO aDo = baseMapper.selectOne(updateWrapper);
         if(Objects.isNull(aDo)){
             throw new ClientException("审核操作失败，数据记录异常，请检查数据记录或者刷新重试");
@@ -90,8 +91,8 @@ public class AdministerAuditServiceImpl extends ServiceImpl<RegisterMapper, Regi
                 .className(studentDefaultInfoDO.getClassName())
                 .enrollmentYear(studentDefaultInfoDO.getEnrollmentYear())
                 .graduationYear(studentDefaultInfoDO.getGraduationYear())
-                .phone(aDo.getPhone())
-                .email(aDo.getEmail())
+                .phone(studentDefaultInfoDO.getPhone())
+                .email(studentDefaultInfoDO.getEmail())
                 .password(aDo.getPassword())
                 .status(1)
                 .registerToken(aDo.getRegisterToken())
