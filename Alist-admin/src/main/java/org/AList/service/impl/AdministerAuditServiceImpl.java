@@ -223,7 +223,5 @@ public class AdministerAuditServiceImpl extends ServiceImpl<RegisterMapper, Regi
         }finally {
             rLock.unlock();
         }
-
-
     }
 }
