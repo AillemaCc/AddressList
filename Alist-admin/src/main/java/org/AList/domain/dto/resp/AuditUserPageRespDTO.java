@@ -6,7 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * 待审核用户返回参数响应实体
+ * 审核用户返回参数响应实体
  */
 @Data
 @AllArgsConstructor
@@ -38,10 +38,6 @@ public class AuditUserPageRespDTO {
      */
     private String email;
 
-    /**
-     * 加密密码
-     */
-    private String password;
 
     /**
      * 注册状态（0待审核，1通过，2拒绝）
