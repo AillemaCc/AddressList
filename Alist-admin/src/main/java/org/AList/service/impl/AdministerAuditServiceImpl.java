@@ -40,6 +40,8 @@ public class AdministerAuditServiceImpl extends ServiceImpl<RegisterMapper, Regi
     private final StudentMapper studentMapper;
     private final StudentDefaultInfoMapper studentDefaultInfoMapper;
     private final RedissonClient redissonClient;
+    private final RegisterMapper registerMapper;
+
     /**
      * @return 待审核用户列表
      */
@@ -180,6 +182,7 @@ public class AdministerAuditServiceImpl extends ServiceImpl<RegisterMapper, Regi
      *
      * @param requestParam 学号请求体
      */
+    @Transactional
     @Override
     public void banStudentById(BanStudentReqDTO requestParam) {
         LambdaQueryWrapper<StudentDO> queryWrapper = Wrappers.lambdaQuery(StudentDO.class)
@@ -187,22 +190,34 @@ public class AdministerAuditServiceImpl extends ServiceImpl<RegisterMapper, Regi
                 .eq(StudentDO::getStatus, 1)
                 .eq(StudentDO::getDelFlag, 0);
         StudentDO studentDO=studentMapper.selectOne(queryWrapper);
-        if(Objects.isNull(studentDO)){
-            throw new ClientException("该学生信息不存在，请重新查询");
 
+        LambdaQueryWrapper<RegisterDO> registerDOLambdaQueryWrapper = Wrappers.lambdaQuery(RegisterDO.class)
+                .eq(RegisterDO::getStudentId, requestParam.getStudentId())
+                .eq(RegisterDO::getStatus, 1)
+                .eq(RegisterDO::getDelFlag, 0);
+        RegisterDO registerDO=registerMapper.selectOne(registerDOLambdaQueryWrapper);
+        // todo: 这里判空逻辑可能有问题，需要修改
+        if(Objects.isNull(studentDO)||Objects.isNull(registerDO)){
+            throw new ClientException("该学生信息不存在，请重新查询");
         }
-        StudentDO updateDO=StudentDO.builder()
+        StudentDO updateStudentDO =StudentDO.builder()
                 .status(3)
                 .build();
-
+        RegisterDO updateRegisterDO=RegisterDO.builder()
+                .status(3)
+                .build();
         RReadWriteLock readWriteLock=redissonClient.getReadWriteLock(String.format(LOCK_UPDATE_BAN_KEY,requestParam.getStudentId()));
         RLock rLock=readWriteLock.writeLock();
         if(!rLock.tryLock()){
             throw new ServiceException("该用户状态信息正在被其他管理员修改，请稍后再试...");
         }
         try{
-            int update = studentMapper.update(updateDO, queryWrapper);
-            if(update<1){
+            int updateStudentInfo = studentMapper.update(updateStudentDO, queryWrapper);
+            if(updateStudentInfo<1){
+                throw new ClientException("禁用学生账户信息操作失败");
+            }
+            int updateRegister=registerMapper.update(updateRegisterDO,registerDOLambdaQueryWrapper);
+            if(updateRegister<1){
                 throw new ClientException("禁用学生账户信息操作失败");
             }
         }finally {
