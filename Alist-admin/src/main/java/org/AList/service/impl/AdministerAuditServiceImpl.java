@@ -9,6 +9,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.AList.common.convention.exception.ClientException;
+import org.AList.common.convention.exception.ServiceException;
 import org.AList.domain.dao.entity.RegisterDO;
 import org.AList.domain.dao.entity.StudentDO;
 import org.AList.domain.dao.entity.StudentDefaultInfoDO;
@@ -16,13 +17,20 @@ import org.AList.domain.dao.mapper.RegisterMapper;
 import org.AList.domain.dao.mapper.StudentDefaultInfoMapper;
 import org.AList.domain.dao.mapper.StudentMapper;
 import org.AList.domain.dto.req.AccpetRegistrationReqDTO;
+import org.AList.domain.dto.req.BanStudentReqDTO;
 import org.AList.domain.dto.req.RefuseRegistrationReqDTO;
 import org.AList.domain.dto.resp.AuditUserPageRespDTO;
 import org.AList.service.AdministerAuditService;
+import org.redisson.api.RLock;
+import org.redisson.api.RReadWriteLock;
+import org.redisson.api.RedissonClient;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Objects;
+
+import static org.AList.common.constant.RedisKeyConstant.LOCK_UPDATE_BAN_KEY;
+import static org.AList.common.constant.RedisKeyConstant.LOCK_UPDATE_UNBAN_KEY;
 
 /**
  * 管理员审核相关接口实现层
@@ -32,6 +40,9 @@ import java.util.Objects;
 public class AdministerAuditServiceImpl extends ServiceImpl<RegisterMapper, RegisterDO> implements AdministerAuditService {
     private final StudentMapper studentMapper;
     private final StudentDefaultInfoMapper studentDefaultInfoMapper;
+    private final RedissonClient redissonClient;
+    private final RegisterMapper registerMapper;
+
     /**
      * @return 待审核用户列表
      */
@@ -58,6 +69,7 @@ public class AdministerAuditServiceImpl extends ServiceImpl<RegisterMapper, Regi
                 .eq(RegisterDO::getStatus, 0)
                 .eq(RegisterDO::getDelFlag, 0)
                 .eq(RegisterDO::getStudentId, requestParam.getStudentId());
+        // 拿到的注册请求的实体
         RegisterDO aDo = baseMapper.selectOne(updateWrapper);
         if(Objects.isNull(aDo)){
             throw new ClientException("审核操作失败，数据记录异常，请检查数据记录或者刷新重试");
@@ -79,8 +91,8 @@ public class AdministerAuditServiceImpl extends ServiceImpl<RegisterMapper, Regi
                 .className(studentDefaultInfoDO.getClassName())
                 .enrollmentYear(studentDefaultInfoDO.getEnrollmentYear())
                 .graduationYear(studentDefaultInfoDO.getGraduationYear())
-                .phone(aDo.getPhone())
-                .email(aDo.getEmail())
+                .phone(studentDefaultInfoDO.getPhone())
+                .email(studentDefaultInfoDO.getEmail())
                 .password(aDo.getPassword())
                 .status(1)
                 .registerToken(aDo.getRegisterToken())
@@ -134,6 +146,129 @@ public class AdministerAuditServiceImpl extends ServiceImpl<RegisterMapper, Regi
         int update = baseMapper.update(registerDO, updateWrapper);
         if(update<1){
             throw new ClientException("审核操作失败，未能更新数据，请检查数据记录或者刷新重试");
+        }
+    }
+
+    /**
+     * 分页查询所有已经通过审核的合法用户
+     *
+     * @return 合法用户分页信息
+     */
+    @Override
+    public IPage<AuditUserPageRespDTO> listAuditRegisterValid() {
+        LambdaQueryWrapper<RegisterDO> queryWrapper = Wrappers.lambdaQuery(RegisterDO.class)
+                .eq(RegisterDO::getStatus, 1)
+                .eq(RegisterDO::getDelFlag, 0)
+                .orderByDesc(RegisterDO::getCreateTime);
+        IPage<RegisterDO> resultPage=baseMapper.selectPage(new Page<>(), queryWrapper);
+        return resultPage.convert(each -> BeanUtil.toBean(each,AuditUserPageRespDTO.class));
+    }
+
+    /**
+     * 分页查询所有已被拒绝的用户
+     *
+     * @return 被拒绝用户分页信息
+     */
+    @Override
+    public IPage<AuditUserPageRespDTO> listAuditRegisterRefuse() {
+        LambdaQueryWrapper<RegisterDO> queryWrapper = Wrappers.lambdaQuery(RegisterDO.class)
+                .eq(RegisterDO::getStatus, 2)
+                .eq(RegisterDO::getDelFlag, 0)
+                .orderByDesc(RegisterDO::getCreateTime);
+        IPage<RegisterDO> resultPage=baseMapper.selectPage(new Page<>(), queryWrapper);
+        return resultPage.convert(each -> BeanUtil.toBean(each,AuditUserPageRespDTO.class));
+    }
+
+    /**
+     * 根据学号ban学生
+     *
+     * @param requestParam 学号请求体
+     */
+    @Transactional
+    @Override
+    public void banStudentById(BanStudentReqDTO requestParam) {
+        LambdaQueryWrapper<StudentDO> queryWrapper = Wrappers.lambdaQuery(StudentDO.class)
+                .eq(StudentDO::getStudentId, requestParam.getStudentId())
+                .eq(StudentDO::getStatus, 1)
+                .eq(StudentDO::getDelFlag, 0);
+        StudentDO studentDO=studentMapper.selectOne(queryWrapper);
+
+        LambdaQueryWrapper<RegisterDO> registerDOLambdaQueryWrapper = Wrappers.lambdaQuery(RegisterDO.class)
+                .eq(RegisterDO::getStudentId, requestParam.getStudentId())
+                .eq(RegisterDO::getStatus, 1)
+                .eq(RegisterDO::getDelFlag, 0);
+        RegisterDO registerDO=registerMapper.selectOne(registerDOLambdaQueryWrapper);
+        // todo: 这里判空逻辑可能有问题，需要修改
+        if(Objects.isNull(studentDO)||Objects.isNull(registerDO)){
+            throw new ClientException("该学生信息不存在，请重新查询");
+        }
+        StudentDO updateStudentDO =StudentDO.builder()
+                .status(3)
+                .build();
+        RegisterDO updateRegisterDO=RegisterDO.builder()
+                .status(3)
+                .build();
+        BanOrUnbanUpdate(requestParam, queryWrapper, registerDOLambdaQueryWrapper, updateStudentDO, updateRegisterDO, LOCK_UPDATE_BAN_KEY);
+    }
+
+    /**
+     * 根据学号unban学生
+     *
+     * @param requestParam 学号请求体
+     */
+    @Override
+    public void unBanStudentById(BanStudentReqDTO requestParam) {
+        LambdaQueryWrapper<StudentDO> queryWrapper = Wrappers.lambdaQuery(StudentDO.class)
+                .eq(StudentDO::getStudentId, requestParam.getStudentId())
+                .eq(StudentDO::getStatus, 3)
+                .eq(StudentDO::getDelFlag, 0);
+        StudentDO studentDO=studentMapper.selectOne(queryWrapper);
+
+        LambdaQueryWrapper<RegisterDO> registerDOLambdaQueryWrapper = Wrappers.lambdaQuery(RegisterDO.class)
+                .eq(RegisterDO::getStudentId, requestParam.getStudentId())
+                .eq(RegisterDO::getStatus, 3)
+                .eq(RegisterDO::getDelFlag, 0);
+        RegisterDO registerDO=registerMapper.selectOne(registerDOLambdaQueryWrapper);
+
+        if(Objects.isNull(studentDO)||Objects.isNull(registerDO)){
+            throw new ClientException("该学生信息不存在，请重新查询");
+        }
+
+        StudentDO updateStudentDO =StudentDO.builder()
+                .status(1)
+                .build();
+        RegisterDO updateRegisterDO=RegisterDO.builder()
+                .status(1)
+                .build();
+        BanOrUnbanUpdate(requestParam, queryWrapper, registerDOLambdaQueryWrapper, updateStudentDO, updateRegisterDO, LOCK_UPDATE_UNBAN_KEY);
+    }
+
+    /**
+     * 更新禁用和解禁的用户状态
+     * @param requestParam 学号请求体
+     * @param queryWrapper 审核通过的学生信息查询参数
+     * @param registerDOLambdaQueryWrapper 注册类学生信息查询参数
+     * @param updateStudentDO 更新学生信息实体
+     * @param updateRegisterDO 更新注册信息实体
+     * @param lockUpdateUnbanKey 读写锁key
+     */
+    private void BanOrUnbanUpdate(BanStudentReqDTO requestParam, LambdaQueryWrapper<StudentDO> queryWrapper, LambdaQueryWrapper<RegisterDO> registerDOLambdaQueryWrapper, StudentDO updateStudentDO, RegisterDO updateRegisterDO, String lockUpdateUnbanKey) {
+        RReadWriteLock readWriteLock=redissonClient.getReadWriteLock(String.format(lockUpdateUnbanKey,requestParam.getStudentId()));
+        RLock rLock=readWriteLock.writeLock();
+        if(!rLock.tryLock()){
+            throw new ServiceException("该用户状态信息正在被其他管理员修改，请稍后再试...");
+        }
+        try{
+            int updateStudentInfo = studentMapper.update(updateStudentDO, queryWrapper);
+            if(updateStudentInfo<1){
+                throw new ClientException("禁用学生账户信息操作失败");
+            }
+            int updateRegister=registerMapper.update(updateRegisterDO,registerDOLambdaQueryWrapper);
+            if(updateRegister<1){
+                throw new ClientException("禁用学生账户信息操作失败");
+            }
+        }finally {
+            rLock.unlock();
         }
     }
 }

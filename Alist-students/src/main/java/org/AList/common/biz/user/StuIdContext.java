@@ -1,5 +1,6 @@
 package org.AList.common.biz.user;
 import com.alibaba.ttl.TransmittableThreadLocal;
+import org.AList.common.convention.exception.ClientException;
 
 import java.util.Optional;
 
@@ -37,5 +38,25 @@ public class StuIdContext {
      */
     public static void removeStudentId() {
         USER_THREAD_LOCAL.remove();
+    }
+
+    /**
+     * get上下文的学号
+     */
+    public static StuIdInfoDTO getStudentIdDTO(){
+        return USER_THREAD_LOCAL.get();
+    }
+
+
+
+    /**
+     * 验证当前用户是否为登录用户，也就是修改操作的鉴权
+     */
+    public static void verifyLoginUser(String studentId) {
+        StuIdInfoDTO currentStu = getStudentIdDTO();
+        if(currentStu == null||!currentStu.getStudentId().equals(studentId)){
+            throw new ClientException("无权修改非当前登录用户信息");
+        }
+
     }
 }

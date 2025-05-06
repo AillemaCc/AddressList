@@ -120,6 +120,7 @@ public class StuServiceImpl extends ServiceImpl<StudentMapper,StudentDO> impleme
         // 布隆过滤器存在误判率，被误判为存在的请求，需要再去数据库查询一下。这时候需要查询的仍然是学籍库，也就是全量默认数据的查询
         LambdaQueryWrapper<StudentDefaultInfoDO> queryWrapper = Wrappers.lambdaQuery(StudentDefaultInfoDO.class)
                 .eq(StudentDefaultInfoDO::getStudentId, requestParam.getStudentId())
+                .eq(StudentDefaultInfoDO::getName,requestParam.getName())
                 .eq(StudentDefaultInfoDO::getDelFlag, 0);
         if(Objects.isNull(studentDefaultInfoMapper.selectOne(queryWrapper))){
             throw new ClientException(USER_NULL);
@@ -131,7 +132,6 @@ public class StuServiceImpl extends ServiceImpl<StudentMapper,StudentDO> impleme
             if(rLock.tryLock()){
                 // 获取到锁之后才执行业务逻辑
                 try{
-                    // TODO 优化唯一key的产生方式，需要全局唯一无冲突，考虑雪花算法
                     String uuid= UUID.randomUUID().toString();
                     // 构建注册实体
                     RegisterDO registerDO=RegisterDO.builder()

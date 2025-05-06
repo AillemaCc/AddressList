@@ -2,6 +2,7 @@ package org.AList.service;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import org.AList.domain.dto.req.AccpetRegistrationReqDTO;
+import org.AList.domain.dto.req.BanStudentReqDTO;
 import org.AList.domain.dto.req.RefuseRegistrationReqDTO;
 import org.AList.domain.dto.resp.AuditUserPageRespDTO;
 
@@ -32,4 +33,28 @@ public interface AdministerAuditService {
      * @param requestParam 拒绝注册请求实体类
      */
     void refuseRegistration(RefuseRegistrationReqDTO requestParam);
+
+    /**
+     * 分页查询所有已经通过审核的合法用户
+     * @return 合法用户分页信息
+     */
+    IPage<AuditUserPageRespDTO> listAuditRegisterValid();
+
+    /**
+     * 分页查询所有已被拒绝的用户
+     * @return 被拒绝用户分页信息
+     */
+    IPage<AuditUserPageRespDTO> listAuditRegisterRefuse();
+
+    /**
+     * 根据学号ban学生
+     * @param requestParam 学号请求体
+     */
+    void banStudentById(BanStudentReqDTO requestParam);
+
+    /**
+     * 根据学号unban学生
+     * @param requestParam 学号请求体
+     */
+    void unBanStudentById(BanStudentReqDTO requestParam);
 }

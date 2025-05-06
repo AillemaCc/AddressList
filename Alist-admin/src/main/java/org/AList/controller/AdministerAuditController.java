@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.AList.common.convention.result.Result;
 import org.AList.common.convention.result.Results;
 import org.AList.domain.dto.req.AccpetRegistrationReqDTO;
+import org.AList.domain.dto.req.BanStudentReqDTO;
 import org.AList.domain.dto.req.RefuseRegistrationReqDTO;
 import org.AList.domain.dto.resp.AuditUserPageRespDTO;
 import org.AList.service.AdministerAuditService;
@@ -26,6 +27,24 @@ public class AdministerAuditController {
     @GetMapping("/auditList")
     public Result<IPage<AuditUserPageRespDTO>> listAuditRegister(){
         return Results.success(administerAuditService.listAuditRegister());
+    }
+
+    /**
+     * 分页查询所有已通过请求
+     * @return 所有已通过请求
+     */
+    @GetMapping("/validList")
+    public Result<IPage<AuditUserPageRespDTO>> listAuditRegisterValid(){
+        return Results.success(administerAuditService.listAuditRegisterValid());
+    }
+
+    /**
+     * 分页查询所有被拒绝请求
+     * @return 所有被拒绝请求
+     */
+    @GetMapping("/refuseList")
+    public Result<IPage<AuditUserPageRespDTO>> listAuditRegisterRefuse(){
+        return Results.success(administerAuditService.listAuditRegisterRefuse());
     }
 
     /**
@@ -56,5 +75,27 @@ public class AdministerAuditController {
     public Result<Void> refuseRegistration(@RequestBody RefuseRegistrationReqDTO requestParam){
         administerAuditService.refuseRegistration(requestParam);
         return Results.success().setMessage("审核拒绝操作成功");
+    }
+
+    /**
+     * 根据学号ban通过审核的学生
+     * @param requestParam 学号
+     * @return null
+     */
+    @PostMapping("/ban")
+    public Result<Void> banStudentById(@RequestBody BanStudentReqDTO requestParam){
+        administerAuditService.banStudentById(requestParam);
+        return Results.success();
+    }
+
+    /**
+     * 根据学号unban通过审核的学生
+     * @param requestParam 学号
+     * @return null
+     */
+    @PostMapping("/unBan")
+    public Result<Void> unBanStudentById(@RequestBody BanStudentReqDTO requestParam){
+        administerAuditService.unBanStudentById(requestParam);
+        return Results.success();
     }
 }
