@@ -6,7 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * 新增通讯信息请求实体类
+ * 新增个人通讯信息请求实体类
  */
 @Data
 @AllArgsConstructor
@@ -17,6 +17,7 @@ public class AddContactReqDTO {
      * 学号
      */
     private String studentId;
+
     /**
      * 就业单位
      */
