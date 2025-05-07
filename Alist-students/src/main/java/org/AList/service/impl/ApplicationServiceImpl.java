@@ -14,6 +14,7 @@ import org.AList.domain.dao.mapper.ApplicationMapper;
 import org.AList.domain.dao.mapper.StudentMapper;
 import org.AList.domain.dto.req.ApplicationSendMsgReqDTO;
 import org.AList.domain.dto.req.ApplicationQueryPageReqDTO;
+import org.AList.domain.dto.req.ApplicationYONReqDTO;
 import org.AList.domain.dto.resp.QueryApplicationPageRespDTO;
 import org.AList.service.ApplicationService;
 import org.AList.service.bloom.StudentIdBloomFilterService;
@@ -46,10 +47,13 @@ public class ApplicationServiceImpl extends ServiceImpl<ApplicationMapper, Appli
         if(!studentIdBloomFilterService.contain(requestParam.getReceiver())){
             throw new ClientException(USER_NULL);
         }
+        // 自己不能给自己发
         if(Objects.equals(requestParam.getReceiver(), StuIdContext.getStudentId())){
             throw new ClientException("您不能给自己发送申请");
         }
-        // 先判断发送者是不是存在 也就是发送者是不是注册过
+
+
+        // 先判断接收者是不是存在 也就是接收者是不是注册过
         LambdaQueryWrapper<StudentDO> validQueryWrapper = Wrappers.lambdaQuery(StudentDO.class)
                 .eq(StudentDO::getStudentId, requestParam.getReceiver())
                 .eq(StudentDO::getStatus, 1)
@@ -58,6 +62,17 @@ public class ApplicationServiceImpl extends ServiceImpl<ApplicationMapper, Appli
 
         if(receiverDO == null) {
             throw new ClientException("收信人状态异常，无法添加到通讯录");
+        }
+
+        // 已经给这个人发过不能再继续发申请 在对面没拒绝的情况下 匹配上发送者和接收者的数据条数超过一条 那就说明你重复发送了
+        LambdaQueryWrapper<ApplicationDO> uniqueMsgQueryWrapper = Wrappers.lambdaQuery(ApplicationDO.class)
+                .eq(ApplicationDO::getSender, StuIdContext.getStudentId())
+                .eq(ApplicationDO::getReceiver, requestParam.getReceiver())
+                .ne(ApplicationDO::getStatus, 2)
+                .eq(ApplicationDO::getDelFlag, 0);
+        Long selectCount = applicationMapper.selectCount(uniqueMsgQueryWrapper);
+        if(selectCount > 1){
+            throw new ClientException("您已经给对方发送过申请，请等待对方处理请求");
         }
         LambdaQueryWrapper<StudentDO> senderWrapper = Wrappers.lambdaQuery(StudentDO.class)
                 .eq(StudentDO::getStudentId, StuIdContext.getStudentId());
