@@ -1,6 +1,8 @@
 package org.AList.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
@@ -11,10 +13,14 @@ import org.AList.domain.dao.entity.StudentDO;
 import org.AList.domain.dao.mapper.ApplicationMapper;
 import org.AList.domain.dao.mapper.StudentMapper;
 import org.AList.domain.dto.req.ApplicationSendMsgReqDTO;
+import org.AList.domain.dto.req.QueryApplicationPageReqDTO;
+import org.AList.domain.dto.resp.QueryApplicationPageRespDTO;
 import org.AList.service.ApplicationService;
 import org.AList.service.bloom.StudentIdBloomFilterService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Objects;
 
 import static org.AList.common.enums.UserErrorCodeEnum.USER_NULL;
 
@@ -39,6 +45,9 @@ public class ApplicationServiceImpl extends ServiceImpl<ApplicationMapper, Appli
         // 最先查一下这个收信人，是不是存在于布隆过滤器当中 假如你发送的学生都不是这个学校的，直接提供快速返回的机制
         if(!studentIdBloomFilterService.contain(requestParam.getReceiver())){
             throw new ClientException(USER_NULL);
+        }
+        if(Objects.equals(requestParam.getReceiver(), StuIdContext.getStudentId())){
+            throw new ClientException("您不能给自己发送申请");
         }
         // 先判断发送者是不是存在 也就是发送者是不是注册过
         LambdaQueryWrapper<StudentDO> validQueryWrapper = Wrappers.lambdaQuery(StudentDO.class)
@@ -67,5 +76,21 @@ public class ApplicationServiceImpl extends ServiceImpl<ApplicationMapper, Appli
         if(insert != 1) {
             throw new ClientException("发送请求失败，请重新操作");
         }
+    }
+
+    /**
+     * 展示所有没删除 没审核的站内信请求
+     *
+     * @return 分页结果
+     */
+    @Override
+    public IPage<QueryApplicationPageRespDTO> listAllValidApplication(QueryApplicationPageReqDTO requestParam) {
+        // todo: 用用户上下文校验还是用输入的请求来校验呢 先用传入的参数校验
+        LambdaQueryWrapper<ApplicationDO> queryWrapper = Wrappers.lambdaQuery(ApplicationDO.class)
+                .eq(ApplicationDO::getReceiver, requestParam.getReceiver())
+                .eq(ApplicationDO::getStatus, 0)
+                .eq(ApplicationDO::getDelFlag, 0);
+        IPage<ApplicationDO> resultPage=baseMapper.selectPage(requestParam,queryWrapper);
+        return resultPage.convert(each-> BeanUtil.toBean(each,QueryApplicationPageRespDTO.class));
     }
 }
