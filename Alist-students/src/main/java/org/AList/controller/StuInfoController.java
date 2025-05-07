@@ -23,7 +23,7 @@ public class StuInfoController {
      * 通讯信息新增接口
      * @return void
      */
-    @PutMapping("contact/add")
+    @PutMapping("/contact/add")
     public Result<Void> addStudentContact(@RequestBody AddContactReqDTO requestParam){
         stuContactService.addStudentContact(requestParam);
         return Results.success();
@@ -34,7 +34,7 @@ public class StuInfoController {
      * @param requestParam 删除请求体
      * @return void
      */
-    @DeleteMapping("contact/delete")
+    @DeleteMapping("/contact/delete")
     public Result<Void> deleteStudentContact(@RequestBody DeleteContactReqDTO requestParam){
         stuContactService.deleteStudentContact(requestParam);
         return Results.success();
@@ -45,7 +45,7 @@ public class StuInfoController {
      * @param requestParam 修改请求体
      * @return void
      */
-    @PostMapping("contact/update")
+    @PostMapping("/contact/update")
     public Result<Void> updateStudentContact(@RequestBody UpdateContactReqDTO requestParam){
         stuContactService.updateStudentContact(requestParam);
         return Results.success();
@@ -57,7 +57,10 @@ public class StuInfoController {
      * @return void
      */
     @GetMapping("/contact/query")
-    public Result<QueryContactRespDTO> queryContactByStuId(@RequestParam QueryContactByIdReqDTO requestParam){
+    public Result<QueryContactRespDTO> queryContactByStuId(@RequestBody QueryContactByIdReqDTO requestParam){
         return Results.success(stuContactService.queryContactById(requestParam));
     }
+
+
+
 }
