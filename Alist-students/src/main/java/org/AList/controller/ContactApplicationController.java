@@ -47,4 +47,12 @@ public class ContactApplicationController {
         return Results.success(applicationService.listAllAcceptedApplication(requestParam));
     }
 
+    /**
+     * 分页展示所有已拒绝的站内信请求
+     */
+    @GetMapping("/listAllRefuse")
+    public Result<IPage<QueryApplicationPageRespDTO>>  listAllRefuseApplication(@RequestBody QueryApplicationPageReqDTO requestParam){
+        return Results.success(applicationService.listAllRefusedApplication(requestParam));
+    }
+
 }

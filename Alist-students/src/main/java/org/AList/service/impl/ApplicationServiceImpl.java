@@ -85,7 +85,7 @@ public class ApplicationServiceImpl extends ServiceImpl<ApplicationMapper, Appli
      */
     @Override
     public IPage<QueryApplicationPageRespDTO> listAllValidApplication(QueryApplicationPageReqDTO requestParam) {
-        // todo: 用用户上下文校验还是用输入的请求来校验呢 先用传入的参数校验
+        // 为了让前端好过一点 尽可能地让所有方法都显式地传入参数
         LambdaQueryWrapper<ApplicationDO> queryWrapper = Wrappers.lambdaQuery(ApplicationDO.class)
                 .eq(ApplicationDO::getReceiver, requestParam.getReceiver())
                 .eq(ApplicationDO::getStatus, 0)
@@ -104,6 +104,22 @@ public class ApplicationServiceImpl extends ServiceImpl<ApplicationMapper, Appli
         LambdaQueryWrapper<ApplicationDO> queryWrapper = Wrappers.lambdaQuery(ApplicationDO.class)
                 .eq(ApplicationDO::getReceiver, requestParam.getReceiver())
                 .eq(ApplicationDO::getStatus, 1)
+                .eq(ApplicationDO::getDelFlag, 0);
+        IPage<ApplicationDO> resultPage=baseMapper.selectPage(requestParam,queryWrapper);
+        return resultPage.convert(each-> BeanUtil.toBean(each,QueryApplicationPageRespDTO.class));
+    }
+
+    /**
+     * 展示没删除 已拒绝的站内信请求
+     *
+     * @param requestParam 传入参数-当前登录的学生学号-接收用户
+     * @return 分页结果
+     */
+    @Override
+    public IPage<QueryApplicationPageRespDTO> listAllRefusedApplication(QueryApplicationPageReqDTO requestParam) {
+        LambdaQueryWrapper<ApplicationDO> queryWrapper = Wrappers.lambdaQuery(ApplicationDO.class)
+                .eq(ApplicationDO::getReceiver, requestParam.getReceiver())
+                .eq(ApplicationDO::getStatus, 2)
                 .eq(ApplicationDO::getDelFlag, 0);
         IPage<ApplicationDO> resultPage=baseMapper.selectPage(requestParam,queryWrapper);
         return resultPage.convert(each-> BeanUtil.toBean(each,QueryApplicationPageRespDTO.class));
