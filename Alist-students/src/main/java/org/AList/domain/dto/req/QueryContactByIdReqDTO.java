@@ -6,17 +6,15 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * 删除通讯信息请求实体类
+ * 按学号查询通讯信息请求体
  */
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class DeleteContactReqDTO {
-
+public class QueryContactByIdReqDTO {
     /**
      * 学号
      */
     private String studentId;
-
 }

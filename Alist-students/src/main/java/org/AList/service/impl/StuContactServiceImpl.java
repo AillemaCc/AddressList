@@ -1,6 +1,8 @@
 package org.AList.service.impl;
 
+import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
@@ -10,6 +12,9 @@ import org.AList.domain.dao.entity.ContactDO;
 import org.AList.domain.dao.mapper.ContactMapper;
 import org.AList.domain.dto.req.AddContactReqDTO;
 import org.AList.domain.dto.req.DeleteContactReqDTO;
+import org.AList.domain.dto.req.QueryContactByIdReqDTO;
+import org.AList.domain.dto.req.UpdateContactReqDTO;
+import org.AList.domain.dto.resp.QueryContactRespDTO;
 import org.AList.service.StuContactService;
 import org.springframework.stereotype.Service;
 
@@ -57,5 +62,45 @@ public class StuContactServiceImpl extends ServiceImpl<ContactMapper, ContactDO>
         delContact.setDelFlag(1);
         contactMapper.update(delContact,queryWrapper);
 
+    }
+
+    /**
+     * 修改通讯信息
+     *
+     * @param requestParam 修改通讯信息请求体
+     */
+    @Override
+    public void updateStudentContact(UpdateContactReqDTO requestParam) {
+        StuIdContext.verifyLoginUser(requestParam.getStudentId());
+        LambdaUpdateWrapper<ContactDO> updateWrapper = Wrappers.lambdaUpdate(ContactDO.class)
+                .eq(ContactDO::getStudentId, requestParam.getStudentId())
+                .eq(ContactDO::getDelFlag, 0);
+        if(Objects.isNull(contactMapper.selectOne(updateWrapper))){
+            throw new ClientException("修改的记录不存在");
+        }
+        ContactDO contact = new ContactDO();
+        int update = contactMapper.update(contact, updateWrapper);
+        if(update != 1){
+            throw new ClientException("修改错误");
+        }
+    }
+
+    /**
+     * 按学号查询通讯信息
+     *
+     * @param requestParam 查询通讯信息请求体
+     * @return 单个学生的通讯信息
+     */
+    @Override
+    public QueryContactRespDTO queryContactById(QueryContactByIdReqDTO requestParam) {
+        StuIdContext.verifyLoginUser(requestParam.getStudentId());
+        LambdaQueryWrapper<ContactDO> queryWrapper = Wrappers.lambdaQuery(ContactDO.class)
+                .eq(ContactDO::getStudentId, requestParam.getStudentId())
+                .eq(ContactDO::getDelFlag, 0);
+        ContactDO contact = contactMapper.selectOne(queryWrapper);
+        if(Objects.isNull(contact)){
+            throw new ClientException("查询的记录不存在");
+        }
+        return BeanUtil.toBean(contact,QueryContactRespDTO.class);
     }
 }
