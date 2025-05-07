@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
+import org.AList.common.biz.user.StuIdContext;
 import org.AList.common.convention.exception.ClientException;
 import org.AList.domain.dao.entity.ApplicationDO;
 import org.AList.domain.dao.entity.StudentDO;
@@ -44,13 +45,21 @@ public class ApplicationServiceImpl extends ServiceImpl<ApplicationMapper, Appli
                 .eq(StudentDO::getStudentId, requestParam.getReceiver())
                 .eq(StudentDO::getStatus, 1)
                 .eq(StudentDO::getDelFlag, 0);
-        if(studentMapper.selectOne(validQueryWrapper) == null) {
+        StudentDO receiverDO = studentMapper.selectOne(validQueryWrapper);
+
+        if(receiverDO == null) {
             throw new ClientException("收信人状态异常，无法添加到通讯录");
         }
+        LambdaQueryWrapper<StudentDO> senderWrapper = Wrappers.lambdaQuery(StudentDO.class)
+                .eq(StudentDO::getStudentId, StuIdContext.getStudentId());
+        StudentDO sender = studentMapper.selectOne(senderWrapper);
+        String senderName=sender.getName();
         // 假如说这个接收者存在 直接写库是不是就行了
         ApplicationDO applicationDO =ApplicationDO.builder()
-                .sender(requestParam.getSender())
+                .sender(StuIdContext.getStudentId())
+                .senderName(senderName)
                 .receiver(requestParam.getReceiver())
+                .receiverName(receiverDO.getName())
                 .content(requestParam.getContent())
                 .status(0)
                 .build();
@@ -58,6 +67,5 @@ public class ApplicationServiceImpl extends ServiceImpl<ApplicationMapper, Appli
         if(insert != 1) {
             throw new ClientException("发送请求失败，请重新操作");
         }
-
     }
 }

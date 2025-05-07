@@ -13,10 +13,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @Builder
 public class ApplicationSendMsgReqDTO {
-    /**
-     * 发送者-学号
-     */
-    private String sender;
 
     /**
      * 接收者-学号
@@ -28,8 +24,4 @@ public class ApplicationSendMsgReqDTO {
      */
     private String content;
 
-    /**
-     * 验证状态 0待审核 1通过 2拒绝
-     */
-    private String status;
 }

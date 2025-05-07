@@ -7,6 +7,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.AList.common.database.BaseDO;
 
 /**
  * 通讯站内信实体类
@@ -16,7 +17,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Builder
 @TableName("t_contact_application")
-public class ApplicationDO {
+public class ApplicationDO extends BaseDO {
     @TableId(type = IdType.AUTO)
     /**
      * 主键id
