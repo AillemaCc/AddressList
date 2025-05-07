@@ -3,12 +3,14 @@ package org.AList.service.impl;
 import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.AList.common.biz.user.StuIdContext;
 import org.AList.common.convention.exception.ClientException;
 import org.AList.domain.dao.entity.ContactDO;
+import org.AList.domain.dao.mapper.ContactGotoMapper;
 import org.AList.domain.dao.mapper.ContactMapper;
 import org.AList.domain.dto.req.AddContactReqDTO;
 import org.AList.domain.dto.req.DeleteContactReqDTO;
@@ -27,8 +29,9 @@ import java.util.Objects;
 @RequiredArgsConstructor
 public class StuContactServiceImpl extends ServiceImpl<ContactMapper, ContactDO> implements StuContactService {
     private final ContactMapper contactMapper;
+    private final ContactGotoMapper contactGotoMapper;
     /**
-     * 新增通讯信息
+     * 新增个人通讯信息
      *
      * @param requestParam 新增通讯信息请求体
      */
@@ -44,7 +47,7 @@ public class StuContactServiceImpl extends ServiceImpl<ContactMapper, ContactDO>
     }
 
     /**
-     * 删除通讯信息
+     * 删除个人通讯信息
      *
      * @param requestParam 删除通讯信息请求体
      */
@@ -65,7 +68,7 @@ public class StuContactServiceImpl extends ServiceImpl<ContactMapper, ContactDO>
     }
 
     /**
-     * 修改通讯信息
+     * 修改个人通讯信息
      *
      * @param requestParam 修改通讯信息请求体
      */
@@ -86,7 +89,7 @@ public class StuContactServiceImpl extends ServiceImpl<ContactMapper, ContactDO>
     }
 
     /**
-     * 按学号查询通讯信息
+     * 按学号查询通讯录信息
      *
      * @param requestParam 查询通讯信息请求体
      * @return 单个学生的通讯信息
@@ -102,5 +105,15 @@ public class StuContactServiceImpl extends ServiceImpl<ContactMapper, ContactDO>
             throw new ClientException("查询的记录不存在");
         }
         return BeanUtil.toBean(contact,QueryContactRespDTO.class);
+    }
+    // todo 分页查询拥有的通讯信息
+    /**
+     * 分页查询通讯信息
+     *
+     * @return 分页返回
+     */
+    @Override
+    public IPage<QueryContactRespDTO> queryContactList() {
+        return null;
     }
 }
