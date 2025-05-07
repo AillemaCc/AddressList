@@ -11,7 +11,7 @@ import org.AList.domain.dao.entity.ApplicationDO;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class QueryApplicationPageReqDTO extends Page<ApplicationDO> {
+public class ApplicationQueryPageReqDTO extends Page<ApplicationDO> {
     /**
      * 接收者-学号
      */

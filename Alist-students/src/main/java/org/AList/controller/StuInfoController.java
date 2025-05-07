@@ -22,7 +22,7 @@ public class StuInfoController {
      * @return void
      */
     @PutMapping("/contact/add")
-    public Result<Void> addStudentContact(@RequestBody AddContactReqDTO requestParam){
+    public Result<Void> addStudentContact(@RequestBody ContactAddReqDTO requestParam){
         stuContactService.addStudentContact(requestParam);
         return Results.success();
     }
@@ -39,7 +39,7 @@ public class StuInfoController {
      * @return void
      */
     @DeleteMapping("/contact/delete")
-    public Result<Void> deleteStudentContact(@RequestBody DeleteContactReqDTO requestParam){
+    public Result<Void> deleteStudentContact(@RequestBody ContactDeleteReqDTO requestParam){
         stuContactService.deleteStudentContact(requestParam);
         return Results.success();
     }
@@ -50,7 +50,7 @@ public class StuInfoController {
      * @return void
      */
     @PostMapping("/contact/update")
-    public Result<Void> updateStudentContact(@RequestBody UpdateContactReqDTO requestParam){
+    public Result<Void> updateStudentContact(@RequestBody ContactUpdateReqDTO requestParam){
         stuContactService.updateStudentContact(requestParam);
         return Results.success();
     }
@@ -61,7 +61,7 @@ public class StuInfoController {
      * @return void
      */
     @GetMapping("/contact/query")
-    public Result<QueryContactRespDTO> queryContactByStuId(@RequestBody QueryContactByIdReqDTO requestParam){
+    public Result<QueryContactRespDTO> queryContactByStuId(@RequestBody ContactQueryByIdReqDTO requestParam){
         return Results.success(stuContactService.queryContactById(requestParam));
     }
 

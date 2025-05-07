@@ -12,10 +12,10 @@ import org.AList.common.convention.exception.ClientException;
 import org.AList.domain.dao.entity.ContactDO;
 import org.AList.domain.dao.mapper.ContactGotoMapper;
 import org.AList.domain.dao.mapper.ContactMapper;
-import org.AList.domain.dto.req.AddContactReqDTO;
-import org.AList.domain.dto.req.DeleteContactReqDTO;
-import org.AList.domain.dto.req.QueryContactByIdReqDTO;
-import org.AList.domain.dto.req.UpdateContactReqDTO;
+import org.AList.domain.dto.req.ContactAddReqDTO;
+import org.AList.domain.dto.req.ContactDeleteReqDTO;
+import org.AList.domain.dto.req.ContactQueryByIdReqDTO;
+import org.AList.domain.dto.req.ContactUpdateReqDTO;
 import org.AList.domain.dto.resp.QueryContactRespDTO;
 import org.AList.service.StuContactService;
 import org.springframework.stereotype.Service;
@@ -36,7 +36,7 @@ public class StuContactServiceImpl extends ServiceImpl<ContactMapper, ContactDO>
      * @param requestParam 新增通讯信息请求体
      */
     @Override
-    public void addStudentContact(AddContactReqDTO requestParam) {
+    public void addStudentContact(ContactAddReqDTO requestParam) {
         StuIdContext.verifyLoginUser(requestParam.getStudentId());
         ContactDO contact =ContactDO.builder()
                 .studentId(requestParam.getStudentId())
@@ -52,7 +52,7 @@ public class StuContactServiceImpl extends ServiceImpl<ContactMapper, ContactDO>
      * @param requestParam 删除通讯信息请求体
      */
     @Override
-    public void deleteStudentContact(DeleteContactReqDTO requestParam) {
+    public void deleteStudentContact(ContactDeleteReqDTO requestParam) {
         StuIdContext.verifyLoginUser(requestParam.getStudentId());
         LambdaQueryWrapper<ContactDO> queryWrapper = Wrappers.lambdaQuery(ContactDO.class)
                 .eq(ContactDO::getStudentId, requestParam.getStudentId())
@@ -73,7 +73,7 @@ public class StuContactServiceImpl extends ServiceImpl<ContactMapper, ContactDO>
      * @param requestParam 修改通讯信息请求体
      */
     @Override
-    public void updateStudentContact(UpdateContactReqDTO requestParam) {
+    public void updateStudentContact(ContactUpdateReqDTO requestParam) {
         StuIdContext.verifyLoginUser(requestParam.getStudentId());
         LambdaUpdateWrapper<ContactDO> updateWrapper = Wrappers.lambdaUpdate(ContactDO.class)
                 .eq(ContactDO::getStudentId, requestParam.getStudentId())
@@ -95,7 +95,7 @@ public class StuContactServiceImpl extends ServiceImpl<ContactMapper, ContactDO>
      * @return 单个学生的通讯信息
      */
     @Override
-    public QueryContactRespDTO queryContactById(QueryContactByIdReqDTO requestParam) {
+    public QueryContactRespDTO queryContactById(ContactQueryByIdReqDTO requestParam) {
         StuIdContext.verifyLoginUser(requestParam.getStudentId());
         LambdaQueryWrapper<ContactDO> queryWrapper = Wrappers.lambdaQuery(ContactDO.class)
                 .eq(ContactDO::getStudentId, requestParam.getStudentId())

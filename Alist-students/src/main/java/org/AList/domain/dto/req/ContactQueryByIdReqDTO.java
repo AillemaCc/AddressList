@@ -12,7 +12,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class QueryContactByIdReqDTO {
+public class ContactQueryByIdReqDTO {
     /**
      * 学号
      */
