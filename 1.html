@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sass.js/0.11.1/sass.sync.min.js"></script>
+    <style lang="text/scss">
+      .container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+      .w130h60 {
+        width: 130px;
+        height: 60px;
+      }
+      .box-container {
+          position: relative;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          width: 100%;
+          height: 100%;
+          /* border: solid 1px skyblue; */
+          cursor: pointer;
+          transition: 0.4s;
+          overflow: hidden;
+      }
+      .box-container:hover {
+          color: #fff;
+      }
+      .box-background {
+          z-index: -1;
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background: linear-gradient(#396FCF,#184DA9);
+          transform:translateY(100%);
+          opacity: 0;
+          transition: .4s;
+        }
+        .box-container:hover .box-background{
+            opacity: 1;
+            transform:translateY(0)
+        }
+    </style>
+    <style></style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="w130h60">
+        <div class="box-container">
+          <div class="box-background"></div>
+          组织机构
+        </div>
+      </div>
+      <div class="w130h60">
+        <div class="box-container">
+          <div class="box-background"></div>
+          组织机构
+        </div>
+      </div>
+      <div class="w130h60">
+        <div class="box-container">
+          <div class="box-background"></div>
+          组织机构
+        </div>
+      </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script></script>
+  </body>
+</html>
