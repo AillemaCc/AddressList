@@ -51,6 +51,11 @@ public class StuInfoController {
         return Results.success();
     }
 
+    /**
+     * 按学号查询通讯信息
+     * @param requestParam 查询请求体
+     * @return void
+     */
     @GetMapping("/contact/query")
     public Result<QueryContactRespDTO> queryContactByStuId(@RequestParam QueryContactByIdReqDTO requestParam){
         return Results.success(stuContactService.queryContactById(requestParam));
