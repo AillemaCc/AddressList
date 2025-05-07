@@ -20,4 +20,10 @@ public interface ApplicationService {
      * @return 分页结果
      */
     IPage<QueryApplicationPageRespDTO> listAllValidApplication(QueryApplicationPageReqDTO requestParam);
+
+    /**
+     * 展示没删除 已通过的站内信请求
+     * @return 分页结果
+     */
+    IPage<QueryApplicationPageRespDTO> listAllAcceptedApplication(QueryApplicationPageReqDTO requestParam);
 }

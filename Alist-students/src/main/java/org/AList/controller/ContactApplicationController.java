@@ -39,4 +39,12 @@ public class ContactApplicationController {
         return Results.success(applicationService.listAllValidApplication(requestParam));
     }
 
+    /**
+     * 分页展示所有已通过站内信请求
+     */
+    @GetMapping("/listAllAccept")
+    public Result<IPage<QueryApplicationPageRespDTO>> listAllAcceptedApplication(@RequestBody QueryApplicationPageReqDTO requestParam){
+        return Results.success(applicationService.listAllAcceptedApplication(requestParam));
+    }
+
 }

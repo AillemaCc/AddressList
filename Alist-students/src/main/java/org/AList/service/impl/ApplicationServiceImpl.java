@@ -93,4 +93,19 @@ public class ApplicationServiceImpl extends ServiceImpl<ApplicationMapper, Appli
         IPage<ApplicationDO> resultPage=baseMapper.selectPage(requestParam,queryWrapper);
         return resultPage.convert(each-> BeanUtil.toBean(each,QueryApplicationPageRespDTO.class));
     }
+
+    /**
+     * 展示没删除 已通过的站内信请求
+     *
+     * @return 分页结果
+     */
+    @Override
+    public IPage<QueryApplicationPageRespDTO> listAllAcceptedApplication(QueryApplicationPageReqDTO requestParam) {
+        LambdaQueryWrapper<ApplicationDO> queryWrapper = Wrappers.lambdaQuery(ApplicationDO.class)
+                .eq(ApplicationDO::getReceiver, requestParam.getReceiver())
+                .eq(ApplicationDO::getStatus, 1)
+                .eq(ApplicationDO::getDelFlag, 0);
+        IPage<ApplicationDO> resultPage=baseMapper.selectPage(requestParam,queryWrapper);
+        return resultPage.convert(each-> BeanUtil.toBean(each,QueryApplicationPageRespDTO.class));
+    }
 }
