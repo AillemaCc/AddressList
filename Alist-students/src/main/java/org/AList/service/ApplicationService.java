@@ -39,7 +39,7 @@ public interface ApplicationService {
 
     /**
      * 同意某个站内信申请
-     * @param requestParam 同意或者拒绝操作请求体
+     * @param requestParam 同意或者拒绝操作请求体--可以通过发送者和接收者定位某条消息
      */
     void acceptSingleApplication(ApplicationYONReqDTO requestParam);
 
@@ -48,4 +48,10 @@ public interface ApplicationService {
      * @param requestParam 同意或者拒绝操作请求体
      */
     void refuseSingleApplication(ApplicationYONReqDTO requestParam);
+
+    /**
+     * 删除某个站内信申请
+     * @param requestParam 同意或者拒绝操作请求体
+     */
+    void deleteSingleApplication(ApplicationYONReqDTO requestParam);
 }
