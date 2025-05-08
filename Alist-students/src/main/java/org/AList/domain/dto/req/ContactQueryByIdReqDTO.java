@@ -6,24 +6,15 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * 新增通讯信息请求实体类
+ * 按学号查询通讯信息请求体
  */
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class AddContactReqDTO {
+public class ContactQueryByIdReqDTO {
     /**
      * 学号
      */
     private String studentId;
-    /**
-     * 就业单位
-     */
-    private String employer;
-
-    /**
-     * 所在城市
-     */
-    private String city;
 }

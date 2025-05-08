@@ -20,9 +20,17 @@ public class MyMetaObjectHandler implements MetaObjectHandler {
     @Override
     public void insertFill(MetaObject metaObject) {
         log.info("开始插入填充...");
-        this.strictInsertFill(metaObject, "createTime", Date::new, Date.class);
-        this.strictInsertFill(metaObject, "updateTime", Date::new, Date.class);
-        this.strictInsertFill(metaObject, "delFlag", Integer.class, 0);
+
+        // 仅在字段值为 null 时填充（避免覆盖已有值）
+        if (metaObject.getValue("createTime") == null) {
+            this.strictInsertFill(metaObject, "createTime", Date::new, Date.class);
+        }
+        if (metaObject.getValue("updateTime") == null) {
+            this.strictInsertFill(metaObject, "updateTime", Date::new, Date.class);
+        }
+        if (metaObject.getValue("delFlag") == null) {  // 仅当 delFlag 未设置时才填充默认值 0
+            this.strictInsertFill(metaObject, "delFlag", Integer.class, 0);
+        }
     }
 
     /**
