@@ -41,6 +41,17 @@ public class ContactApplicationController {
     }
 
     /**
+     * 拒绝某个站内信申请
+     * @param requestParam 拒绝请求实体
+     * @return void
+     */
+    @PutMapping("/refuseSingle")
+    public Result<Void> refuseSingleApplication(@RequestBody ApplicationYONReqDTO requestParam){
+        applicationService.refuseSingleApplication(requestParam);
+        return Results.success();
+    }
+
+    /**
      * 分页展示所有站内信请求
      * @return 分页返回
      */

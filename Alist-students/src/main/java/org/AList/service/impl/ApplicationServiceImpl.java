@@ -163,4 +163,27 @@ public class ApplicationServiceImpl extends ServiceImpl<ApplicationMapper, Appli
         }
     }
 
+    /**
+     * 拒绝某个站内信申请
+     *
+     * @param requestParam 同意或者拒绝操作请求体
+     */
+    @Override
+    public void refuseSingleApplication(ApplicationYONReqDTO requestParam) {
+        LambdaQueryWrapper<ApplicationDO> queryWrapper = Wrappers.lambdaQuery(ApplicationDO.class)
+                .eq(ApplicationDO::getReceiver, requestParam.getReceiver())
+                .eq(ApplicationDO::getSender, requestParam.getSender())
+                .eq(ApplicationDO::getStatus, 0)
+                .eq(ApplicationDO::getDelFlag, 0);
+        ApplicationDO applicationDO = baseMapper.selectOne(queryWrapper);
+        if (applicationDO != null) {
+            applicationDO.setStatus(2); // 修改状态为2
+            // 调用 MyBatis Plus 的 updateById 方法进行更新
+            baseMapper.updateById(applicationDO);
+        } else {
+            // 处理未找到记录的情况，可抛异常或返回提示信息
+            throw new RuntimeException("未找到待处理的申请记录");
+        }
+    }
+
 }

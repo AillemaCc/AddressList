@@ -42,4 +42,10 @@ public interface ApplicationService {
      * @param requestParam 同意或者拒绝操作请求体
      */
     void acceptSingleApplication(ApplicationYONReqDTO requestParam);
+
+    /**
+     * 拒绝某个站内信申请
+     * @param requestParam 同意或者拒绝操作请求体
+     */
+    void refuseSingleApplication(ApplicationYONReqDTO requestParam);
 }
