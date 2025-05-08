@@ -54,17 +54,14 @@ public class StuContactServiceImpl extends ServiceImpl<ContactMapper, ContactDO>
     @Override
     public void deleteStudentContact(ContactDeleteReqDTO requestParam) {
         StuIdContext.verifyLoginUser(requestParam.getStudentId());
-        LambdaQueryWrapper<ContactDO> queryWrapper = Wrappers.lambdaQuery(ContactDO.class)
+        LambdaUpdateWrapper<ContactDO> updateWrapper = Wrappers.lambdaUpdate(ContactDO.class)
                 .eq(ContactDO::getStudentId, requestParam.getStudentId())
-                .eq(ContactDO::getDelFlag, 0);
-        ContactDO contactDO = contactMapper.selectOne(queryWrapper);
-        if(Objects.isNull(contactDO)){
-            throw new ClientException("删除的记录不存在");
+                .eq(ContactDO::getDelFlag, 0)
+                .set(ContactDO::getDelFlag, 1);
+        int updated=contactMapper.update(null, updateWrapper);
+        if(updated==0){
+            throw new ClientException("删除个人通讯信息出现异常，请重试");
         }
-        ContactDO delContact = new ContactDO();
-        delContact.setDelFlag(1);
-        contactMapper.update(delContact,queryWrapper);
-
     }
 
     /**
