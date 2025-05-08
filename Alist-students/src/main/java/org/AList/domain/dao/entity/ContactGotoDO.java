@@ -2,6 +2,7 @@ package org.AList.domain.dao.entity;
 
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.*;
 import org.AList.common.database.BaseDO;
 
@@ -13,6 +14,7 @@ import org.AList.common.database.BaseDO;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
+@TableName("t_contact_goto")
 public class ContactGotoDO extends BaseDO {
     @TableId(type = IdType.AUTO)
 

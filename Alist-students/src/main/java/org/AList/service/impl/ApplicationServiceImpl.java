@@ -9,11 +9,13 @@ import lombok.RequiredArgsConstructor;
 import org.AList.common.biz.user.StuIdContext;
 import org.AList.common.convention.exception.ClientException;
 import org.AList.domain.dao.entity.ApplicationDO;
+import org.AList.domain.dao.entity.ContactGotoDO;
 import org.AList.domain.dao.entity.StudentDO;
 import org.AList.domain.dao.mapper.ApplicationMapper;
+import org.AList.domain.dao.mapper.ContactGotoMapper;
 import org.AList.domain.dao.mapper.StudentMapper;
-import org.AList.domain.dto.req.ApplicationSendMsgReqDTO;
 import org.AList.domain.dto.req.ApplicationQueryPageReqDTO;
+import org.AList.domain.dto.req.ApplicationSendMsgReqDTO;
 import org.AList.domain.dto.req.ApplicationYONReqDTO;
 import org.AList.domain.dto.resp.QueryApplicationPageRespDTO;
 import org.AList.service.ApplicationService;
@@ -33,6 +35,7 @@ import static org.AList.common.enums.UserErrorCodeEnum.USER_NULL;
 public class ApplicationServiceImpl extends ServiceImpl<ApplicationMapper, ApplicationDO> implements ApplicationService {
     private final StudentMapper studentMapper;
     private final ApplicationMapper applicationMapper;
+    private final ContactGotoMapper contactGotoMapper;
     private final StudentIdBloomFilterService studentIdBloomFilterService;
 
     /**
@@ -145,6 +148,7 @@ public class ApplicationServiceImpl extends ServiceImpl<ApplicationMapper, Appli
      *
      * @param requestParam 同意或者拒绝操作请求体
      */
+    @Transactional(rollbackFor = Exception.class)
     @Override
     public void acceptSingleApplication(ApplicationYONReqDTO requestParam) {
         LambdaQueryWrapper<ApplicationDO> queryWrapper = Wrappers.lambdaQuery(ApplicationDO.class)
@@ -158,9 +162,19 @@ public class ApplicationServiceImpl extends ServiceImpl<ApplicationMapper, Appli
             // 调用 MyBatis Plus 的 updateById 方法进行更新
             baseMapper.updateById(applicationDO);
             // 既然同意了站内信申请，就需要把自己的联系信息展示给sender
+            String contactId=requestParam.getReceiver();
+            String ownerId=requestParam.getSender();
+            ContactGotoDO contactGotoDO=ContactGotoDO.builder()
+                    .contactId(contactId)
+                    .ownerId(ownerId)
+                    .build();
+            int insert = contactGotoMapper.insert(contactGotoDO);
+            if(insert != 1) {
+                throw new ClientException("同意请求失败，请重试");
+            }
         } else {
             // 处理未找到记录的情况，可抛异常或返回提示信息
-            throw new RuntimeException("未找到待处理的申请记录");
+            throw new ClientException("未找到待处理的申请记录");
         }
     }
 
