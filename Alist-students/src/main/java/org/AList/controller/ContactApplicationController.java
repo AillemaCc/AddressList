@@ -87,4 +87,12 @@ public class ContactApplicationController {
         return Results.success(applicationService.listAllRefusedApplication(requestParam));
     }
 
+    /**
+     * 分页展示所有自己已删除的站内信请求
+     */
+    @GetMapping("/listAllDelete")
+    public Result<IPage<QueryApplicationPageRespDTO>> listAllDeleteApplication(@RequestBody ApplicationReceiveQueryPageReqDTO requestParam){
+        return Results.success(applicationService.listAllDeleteApplication(requestParam));
+    }
+
 }

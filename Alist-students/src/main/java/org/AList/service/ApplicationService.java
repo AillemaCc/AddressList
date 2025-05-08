@@ -38,6 +38,13 @@ public interface ApplicationService {
     IPage<QueryApplicationPageRespDTO> listAllRefusedApplication(ApplicationReceiveQueryPageReqDTO requestParam);
 
     /**
+     * 展示已删除的站内信申请
+     * @param requestParam 传入参数-当前登录的学生学号-接收用户
+     * @return 分页结果
+     */
+    IPage<QueryApplicationPageRespDTO> listAllDeleteApplication(ApplicationReceiveQueryPageReqDTO requestParam);
+
+    /**
      * 同意某个站内信申请
      * @param requestParam 同意或者拒绝操作请求体--可以通过发送者和接收者定位某条消息
      */
@@ -54,4 +61,6 @@ public interface ApplicationService {
      * @param requestParam 同意或者拒绝操作请求体
      */
     void deleteSingleApplication(ApplicationYONReqDTO requestParam);
+
+
 }

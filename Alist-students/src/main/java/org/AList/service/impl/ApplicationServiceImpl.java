@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.AList.common.biz.user.StuIdContext;
@@ -142,6 +143,29 @@ public class ApplicationServiceImpl extends ServiceImpl<ApplicationMapper, Appli
                 .eq(ApplicationDO::getDelFlag, 0);
         IPage<ApplicationDO> resultPage=baseMapper.selectPage(requestParam,queryWrapper);
         return resultPage.convert(each-> BeanUtil.toBean(each,QueryApplicationPageRespDTO.class));
+    }
+
+    /**
+     * 展示已删除的站内信申请
+     *
+     * @param requestParam 传入参数-当前登录的学生学号-接收用户
+     * @return 分页结果
+     */
+    @Override
+
+    public IPage<QueryApplicationPageRespDTO> listAllDeleteApplication(ApplicationReceiveQueryPageReqDTO requestParam) {
+        // 1. 构造分页参数
+        Page<ApplicationDO> page = new Page<>(1,10);
+
+        // 2. 调用自定义SQL查询
+        IPage<ApplicationDO> resultPage = applicationMapper.selectDeletedApplications(
+                page,
+                requestParam.getReceiver(),
+                1  // delFlag = 1（查询已删除数据）
+        );
+
+        // 3. 转换为 DTO
+        return resultPage.convert(each -> BeanUtil.toBean(each, QueryApplicationPageRespDTO.class));
     }
 
     /**
