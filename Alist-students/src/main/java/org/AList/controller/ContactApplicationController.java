@@ -51,6 +51,11 @@ public class ContactApplicationController {
         return Results.success();
     }
 
+    /**
+     * 删除某个站内信申请
+     * @param requestParam 删除请求实体
+     * @return void
+     */
     @DeleteMapping("/deleteSingle")
     public Result<Void> deleteSingleApplication(@RequestBody ApplicationYONReqDTO requestParam){
         applicationService.deleteSingleApplication(requestParam);
