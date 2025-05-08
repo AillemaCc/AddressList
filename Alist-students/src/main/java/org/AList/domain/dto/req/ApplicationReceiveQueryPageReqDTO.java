@@ -7,11 +7,14 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.AList.domain.dao.entity.ApplicationDO;
 
+/**
+ * 用户接受的请求分页查询实体
+ */
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class ApplicationQueryPageReqDTO extends Page<ApplicationDO> {
+public class ApplicationReceiveQueryPageReqDTO extends Page<ApplicationDO> {
     /**
      * 接收者-学号
      */

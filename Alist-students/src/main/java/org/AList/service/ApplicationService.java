@@ -2,7 +2,7 @@ package org.AList.service;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import org.AList.domain.dto.req.ApplicationSendMsgReqDTO;
-import org.AList.domain.dto.req.ApplicationQueryPageReqDTO;
+import org.AList.domain.dto.req.ApplicationReceiveQueryPageReqDTO;
 import org.AList.domain.dto.req.ApplicationYONReqDTO;
 import org.AList.domain.dto.resp.QueryApplicationPageRespDTO;
 
@@ -21,21 +21,21 @@ public interface ApplicationService {
      * @param requestParam 传入参数-当前登录的学生学号-接收用户
      * @return 分页结果
      */
-    IPage<QueryApplicationPageRespDTO> listAllValidApplication(ApplicationQueryPageReqDTO requestParam);
+    IPage<QueryApplicationPageRespDTO> listAllValidApplication(ApplicationReceiveQueryPageReqDTO requestParam);
 
     /**
      * 展示没删除 已通过的站内信请求
      * @param requestParam 传入参数-当前登录的学生学号-接收用户
      * @return 分页结果
      */
-    IPage<QueryApplicationPageRespDTO> listAllAcceptedApplication(ApplicationQueryPageReqDTO requestParam);
+    IPage<QueryApplicationPageRespDTO> listAllAcceptedApplication(ApplicationReceiveQueryPageReqDTO requestParam);
 
     /**
      * 展示没删除 已拒绝的站内信请求
      * @param requestParam 传入参数-当前登录的学生学号-接收用户
      * @return 分页结果
      */
-    IPage<QueryApplicationPageRespDTO> listAllRefusedApplication(ApplicationQueryPageReqDTO requestParam);
+    IPage<QueryApplicationPageRespDTO> listAllRefusedApplication(ApplicationReceiveQueryPageReqDTO requestParam);
 
     /**
      * 同意某个站内信申请

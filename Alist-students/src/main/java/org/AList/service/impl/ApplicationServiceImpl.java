@@ -14,7 +14,7 @@ import org.AList.domain.dao.entity.StudentDO;
 import org.AList.domain.dao.mapper.ApplicationMapper;
 import org.AList.domain.dao.mapper.ContactGotoMapper;
 import org.AList.domain.dao.mapper.StudentMapper;
-import org.AList.domain.dto.req.ApplicationQueryPageReqDTO;
+import org.AList.domain.dto.req.ApplicationReceiveQueryPageReqDTO;
 import org.AList.domain.dto.req.ApplicationSendMsgReqDTO;
 import org.AList.domain.dto.req.ApplicationYONReqDTO;
 import org.AList.domain.dto.resp.QueryApplicationPageRespDTO;
@@ -102,7 +102,7 @@ public class ApplicationServiceImpl extends ServiceImpl<ApplicationMapper, Appli
      * @return 分页结果
      */
     @Override
-    public IPage<QueryApplicationPageRespDTO> listAllValidApplication(ApplicationQueryPageReqDTO requestParam) {
+    public IPage<QueryApplicationPageRespDTO> listAllValidApplication(ApplicationReceiveQueryPageReqDTO requestParam) {
         // 为了让前端好过一点 尽可能地让所有方法都显式地传入参数
         LambdaQueryWrapper<ApplicationDO> queryWrapper = Wrappers.lambdaQuery(ApplicationDO.class)
                 .eq(ApplicationDO::getReceiver, requestParam.getReceiver())
@@ -118,7 +118,7 @@ public class ApplicationServiceImpl extends ServiceImpl<ApplicationMapper, Appli
      * @return 分页结果
      */
     @Override
-    public IPage<QueryApplicationPageRespDTO> listAllAcceptedApplication(ApplicationQueryPageReqDTO requestParam) {
+    public IPage<QueryApplicationPageRespDTO> listAllAcceptedApplication(ApplicationReceiveQueryPageReqDTO requestParam) {
         LambdaQueryWrapper<ApplicationDO> queryWrapper = Wrappers.lambdaQuery(ApplicationDO.class)
                 .eq(ApplicationDO::getReceiver, requestParam.getReceiver())
                 .eq(ApplicationDO::getStatus, 1)
@@ -134,7 +134,7 @@ public class ApplicationServiceImpl extends ServiceImpl<ApplicationMapper, Appli
      * @return 分页结果
      */
     @Override
-    public IPage<QueryApplicationPageRespDTO> listAllRefusedApplication(ApplicationQueryPageReqDTO requestParam) {
+    public IPage<QueryApplicationPageRespDTO> listAllRefusedApplication(ApplicationReceiveQueryPageReqDTO requestParam) {
         LambdaQueryWrapper<ApplicationDO> queryWrapper = Wrappers.lambdaQuery(ApplicationDO.class)
                 .eq(ApplicationDO::getReceiver, requestParam.getReceiver())
                 .eq(ApplicationDO::getStatus, 2)
