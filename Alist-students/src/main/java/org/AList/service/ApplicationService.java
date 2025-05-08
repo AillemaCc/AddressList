@@ -3,6 +3,7 @@ package org.AList.service;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import org.AList.domain.dto.req.ApplicationSendMsgReqDTO;
 import org.AList.domain.dto.req.ApplicationQueryPageReqDTO;
+import org.AList.domain.dto.req.ApplicationYONReqDTO;
 import org.AList.domain.dto.resp.QueryApplicationPageRespDTO;
 
 /**
@@ -35,4 +36,10 @@ public interface ApplicationService {
      * @return 分页结果
      */
     IPage<QueryApplicationPageRespDTO> listAllRefusedApplication(ApplicationQueryPageReqDTO requestParam);
+
+    /**
+     * 同意某个站内信申请
+     * @param requestParam 同意或者拒绝操作请求体
+     */
+    void acceptSingleApplication(ApplicationYONReqDTO requestParam);
 }

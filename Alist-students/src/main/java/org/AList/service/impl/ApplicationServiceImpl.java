@@ -94,7 +94,7 @@ public class ApplicationServiceImpl extends ServiceImpl<ApplicationMapper, Appli
     }
 
     /**
-     * 展示所有没删除 没审核的站内信请求
+     * 展示接受的 所有没删除 没审核的站内信请求
      *
      * @return 分页结果
      */
@@ -110,7 +110,7 @@ public class ApplicationServiceImpl extends ServiceImpl<ApplicationMapper, Appli
     }
 
     /**
-     * 展示没删除 已通过的站内信请求
+     * 展示接受的 没删除 已通过的站内信请求
      *
      * @return 分页结果
      */
@@ -125,7 +125,7 @@ public class ApplicationServiceImpl extends ServiceImpl<ApplicationMapper, Appli
     }
 
     /**
-     * 展示没删除 已拒绝的站内信请求
+     * 展示接受的 没删除 已拒绝的站内信请求
      *
      * @param requestParam 传入参数-当前登录的学生学号-接收用户
      * @return 分页结果
@@ -139,4 +139,28 @@ public class ApplicationServiceImpl extends ServiceImpl<ApplicationMapper, Appli
         IPage<ApplicationDO> resultPage=baseMapper.selectPage(requestParam,queryWrapper);
         return resultPage.convert(each-> BeanUtil.toBean(each,QueryApplicationPageRespDTO.class));
     }
+
+    /**
+     * 同意某个站内信申请
+     *
+     * @param requestParam 同意或者拒绝操作请求体
+     */
+    @Override
+    public void acceptSingleApplication(ApplicationYONReqDTO requestParam) {
+        LambdaQueryWrapper<ApplicationDO> queryWrapper = Wrappers.lambdaQuery(ApplicationDO.class)
+                .eq(ApplicationDO::getReceiver, requestParam.getReceiver())
+                .eq(ApplicationDO::getSender, requestParam.getSender())
+                .eq(ApplicationDO::getStatus, 0)
+                .eq(ApplicationDO::getDelFlag, 0);
+        ApplicationDO applicationDO = baseMapper.selectOne(queryWrapper);
+        if (applicationDO != null) {
+            applicationDO.setStatus(1); // 修改状态为1
+            // 调用 MyBatis Plus 的 updateById 方法进行更新
+            baseMapper.updateById(applicationDO);
+        } else {
+            // 处理未找到记录的情况，可抛异常或返回提示信息
+            throw new RuntimeException("未找到待处理的申请记录");
+        }
+    }
+
 }
