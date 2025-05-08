@@ -157,6 +157,7 @@ public class ApplicationServiceImpl extends ServiceImpl<ApplicationMapper, Appli
             applicationDO.setStatus(1); // 修改状态为1
             // 调用 MyBatis Plus 的 updateById 方法进行更新
             baseMapper.updateById(applicationDO);
+            // 既然同意了站内信申请，就需要把自己的联系信息展示给sender
         } else {
             // 处理未找到记录的情况，可抛异常或返回提示信息
             throw new RuntimeException("未找到待处理的申请记录");

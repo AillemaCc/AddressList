@@ -22,7 +22,7 @@ public class ContactGotoDO extends BaseDO {
     private Integer id;
 
     /**
-     * 通讯录信息id
+     * 通讯录信息所属的学生id
      */
     private String contactId;
 
