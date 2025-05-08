@@ -2,6 +2,7 @@ package org.AList.service.impl;
 
 import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -207,18 +208,15 @@ public class ApplicationServiceImpl extends ServiceImpl<ApplicationMapper, Appli
      * @param requestParam 同意或者拒绝操作请求体
      */
     @Override
+    @Transactional
     public void deleteSingleApplication(ApplicationYONReqDTO requestParam) {
-        LambdaQueryWrapper<ApplicationDO> queryWrapper = Wrappers.lambdaQuery(ApplicationDO.class)
+        LambdaUpdateWrapper<ApplicationDO> updateWrapper = Wrappers.lambdaUpdate(ApplicationDO.class)
                 .eq(ApplicationDO::getReceiver, requestParam.getReceiver())
                 .eq(ApplicationDO::getSender, requestParam.getSender())
-                .eq(ApplicationDO::getDelFlag, 0);
-        ApplicationDO applicationDO = baseMapper.selectOne(queryWrapper);
-        if (applicationDO != null) {
-            applicationDO.setDelFlag(1); // 修改状态为1
-            // 调用 MyBatis Plus 的 updateById 方法进行更新
-            baseMapper.updateById(applicationDO);
-        } else {
-            // 处理未找到记录的情况，可抛异常或返回提示信息
+                .eq(ApplicationDO::getDelFlag, 0)
+                .set(ApplicationDO::getDelFlag, 1);  // 直接在这里设置 del_flag=1
+        int updated = applicationMapper.update(null, updateWrapper);
+        if (updated == 0) {
             throw new RuntimeException("未找到待处理的申请记录");
         }
     }
