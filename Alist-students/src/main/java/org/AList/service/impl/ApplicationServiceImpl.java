@@ -18,6 +18,7 @@ import org.AList.domain.dao.mapper.ContactGotoMapper;
 import org.AList.domain.dao.mapper.StudentMapper;
 import org.AList.domain.dto.req.ApplicationReceiveQueryPageReqDTO;
 import org.AList.domain.dto.req.ApplicationSendMsgReqDTO;
+import org.AList.domain.dto.req.ApplicationSendQueryPageReqDTO;
 import org.AList.domain.dto.req.ApplicationYONReqDTO;
 import org.AList.domain.dto.resp.QueryApplicationPageRespDTO;
 import org.AList.service.ApplicationService;
@@ -166,6 +167,21 @@ public class ApplicationServiceImpl extends ServiceImpl<ApplicationMapper, Appli
 
         // 3. 转换为 DTO
         return resultPage.convert(each -> BeanUtil.toBean(each, QueryApplicationPageRespDTO.class));
+    }
+
+    /**
+     * 展示已发送的站内信请求
+     *
+     * @param requestParam 传入参数-消息的sender
+     * @return void
+     */
+    @Override
+    public IPage<QueryApplicationPageRespDTO> listAllSendApplication(ApplicationSendQueryPageReqDTO requestParam) {
+        LambdaQueryWrapper<ApplicationDO> queryWrapper = Wrappers.lambdaQuery(ApplicationDO.class)
+                .eq(ApplicationDO::getSender, requestParam.getSender())
+                .eq(ApplicationDO::getDelFlag, 0);
+        IPage<ApplicationDO> resultPage=baseMapper.selectPage(requestParam,queryWrapper);
+        return resultPage.convert(each-> BeanUtil.toBean(each,QueryApplicationPageRespDTO.class));
     }
 
     /**

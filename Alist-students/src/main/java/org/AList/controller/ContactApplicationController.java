@@ -6,6 +6,7 @@ import org.AList.common.convention.result.Result;
 import org.AList.common.convention.result.Results;
 import org.AList.domain.dto.req.ApplicationReceiveQueryPageReqDTO;
 import org.AList.domain.dto.req.ApplicationSendMsgReqDTO;
+import org.AList.domain.dto.req.ApplicationSendQueryPageReqDTO;
 import org.AList.domain.dto.req.ApplicationYONReqDTO;
 import org.AList.domain.dto.resp.QueryApplicationPageRespDTO;
 import org.AList.service.ApplicationService;
@@ -93,6 +94,14 @@ public class ContactApplicationController {
     @GetMapping("/listAllDelete")
     public Result<IPage<QueryApplicationPageRespDTO>> listAllDeleteApplication(@RequestBody ApplicationReceiveQueryPageReqDTO requestParam){
         return Results.success(applicationService.listAllDeleteApplication(requestParam));
+    }
+
+    /**
+     * 分页查询所有自己已发送的站内信请求
+     */
+    @GetMapping("/listAllSend")
+    public Result<IPage<QueryApplicationPageRespDTO>> listAllSendApplication(@RequestBody ApplicationSendQueryPageReqDTO requestParam){
+        return Results.success(applicationService.listAllSendApplication(requestParam));
     }
 
 }
