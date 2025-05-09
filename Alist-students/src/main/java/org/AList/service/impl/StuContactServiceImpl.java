@@ -1,25 +1,25 @@
 package org.AList.service.impl;
 
-import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.AList.common.biz.user.StuIdContext;
 import org.AList.common.convention.exception.ClientException;
 import org.AList.domain.dao.entity.ContactDO;
+import org.AList.domain.dao.entity.ContactGotoDO;
 import org.AList.domain.dao.mapper.ContactGotoMapper;
 import org.AList.domain.dao.mapper.ContactMapper;
-import org.AList.domain.dto.req.ContactAddReqDTO;
-import org.AList.domain.dto.req.ContactDeleteReqDTO;
-import org.AList.domain.dto.req.ContactQueryByIdReqDTO;
-import org.AList.domain.dto.req.ContactUpdateReqDTO;
-import org.AList.domain.dto.resp.QueryContactRespDTO;
+import org.AList.domain.dto.req.*;
+import org.AList.domain.dto.resp.ContactQueryRespDTO;
 import org.AList.service.StuContactService;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -53,15 +53,38 @@ public class StuContactServiceImpl extends ServiceImpl<ContactMapper, ContactDO>
      */
     @Override
     public void deleteStudentContact(ContactDeleteReqDTO requestParam) {
-        StuIdContext.verifyLoginUser(requestParam.getStudentId());
+        // 1. 验证当前登录用户
+        StuIdContext.verifyLoginUser(requestParam.getOwnerId());
+
+        // 2. 首先检查goto表中是否存在该ownerId和contactId的记录，验证用户是否拥有该通讯录
+        LambdaQueryWrapper<ContactGotoDO> gotoQueryWrapper = Wrappers.lambdaQuery(ContactGotoDO.class)
+                .eq(ContactGotoDO::getOwnerId, requestParam.getOwnerId())
+                .eq(ContactGotoDO::getContactId, requestParam.getContactId())
+                .eq(ContactGotoDO::getDelFlag, 0);
+        ContactGotoDO contactGoto = contactGotoMapper.selectOne(gotoQueryWrapper);
+
+        if (Objects.isNull(contactGoto)) {
+            throw new ClientException("您没有权限删除此通讯录信息或记录不存在");
+        }
+
+        // 3. 逻辑删除Contact表中的记录（设置del_flag=1）
         LambdaUpdateWrapper<ContactDO> updateWrapper = Wrappers.lambdaUpdate(ContactDO.class)
-                .eq(ContactDO::getStudentId, requestParam.getStudentId())
+                .eq(ContactDO::getStudentId, requestParam.getContactId())
                 .eq(ContactDO::getDelFlag, 0)
                 .set(ContactDO::getDelFlag, 1);
-        int updated=contactMapper.update(null, updateWrapper);
-        if(updated==0){
+        int updated = contactMapper.update(null, updateWrapper);
+
+        if (updated == 0) {
             throw new ClientException("删除个人通讯信息出现异常，请重试");
         }
+
+        // 4. 同时逻辑删除goto表中的关联记录（根据业务需求决定）
+        LambdaUpdateWrapper<ContactGotoDO> gotoUpdateWrapper = Wrappers.lambdaUpdate(ContactGotoDO.class)
+                .eq(ContactGotoDO::getOwnerId, requestParam.getOwnerId())
+                .eq(ContactGotoDO::getContactId, requestParam.getContactId())
+                .eq(ContactGotoDO::getDelFlag, 0)
+                .set(ContactGotoDO::getDelFlag, 1);
+        contactGotoMapper.update(null, gotoUpdateWrapper);
     }
 
     /**
@@ -92,25 +115,66 @@ public class StuContactServiceImpl extends ServiceImpl<ContactMapper, ContactDO>
      * @return 单个学生的通讯信息
      */
     @Override
-    public QueryContactRespDTO queryContactById(ContactQueryByIdReqDTO requestParam) {
-        StuIdContext.verifyLoginUser(requestParam.getStudentId());
-        LambdaQueryWrapper<ContactDO> queryWrapper = Wrappers.lambdaQuery(ContactDO.class)
-                .eq(ContactDO::getStudentId, requestParam.getStudentId())
-                .eq(ContactDO::getDelFlag, 0);
-        ContactDO contact = contactMapper.selectOne(queryWrapper);
-        if(Objects.isNull(contact)){
-            throw new ClientException("查询的记录不存在");
+    public ContactQueryRespDTO queryContactById(ContactQueryByIdReqDTO requestParam) {
+        // 1. 验证当前登录用户
+        StuIdContext.verifyLoginUser(requestParam.getOwnerId());
+
+        // 2. 首先检查goto表中是否存在该ownerId和contactId的记录，验证用户是否拥有该通讯录
+        LambdaQueryWrapper<ContactGotoDO> gotoQueryWrapper = Wrappers.lambdaQuery(ContactGotoDO.class)
+                .eq(ContactGotoDO::getOwnerId, requestParam.getOwnerId())
+                .eq(ContactGotoDO::getContactId, requestParam.getContactId())
+                .eq(ContactGotoDO::getDelFlag, 0);
+        ContactGotoDO contactGoto = contactGotoMapper.selectOne(gotoQueryWrapper);
+
+        if (Objects.isNull(contactGoto)) {
+            throw new ClientException("您没有权限查看此通讯录信息或记录不存在");
         }
-        return BeanUtil.toBean(contact,QueryContactRespDTO.class);
+
+        // 3. 从contact表中查询完整的通讯录信息
+        LambdaQueryWrapper<ContactDO> contactQueryWrapper = Wrappers.lambdaQuery(ContactDO.class)
+                .eq(ContactDO::getStudentId, requestParam.getContactId())
+                .eq(ContactDO::getDelFlag, 0);
+        ContactDO contact = contactMapper.selectOne(contactQueryWrapper);
+
+        if (Objects.isNull(contact)) {
+            throw new ClientException("通讯录信息不存在或已被删除");
+        }
+
+        // 4. 转换为响应DTO
+        ContactQueryRespDTO respDTO = new ContactQueryRespDTO();
+        BeanUtils.copyProperties(contact, respDTO);
+
+        return respDTO;
     }
-    // todo 分页查询拥有的通讯信息
+
     /**
-     * 分页查询通讯信息
+     * 分页查询个人全量通讯信息
      *
      * @return 分页返回
      */
     @Override
-    public IPage<QueryContactRespDTO> queryContactList() {
-        return null;
+    public IPage<ContactQueryRespDTO> queryContactList(ContactQueryAllOwnReqDTO requestParam) {
+        String ownerId=requestParam.getOwnerId();
+        LambdaQueryWrapper<ContactGotoDO> queryWrapper = Wrappers.lambdaQuery(ContactGotoDO.class)
+                .eq(ContactGotoDO::getOwnerId, ownerId)
+                .eq(ContactGotoDO::getDelFlag, 0);
+        List<ContactGotoDO> gotoList = contactGotoMapper.selectList(queryWrapper);
+        if(Objects.isNull(gotoList)){
+            return new Page<>(1,10,0);
+        }
+        List<String> contactIds=gotoList.stream()
+                .map(ContactGotoDO::getContactId)
+                .toList();
+        LambdaQueryWrapper<ContactDO> contactQueryWrapper = Wrappers.lambdaQuery(ContactDO.class)
+                .in(ContactDO::getStudentId, contactIds)
+                .eq(ContactDO::getDelFlag, 0);
+        Page<ContactDO> page = new Page<>(1,10);
+        IPage<ContactDO> contactPage = contactMapper.selectPage(page, contactQueryWrapper);
+        return contactPage.convert(contactDO -> {
+            ContactQueryRespDTO respDTO = new ContactQueryRespDTO();
+            // 这里进行属性拷贝，可以使用BeanUtils或者手动set
+            BeanUtils.copyProperties(contactDO, respDTO);
+            return respDTO;
+        });
     }
 }

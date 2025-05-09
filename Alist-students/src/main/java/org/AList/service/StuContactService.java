@@ -1,11 +1,8 @@
 package org.AList.service;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
-import org.AList.domain.dto.req.ContactAddReqDTO;
-import org.AList.domain.dto.req.ContactDeleteReqDTO;
-import org.AList.domain.dto.req.ContactQueryByIdReqDTO;
-import org.AList.domain.dto.req.ContactUpdateReqDTO;
-import org.AList.domain.dto.resp.QueryContactRespDTO;
+import org.AList.domain.dto.req.*;
+import org.AList.domain.dto.resp.ContactQueryRespDTO;
 
 /**
  * 通讯信息服务层
@@ -34,11 +31,11 @@ public interface StuContactService {
      * @param requestParam 查询通讯信息请求体
      * @return 单个学生的通讯信息
      */
-    QueryContactRespDTO queryContactById(ContactQueryByIdReqDTO requestParam);
+    ContactQueryRespDTO queryContactById(ContactQueryByIdReqDTO requestParam);
 
     /**
      * 分页查询通讯信息
      * @return 分页返回
      */
-    IPage<QueryContactRespDTO> queryContactList();
+    IPage<ContactQueryRespDTO> queryContactList(ContactQueryAllOwnReqDTO requestParam);
 }

@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class QueryApplicationPageRespDTO {
+public class ApplicationQueryPageRespDTO {
     /**
      * 发送者-学号
      */

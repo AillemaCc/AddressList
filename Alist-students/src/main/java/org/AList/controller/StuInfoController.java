@@ -5,7 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.AList.common.convention.result.Result;
 import org.AList.common.convention.result.Results;
 import org.AList.domain.dto.req.*;
-import org.AList.domain.dto.resp.QueryContactRespDTO;
+import org.AList.domain.dto.resp.ContactQueryRespDTO;
 import org.AList.service.StuContactService;
 import org.springframework.web.bind.annotation.*;
 
@@ -26,15 +26,9 @@ public class StuInfoController {
         stuContactService.addStudentContact(requestParam);
         return Results.success();
     }
-    // todo 开发通过姓名新增他人通讯信息
-//    /**
-//     * 通过姓名新增他人通讯信息
-//     */
-//    @PutMapping("/contact/addOther")
-//    public Result<Void> addOtherStudentContact(@RequestBody AddOtherContactReqDTO requestParam){}
 
     /**
-     * 个人通讯信息删除接口
+     * 个人拥有的通讯信息删除
      * @param requestParam 删除请求体
      * @return void
      */
@@ -56,12 +50,12 @@ public class StuInfoController {
     }
 
     /**
-     * 按学号查询个人通讯信息
+     * 按学号查询自己拥有的某个人的通讯信息
      * @param requestParam 查询请求体
      * @return void
      */
     @GetMapping("/contact/query")
-    public Result<QueryContactRespDTO> queryContactByStuId(@RequestBody ContactQueryByIdReqDTO requestParam){
+    public Result<ContactQueryRespDTO> queryContactByStuId(@RequestBody ContactQueryByIdReqDTO requestParam){
         return Results.success(stuContactService.queryContactById(requestParam));
     }
 
@@ -70,8 +64,8 @@ public class StuInfoController {
      * @return 分页查询
      */
     @GetMapping("/contact/list")
-    public Result<IPage<QueryContactRespDTO>> queryContactList(){
-        return Results.success(stuContactService.queryContactList());
+    public Result<IPage<ContactQueryRespDTO>> queryContactList(@RequestBody ContactQueryAllOwnReqDTO requestParam){
+        return Results.success(stuContactService.queryContactList(requestParam));
     }
 
 }
