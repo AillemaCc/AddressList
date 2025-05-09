@@ -53,15 +53,38 @@ public class StuContactServiceImpl extends ServiceImpl<ContactMapper, ContactDO>
      */
     @Override
     public void deleteStudentContact(ContactDeleteReqDTO requestParam) {
-        StuIdContext.verifyLoginUser(requestParam.getStudentId());
+        // 1. 验证当前登录用户
+        StuIdContext.verifyLoginUser(requestParam.getOwnerId());
+
+        // 2. 首先检查goto表中是否存在该ownerId和contactId的记录，验证用户是否拥有该通讯录
+        LambdaQueryWrapper<ContactGotoDO> gotoQueryWrapper = Wrappers.lambdaQuery(ContactGotoDO.class)
+                .eq(ContactGotoDO::getOwnerId, requestParam.getOwnerId())
+                .eq(ContactGotoDO::getContactId, requestParam.getContactId())
+                .eq(ContactGotoDO::getDelFlag, 0);
+        ContactGotoDO contactGoto = contactGotoMapper.selectOne(gotoQueryWrapper);
+
+        if (Objects.isNull(contactGoto)) {
+            throw new ClientException("您没有权限删除此通讯录信息或记录不存在");
+        }
+
+        // 3. 逻辑删除Contact表中的记录（设置del_flag=1）
         LambdaUpdateWrapper<ContactDO> updateWrapper = Wrappers.lambdaUpdate(ContactDO.class)
-                .eq(ContactDO::getStudentId, requestParam.getStudentId())
+                .eq(ContactDO::getStudentId, requestParam.getContactId())
                 .eq(ContactDO::getDelFlag, 0)
                 .set(ContactDO::getDelFlag, 1);
-        int updated=contactMapper.update(null, updateWrapper);
-        if(updated==0){
+        int updated = contactMapper.update(null, updateWrapper);
+
+        if (updated == 0) {
             throw new ClientException("删除个人通讯信息出现异常，请重试");
         }
+
+        // 4. 同时逻辑删除goto表中的关联记录（根据业务需求决定）
+        LambdaUpdateWrapper<ContactGotoDO> gotoUpdateWrapper = Wrappers.lambdaUpdate(ContactGotoDO.class)
+                .eq(ContactGotoDO::getOwnerId, requestParam.getOwnerId())
+                .eq(ContactGotoDO::getContactId, requestParam.getContactId())
+                .eq(ContactGotoDO::getDelFlag, 0)
+                .set(ContactGotoDO::getDelFlag, 1);
+        contactGotoMapper.update(null, gotoUpdateWrapper);
     }
 
     /**
