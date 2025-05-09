@@ -103,7 +103,7 @@ public class StuContactServiceImpl extends ServiceImpl<ContactMapper, ContactDO>
         }
         return BeanUtil.toBean(contact,QueryContactRespDTO.class);
     }
-    // todo 分页查询拥有的通讯信息
+
     /**
      * 分页查询通讯信息
      *

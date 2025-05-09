@@ -26,15 +26,11 @@ public class StuInfoController {
         stuContactService.addStudentContact(requestParam);
         return Results.success();
     }
-    // todo 开发通过姓名新增他人通讯信息
-//    /**
-//     * 通过姓名新增他人通讯信息
-//     */
-//    @PutMapping("/contact/addOther")
-//    public Result<Void> addOtherStudentContact(@RequestBody AddOtherContactReqDTO requestParam){}
+
+
 
     /**
-     * 个人通讯信息删除接口
+     * 个人通讯信息删除
      * @param requestParam 删除请求体
      * @return void
      */
