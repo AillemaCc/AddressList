@@ -116,15 +116,35 @@ public class StuContactServiceImpl extends ServiceImpl<ContactMapper, ContactDO>
      */
     @Override
     public ContactQueryRespDTO queryContactById(ContactQueryByIdReqDTO requestParam) {
-        StuIdContext.verifyLoginUser(requestParam.getStudentId());
-        LambdaQueryWrapper<ContactDO> queryWrapper = Wrappers.lambdaQuery(ContactDO.class)
-                .eq(ContactDO::getStudentId, requestParam.getStudentId())
-                .eq(ContactDO::getDelFlag, 0);
-        ContactDO contact = contactMapper.selectOne(queryWrapper);
-        if(Objects.isNull(contact)){
-            throw new ClientException("查询的记录不存在");
+        // 1. 验证当前登录用户
+        StuIdContext.verifyLoginUser(requestParam.getOwnerId());
+
+        // 2. 首先检查goto表中是否存在该ownerId和contactId的记录，验证用户是否拥有该通讯录
+        LambdaQueryWrapper<ContactGotoDO> gotoQueryWrapper = Wrappers.lambdaQuery(ContactGotoDO.class)
+                .eq(ContactGotoDO::getOwnerId, requestParam.getOwnerId())
+                .eq(ContactGotoDO::getContactId, requestParam.getContactId())
+                .eq(ContactGotoDO::getDelFlag, 0);
+        ContactGotoDO contactGoto = contactGotoMapper.selectOne(gotoQueryWrapper);
+
+        if (Objects.isNull(contactGoto)) {
+            throw new ClientException("您没有权限查看此通讯录信息或记录不存在");
         }
-        return BeanUtil.toBean(contact, ContactQueryRespDTO.class);
+
+        // 3. 从contact表中查询完整的通讯录信息
+        LambdaQueryWrapper<ContactDO> contactQueryWrapper = Wrappers.lambdaQuery(ContactDO.class)
+                .eq(ContactDO::getStudentId, requestParam.getContactId())
+                .eq(ContactDO::getDelFlag, 0);
+        ContactDO contact = contactMapper.selectOne(contactQueryWrapper);
+
+        if (Objects.isNull(contact)) {
+            throw new ClientException("通讯录信息不存在或已被删除");
+        }
+
+        // 4. 转换为响应DTO
+        ContactQueryRespDTO respDTO = new ContactQueryRespDTO();
+        BeanUtils.copyProperties(contact, respDTO);
+
+        return respDTO;
     }
 
     /**
