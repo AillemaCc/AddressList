@@ -1,10 +1,7 @@
 package org.AList.service;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
-import org.AList.domain.dto.req.ContactAddReqDTO;
-import org.AList.domain.dto.req.ContactDeleteReqDTO;
-import org.AList.domain.dto.req.ContactQueryByIdReqDTO;
-import org.AList.domain.dto.req.ContactUpdateReqDTO;
+import org.AList.domain.dto.req.*;
 import org.AList.domain.dto.resp.ContactQueryRespDTO;
 
 /**
@@ -40,5 +37,5 @@ public interface StuContactService {
      * 分页查询通讯信息
      * @return 分页返回
      */
-    IPage<ContactQueryRespDTO> queryContactList();
+    IPage<ContactQueryRespDTO> queryContactList(ContactQueryAllOwnReqDTO requestParam);
 }

@@ -64,8 +64,8 @@ public class StuInfoController {
      * @return 分页查询
      */
     @GetMapping("/contact/list")
-    public Result<IPage<ContactQueryRespDTO>> queryContactList(){
-        return Results.success(stuContactService.queryContactList());
+    public Result<IPage<ContactQueryRespDTO>> queryContactList(@RequestBody ContactQueryAllOwnReqDTO requestParam){
+        return Results.success(stuContactService.queryContactList(requestParam));
     }
 
 }

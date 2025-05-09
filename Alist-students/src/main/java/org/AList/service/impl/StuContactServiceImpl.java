@@ -1,25 +1,25 @@
 package org.AList.service.impl;
 
-import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.AList.common.biz.user.StuIdContext;
 import org.AList.common.convention.exception.ClientException;
 import org.AList.domain.dao.entity.ContactDO;
+import org.AList.domain.dao.entity.ContactGotoDO;
 import org.AList.domain.dao.mapper.ContactGotoMapper;
 import org.AList.domain.dao.mapper.ContactMapper;
-import org.AList.domain.dto.req.ContactAddReqDTO;
-import org.AList.domain.dto.req.ContactDeleteReqDTO;
-import org.AList.domain.dto.req.ContactQueryByIdReqDTO;
-import org.AList.domain.dto.req.ContactUpdateReqDTO;
+import org.AList.domain.dto.req.*;
 import org.AList.domain.dto.resp.ContactQueryRespDTO;
 import org.AList.service.StuContactService;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -105,12 +105,33 @@ public class StuContactServiceImpl extends ServiceImpl<ContactMapper, ContactDO>
     }
 
     /**
-     * 分页查询通讯信息
+     * 分页查询个人全量通讯信息
      *
      * @return 分页返回
      */
     @Override
-    public IPage<ContactQueryRespDTO> queryContactList() {
-        return null;
+    public IPage<ContactQueryRespDTO> queryContactList(ContactQueryAllOwnReqDTO requestParam) {
+        String ownerId=requestParam.getOwnerId();
+        LambdaQueryWrapper<ContactGotoDO> queryWrapper = Wrappers.lambdaQuery(ContactGotoDO.class)
+                .eq(ContactGotoDO::getOwnerId, ownerId)
+                .eq(ContactGotoDO::getDelFlag, 0);
+        List<ContactGotoDO> gotoList = contactGotoMapper.selectList(queryWrapper);
+        if(Objects.isNull(gotoList)){
+            return new Page<>(1,10,0);
+        }
+        List<String> contactIds=gotoList.stream()
+                .map(ContactGotoDO::getContactId)
+                .toList();
+        LambdaQueryWrapper<ContactDO> contactQueryWrapper = Wrappers.lambdaQuery(ContactDO.class)
+                .in(ContactDO::getStudentId, contactIds)
+                .eq(ContactDO::getDelFlag, 0);
+        Page<ContactDO> page = new Page<>(1,10);
+        IPage<ContactDO> contactPage = contactMapper.selectPage(page, contactQueryWrapper);
+        return contactPage.convert(contactDO -> {
+            ContactQueryRespDTO respDTO = new ContactQueryRespDTO();
+            // 这里进行属性拷贝，可以使用BeanUtils或者手动set
+            BeanUtils.copyProperties(contactDO, respDTO);
+            return respDTO;
+        });
     }
 }
