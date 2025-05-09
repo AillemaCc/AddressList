@@ -8,7 +8,7 @@ import org.AList.domain.dto.req.ApplicationReceiveQueryPageReqDTO;
 import org.AList.domain.dto.req.ApplicationSendMsgReqDTO;
 import org.AList.domain.dto.req.ApplicationSendQueryPageReqDTO;
 import org.AList.domain.dto.req.ApplicationYONReqDTO;
-import org.AList.domain.dto.resp.QueryApplicationPageRespDTO;
+import org.AList.domain.dto.resp.ApplicationQueryPageRespDTO;
 import org.AList.service.ApplicationService;
 import org.springframework.web.bind.annotation.*;
 
@@ -68,7 +68,7 @@ public class ContactApplicationController {
      * @return 分页返回
      */
     @GetMapping("/listAll")
-    public Result<IPage<QueryApplicationPageRespDTO>> listAllValidApplication(@RequestBody ApplicationReceiveQueryPageReqDTO requestParam){
+    public Result<IPage<ApplicationQueryPageRespDTO>> listAllValidApplication(@RequestBody ApplicationReceiveQueryPageReqDTO requestParam){
         return Results.success(applicationService.listAllValidApplication(requestParam));
     }
 
@@ -76,7 +76,7 @@ public class ContactApplicationController {
      * 分页展示所有自己已通过站内信请求
      */
     @GetMapping("/listAllAccept")
-    public Result<IPage<QueryApplicationPageRespDTO>> listAllAcceptedApplication(@RequestBody ApplicationReceiveQueryPageReqDTO requestParam){
+    public Result<IPage<ApplicationQueryPageRespDTO>> listAllAcceptedApplication(@RequestBody ApplicationReceiveQueryPageReqDTO requestParam){
         return Results.success(applicationService.listAllAcceptedApplication(requestParam));
     }
 
@@ -84,7 +84,7 @@ public class ContactApplicationController {
      * 分页展示所有自己已拒绝的站内信请求
      */
     @GetMapping("/listAllRefuse")
-    public Result<IPage<QueryApplicationPageRespDTO>>  listAllRefuseApplication(@RequestBody ApplicationReceiveQueryPageReqDTO requestParam){
+    public Result<IPage<ApplicationQueryPageRespDTO>>  listAllRefuseApplication(@RequestBody ApplicationReceiveQueryPageReqDTO requestParam){
         return Results.success(applicationService.listAllRefusedApplication(requestParam));
     }
 
@@ -92,7 +92,7 @@ public class ContactApplicationController {
      * 分页展示所有自己已删除的站内信请求
      */
     @GetMapping("/listAllDelete")
-    public Result<IPage<QueryApplicationPageRespDTO>> listAllDeleteApplication(@RequestBody ApplicationReceiveQueryPageReqDTO requestParam){
+    public Result<IPage<ApplicationQueryPageRespDTO>> listAllDeleteApplication(@RequestBody ApplicationReceiveQueryPageReqDTO requestParam){
         return Results.success(applicationService.listAllDeleteApplication(requestParam));
     }
 
@@ -100,7 +100,7 @@ public class ContactApplicationController {
      * 分页查询所有自己已发送的站内信请求
      */
     @GetMapping("/listAllSend")
-    public Result<IPage<QueryApplicationPageRespDTO>> listAllSendApplication(@RequestBody ApplicationSendQueryPageReqDTO requestParam){
+    public Result<IPage<ApplicationQueryPageRespDTO>> listAllSendApplication(@RequestBody ApplicationSendQueryPageReqDTO requestParam){
         return Results.success(applicationService.listAllSendApplication(requestParam));
     }
 

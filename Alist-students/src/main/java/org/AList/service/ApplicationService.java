@@ -5,7 +5,7 @@ import org.AList.domain.dto.req.ApplicationReceiveQueryPageReqDTO;
 import org.AList.domain.dto.req.ApplicationSendMsgReqDTO;
 import org.AList.domain.dto.req.ApplicationSendQueryPageReqDTO;
 import org.AList.domain.dto.req.ApplicationYONReqDTO;
-import org.AList.domain.dto.resp.QueryApplicationPageRespDTO;
+import org.AList.domain.dto.resp.ApplicationQueryPageRespDTO;
 
 /**
  * 站内信Service层
@@ -22,35 +22,35 @@ public interface ApplicationService {
      * @param requestParam 传入参数-学生学号-接收用户
      * @return 分页结果
      */
-    IPage<QueryApplicationPageRespDTO> listAllValidApplication(ApplicationReceiveQueryPageReqDTO requestParam);
+    IPage<ApplicationQueryPageRespDTO> listAllValidApplication(ApplicationReceiveQueryPageReqDTO requestParam);
 
     /**
      * 展示没删除 已通过的站内信请求
      * @param requestParam 传入参数-学生学号-接收用户
      * @return 分页结果
      */
-    IPage<QueryApplicationPageRespDTO> listAllAcceptedApplication(ApplicationReceiveQueryPageReqDTO requestParam);
+    IPage<ApplicationQueryPageRespDTO> listAllAcceptedApplication(ApplicationReceiveQueryPageReqDTO requestParam);
 
     /**
      * 展示没删除 已拒绝的站内信请求
      * @param requestParam 传入参数-学生学号-接收用户
      * @return 分页结果
      */
-    IPage<QueryApplicationPageRespDTO> listAllRefusedApplication(ApplicationReceiveQueryPageReqDTO requestParam);
+    IPage<ApplicationQueryPageRespDTO> listAllRefusedApplication(ApplicationReceiveQueryPageReqDTO requestParam);
 
     /**
      * 展示已删除的站内信申请
      * @param requestParam 传入参数-学生学号-接收用户
      * @return 分页结果
      */
-    IPage<QueryApplicationPageRespDTO> listAllDeleteApplication(ApplicationReceiveQueryPageReqDTO requestParam);
+    IPage<ApplicationQueryPageRespDTO> listAllDeleteApplication(ApplicationReceiveQueryPageReqDTO requestParam);
 
     /**
      * 展示已发送的站内信请求
      * @param requestParam 传入参数-消息的sender
      * @return void
      */
-    IPage<QueryApplicationPageRespDTO> listAllSendApplication(ApplicationSendQueryPageReqDTO requestParam);
+    IPage<ApplicationQueryPageRespDTO> listAllSendApplication(ApplicationSendQueryPageReqDTO requestParam);
 
     /**
      * 同意某个站内信申请

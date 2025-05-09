@@ -5,7 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.AList.common.convention.result.Result;
 import org.AList.common.convention.result.Results;
 import org.AList.domain.dto.req.*;
-import org.AList.domain.dto.resp.QueryContactRespDTO;
+import org.AList.domain.dto.resp.ContactQueryRespDTO;
 import org.AList.service.StuContactService;
 import org.springframework.web.bind.annotation.*;
 
@@ -26,8 +26,6 @@ public class StuInfoController {
         stuContactService.addStudentContact(requestParam);
         return Results.success();
     }
-
-
 
     /**
      * 个人通讯信息删除
@@ -57,7 +55,7 @@ public class StuInfoController {
      * @return void
      */
     @GetMapping("/contact/query")
-    public Result<QueryContactRespDTO> queryContactByStuId(@RequestBody ContactQueryByIdReqDTO requestParam){
+    public Result<ContactQueryRespDTO> queryContactByStuId(@RequestBody ContactQueryByIdReqDTO requestParam){
         return Results.success(stuContactService.queryContactById(requestParam));
     }
 
@@ -66,7 +64,7 @@ public class StuInfoController {
      * @return 分页查询
      */
     @GetMapping("/contact/list")
-    public Result<IPage<QueryContactRespDTO>> queryContactList(){
+    public Result<IPage<ContactQueryRespDTO>> queryContactList(){
         return Results.success(stuContactService.queryContactList());
     }
 

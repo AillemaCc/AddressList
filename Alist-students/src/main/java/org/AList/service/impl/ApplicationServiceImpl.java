@@ -20,7 +20,7 @@ import org.AList.domain.dto.req.ApplicationReceiveQueryPageReqDTO;
 import org.AList.domain.dto.req.ApplicationSendMsgReqDTO;
 import org.AList.domain.dto.req.ApplicationSendQueryPageReqDTO;
 import org.AList.domain.dto.req.ApplicationYONReqDTO;
-import org.AList.domain.dto.resp.QueryApplicationPageRespDTO;
+import org.AList.domain.dto.resp.ApplicationQueryPageRespDTO;
 import org.AList.service.ApplicationService;
 import org.AList.service.bloom.StudentIdBloomFilterService;
 import org.springframework.stereotype.Service;
@@ -105,14 +105,14 @@ public class ApplicationServiceImpl extends ServiceImpl<ApplicationMapper, Appli
      * @return 分页结果
      */
     @Override
-    public IPage<QueryApplicationPageRespDTO> listAllValidApplication(ApplicationReceiveQueryPageReqDTO requestParam) {
+    public IPage<ApplicationQueryPageRespDTO> listAllValidApplication(ApplicationReceiveQueryPageReqDTO requestParam) {
         // 为了让前端好过一点 尽可能地让所有方法都显式地传入参数
         LambdaQueryWrapper<ApplicationDO> queryWrapper = Wrappers.lambdaQuery(ApplicationDO.class)
                 .eq(ApplicationDO::getReceiver, requestParam.getReceiver())
                 .eq(ApplicationDO::getStatus, 0)
                 .eq(ApplicationDO::getDelFlag, 0);
         IPage<ApplicationDO> resultPage=baseMapper.selectPage(requestParam,queryWrapper);
-        return resultPage.convert(each-> BeanUtil.toBean(each,QueryApplicationPageRespDTO.class));
+        return resultPage.convert(each-> BeanUtil.toBean(each, ApplicationQueryPageRespDTO.class));
     }
 
     /**
@@ -121,13 +121,13 @@ public class ApplicationServiceImpl extends ServiceImpl<ApplicationMapper, Appli
      * @return 分页结果
      */
     @Override
-    public IPage<QueryApplicationPageRespDTO> listAllAcceptedApplication(ApplicationReceiveQueryPageReqDTO requestParam) {
+    public IPage<ApplicationQueryPageRespDTO> listAllAcceptedApplication(ApplicationReceiveQueryPageReqDTO requestParam) {
         LambdaQueryWrapper<ApplicationDO> queryWrapper = Wrappers.lambdaQuery(ApplicationDO.class)
                 .eq(ApplicationDO::getReceiver, requestParam.getReceiver())
                 .eq(ApplicationDO::getStatus, 1)
                 .eq(ApplicationDO::getDelFlag, 0);
         IPage<ApplicationDO> resultPage=baseMapper.selectPage(requestParam,queryWrapper);
-        return resultPage.convert(each-> BeanUtil.toBean(each,QueryApplicationPageRespDTO.class));
+        return resultPage.convert(each-> BeanUtil.toBean(each, ApplicationQueryPageRespDTO.class));
     }
 
     /**
@@ -137,13 +137,13 @@ public class ApplicationServiceImpl extends ServiceImpl<ApplicationMapper, Appli
      * @return 分页结果
      */
     @Override
-    public IPage<QueryApplicationPageRespDTO> listAllRefusedApplication(ApplicationReceiveQueryPageReqDTO requestParam) {
+    public IPage<ApplicationQueryPageRespDTO> listAllRefusedApplication(ApplicationReceiveQueryPageReqDTO requestParam) {
         LambdaQueryWrapper<ApplicationDO> queryWrapper = Wrappers.lambdaQuery(ApplicationDO.class)
                 .eq(ApplicationDO::getReceiver, requestParam.getReceiver())
                 .eq(ApplicationDO::getStatus, 2)
                 .eq(ApplicationDO::getDelFlag, 0);
         IPage<ApplicationDO> resultPage=baseMapper.selectPage(requestParam,queryWrapper);
-        return resultPage.convert(each-> BeanUtil.toBean(each,QueryApplicationPageRespDTO.class));
+        return resultPage.convert(each-> BeanUtil.toBean(each, ApplicationQueryPageRespDTO.class));
     }
 
     /**
@@ -154,7 +154,7 @@ public class ApplicationServiceImpl extends ServiceImpl<ApplicationMapper, Appli
      */
     @Override
 
-    public IPage<QueryApplicationPageRespDTO> listAllDeleteApplication(ApplicationReceiveQueryPageReqDTO requestParam) {
+    public IPage<ApplicationQueryPageRespDTO> listAllDeleteApplication(ApplicationReceiveQueryPageReqDTO requestParam) {
         // 1. 构造分页参数
         Page<ApplicationDO> page = new Page<>(1,10);
 
@@ -166,7 +166,7 @@ public class ApplicationServiceImpl extends ServiceImpl<ApplicationMapper, Appli
         );
 
         // 3. 转换为 DTO
-        return resultPage.convert(each -> BeanUtil.toBean(each, QueryApplicationPageRespDTO.class));
+        return resultPage.convert(each -> BeanUtil.toBean(each, ApplicationQueryPageRespDTO.class));
     }
 
     /**
@@ -176,12 +176,12 @@ public class ApplicationServiceImpl extends ServiceImpl<ApplicationMapper, Appli
      * @return void
      */
     @Override
-    public IPage<QueryApplicationPageRespDTO> listAllSendApplication(ApplicationSendQueryPageReqDTO requestParam) {
+    public IPage<ApplicationQueryPageRespDTO> listAllSendApplication(ApplicationSendQueryPageReqDTO requestParam) {
         LambdaQueryWrapper<ApplicationDO> queryWrapper = Wrappers.lambdaQuery(ApplicationDO.class)
                 .eq(ApplicationDO::getSender, requestParam.getSender())
                 .eq(ApplicationDO::getDelFlag, 0);
         IPage<ApplicationDO> resultPage=baseMapper.selectPage(requestParam,queryWrapper);
-        return resultPage.convert(each-> BeanUtil.toBean(each,QueryApplicationPageRespDTO.class));
+        return resultPage.convert(each-> BeanUtil.toBean(each, ApplicationQueryPageRespDTO.class));
     }
 
     /**

@@ -16,7 +16,7 @@ import org.AList.domain.dto.req.ContactAddReqDTO;
 import org.AList.domain.dto.req.ContactDeleteReqDTO;
 import org.AList.domain.dto.req.ContactQueryByIdReqDTO;
 import org.AList.domain.dto.req.ContactUpdateReqDTO;
-import org.AList.domain.dto.resp.QueryContactRespDTO;
+import org.AList.domain.dto.resp.ContactQueryRespDTO;
 import org.AList.service.StuContactService;
 import org.springframework.stereotype.Service;
 
@@ -92,7 +92,7 @@ public class StuContactServiceImpl extends ServiceImpl<ContactMapper, ContactDO>
      * @return 单个学生的通讯信息
      */
     @Override
-    public QueryContactRespDTO queryContactById(ContactQueryByIdReqDTO requestParam) {
+    public ContactQueryRespDTO queryContactById(ContactQueryByIdReqDTO requestParam) {
         StuIdContext.verifyLoginUser(requestParam.getStudentId());
         LambdaQueryWrapper<ContactDO> queryWrapper = Wrappers.lambdaQuery(ContactDO.class)
                 .eq(ContactDO::getStudentId, requestParam.getStudentId())
@@ -101,7 +101,7 @@ public class StuContactServiceImpl extends ServiceImpl<ContactMapper, ContactDO>
         if(Objects.isNull(contact)){
             throw new ClientException("查询的记录不存在");
         }
-        return BeanUtil.toBean(contact,QueryContactRespDTO.class);
+        return BeanUtil.toBean(contact, ContactQueryRespDTO.class);
     }
 
     /**
@@ -110,7 +110,7 @@ public class StuContactServiceImpl extends ServiceImpl<ContactMapper, ContactDO>
      * @return 分页返回
      */
     @Override
-    public IPage<QueryContactRespDTO> queryContactList() {
+    public IPage<ContactQueryRespDTO> queryContactList() {
         return null;
     }
 }
