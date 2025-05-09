@@ -28,7 +28,7 @@ public class StuInfoController {
     }
 
     /**
-     * 个人通讯信息删除
+     * 个人拥有的通讯信息删除
      * @param requestParam 删除请求体
      * @return void
      */
@@ -50,7 +50,7 @@ public class StuInfoController {
     }
 
     /**
-     * 按学号查询个人通讯信息
+     * 按学号查询自己拥有的某个人的通讯信息
      * @param requestParam 查询请求体
      * @return void
      */
