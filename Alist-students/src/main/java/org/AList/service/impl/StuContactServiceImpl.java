@@ -177,4 +177,33 @@ public class StuContactServiceImpl extends ServiceImpl<ContactMapper, ContactDO>
             return respDTO;
         });
     }
+
+    /**
+     * 恢复删除的通讯信息
+     *
+     * @param requestParam 恢复通讯信息请求体
+     */
+    @Override
+    public void restoreStudentContact(ContactRestoreReqDTO requestParam) {
+        StuIdContext.verifyLoginUser(requestParam.getOwnerId());
+        ContactGotoDO deletedContactGotoDO=contactGotoMapper.selectSingleDeletedContactGoto(
+                requestParam.getContactId(),
+                requestParam.getOwnerId(),
+                1);
+        if(Objects.isNull(deletedContactGotoDO)){
+            throw new ClientException("您没有权限恢复此通讯录信息或记录不存在");
+        }
+        ContactDO deletedContact=contactMapper.selectSingleDeletedContact(
+                requestParam.getContactId(),
+                1
+        );
+        if(Objects.isNull(deletedContact)){
+            throw new ClientException("您没有权限恢复此通讯录信息或记录不存在");
+        }
+        int restoreGoto= contactGotoMapper.restoreContactGoto(requestParam.getContactId(), requestParam.getOwnerId());
+        int restoreContact= contactMapper.restoreContact(requestParam.getContactId());
+        if(restoreGoto!=1||restoreContact!=1){
+            throw new ClientException("恢复失败，记录可能不存在或未被删除");
+        }
+    }
 }

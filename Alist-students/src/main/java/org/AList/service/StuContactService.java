@@ -38,4 +38,10 @@ public interface StuContactService {
      * @return 分页返回
      */
     IPage<ContactQueryRespDTO> queryContactList(ContactQueryAllOwnReqDTO requestParam);
+
+    /**
+     * 恢复删除的通讯信息
+     * @param requestParam 恢复通讯信息请求体
+     */
+    void restoreStudentContact(ContactRestoreReqDTO requestParam);
 }
