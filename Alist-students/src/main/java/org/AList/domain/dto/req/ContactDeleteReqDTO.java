@@ -17,6 +17,8 @@ public class ContactDeleteReqDTO {
     /**
      * 学号
      */
-    private String studentId;
+    private String ownerId;
+
+    private String contactId;
 
 }
