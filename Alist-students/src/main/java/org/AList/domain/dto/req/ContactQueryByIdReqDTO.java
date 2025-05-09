@@ -16,5 +16,10 @@ public class ContactQueryByIdReqDTO {
     /**
      * 学号
      */
-    private String studentId;
+    private String ownerId;
+
+    /**
+     * 通讯信息id
+     */
+    private String contactId;
 }
