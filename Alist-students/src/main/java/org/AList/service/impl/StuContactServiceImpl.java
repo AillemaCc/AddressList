@@ -94,18 +94,29 @@ public class StuContactServiceImpl extends ServiceImpl<ContactMapper, ContactDO>
      */
     @Override
     public void updateStudentContact(ContactUpdateReqDTO requestParam) {
+        // 1. 验证当前登录用户
         StuIdContext.verifyLoginUser(requestParam.getStudentId());
-        LambdaUpdateWrapper<ContactDO> updateWrapper = Wrappers.lambdaUpdate(ContactDO.class)
+
+        // 2. 检查记录是否存在
+        LambdaQueryWrapper<ContactDO> queryWrapper = Wrappers.lambdaQuery(ContactDO.class)
                 .eq(ContactDO::getStudentId, requestParam.getStudentId())
                 .eq(ContactDO::getDelFlag, 0);
-        if(Objects.isNull(contactMapper.selectOne(updateWrapper))){
+        if (contactMapper.selectOne(queryWrapper) == null) {
             throw new ClientException("修改的记录不存在");
         }
-        ContactDO contact = new ContactDO();
-        int update = contactMapper.update(contact, updateWrapper);
-        if(update != 1){
+
+        // 3. 构建更新内容和条件
+        LambdaUpdateWrapper<ContactDO> updateWrapper = Wrappers.lambdaUpdate(ContactDO.class)
+                .eq(ContactDO::getStudentId, requestParam.getStudentId())
+                .eq(ContactDO::getDelFlag, 0)
+                .set(ContactDO::getEmployer, requestParam.getEmployer())  // 设置要更新的字段
+                .set(ContactDO::getCity, requestParam.getCity());
+        // 4. 执行更新
+        int updated = contactMapper.update(null, updateWrapper);
+        if (updated != 1) {
             throw new ClientException("修改错误");
         }
+        rebuildContactCache(requestParam.getStudentId());
     }
 
     /**
