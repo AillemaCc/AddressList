@@ -206,4 +206,78 @@ public class StuContactServiceImpl extends ServiceImpl<ContactMapper, ContactDO>
             throw new ClientException("恢复失败，记录可能不存在或未被删除");
         }
     }
+
+    private void rebuildContactCache(String studentId) {
+        // 1. 先清除所有相关缓存
+        String patternKey = String.format("contact:*:%s", studentId);
+        Set<String> keys = stringRedisTemplate.keys(patternKey);
+        if (keys != null && !keys.isEmpty()) {
+            stringRedisTemplate.delete(keys);
+        }
+
+        // 2. 查询联系人完整信息（只需查一次数据库）
+        ContactDO contact = contactMapper.selectOne(Wrappers.lambdaQuery(ContactDO.class)
+                .eq(ContactDO::getStudentId, studentId)
+                .eq(ContactDO::getDelFlag, 0));
+
+        if (contact == null) {
+            return; // 如果联系人已被删除，直接返回
+        }
+
+        // 3. 查询学生基本信息
+        StudentDO student = studentMapper.selectOne(Wrappers.lambdaQuery(StudentDO.class)
+                .eq(StudentDO::getStudentId, studentId)
+                .eq(StudentDO::getDelFlag, 0));
+
+        if (student == null) {
+            return;
+        }
+
+        // 4. 查询关联信息（专业、学院等）
+        MajorAndAcademyDO majorAndAcademy = majorAndAcademyMapper.selectOne(
+                Wrappers.lambdaQuery(MajorAndAcademyDO.class)
+                        .eq(MajorAndAcademyDO::getMajorNum, student.getMajor())
+                        .eq(MajorAndAcademyDO::getDelFlag, 0));
+
+        ClassInfoDO classInfo = classInfoMapper.selectOne(
+                Wrappers.lambdaQuery(ClassInfoDO.class)
+                        .eq(ClassInfoDO::getClassNum, student.getClassName())
+                        .eq(ClassInfoDO::getDelFlag, 0));
+
+        // 5. 构建完整响应DTO
+        ContactQueryRespDTO response = ContactQueryRespDTO.builder()
+                .studentId(studentId)
+                .name(student.getName())
+                .academy(majorAndAcademy != null ? majorAndAcademy.getAcademy() : null)
+                .major(majorAndAcademy != null ? majorAndAcademy.getMajor() : null)
+                .className(classInfo != null ? classInfo.getClassName() : null)
+                .enrollmentYear(student.getEnrollmentYear())
+                .graduationYear(student.getGraduationYear())
+                .employer(contact.getEmployer())
+                .city(contact.getCity())
+                .phone(student.getPhone())
+                .email(student.getEmail())
+                .build();
+
+        // 6. 获取所有拥有者ID
+        List<String> ownerIds = contactGotoMapper.selectOwnerIdsByContactId(studentId);
+
+        // 7. 直接为每个拥有者设置缓存
+        for (String ownerId : ownerIds) {
+            String redisKey = String.format("contact:%s:%s", ownerId, studentId);
+            try {
+                // 使用Jackson将DTO转换为JSON字符串
+                String jsonResponse = objectMapper.writeValueAsString(response);
+                stringRedisTemplate.opsForValue().set(
+                        redisKey,
+                        jsonResponse,
+                        1,
+                        TimeUnit.HOURS
+                );
+            } catch (JsonProcessingException e) {
+                log.error("序列化联系人缓存失败，studentId: {}", studentId, e);
+                // 可以选择继续处理下一个ownerId或抛出运行时异常
+            }
+        }
+    }
 }
