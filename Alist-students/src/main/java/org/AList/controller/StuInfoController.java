@@ -39,6 +39,17 @@ public class StuInfoController {
     }
 
     /**
+     * 恢复删除的某一条个人通讯信息
+     * @param requestParam 请求体
+     * @return void
+     */
+    @PostMapping("/contact/restore")
+    public Result<Void> restoreStudentContact(@RequestBody ContactRestoreReqDTO requestParam){
+        stuContactService.restoreStudentContact(requestParam);
+        return Results.success();
+    }
+
+    /**
      * 按学号修改个人通讯信息
      * @param requestParam 修改请求体
      * @return void
