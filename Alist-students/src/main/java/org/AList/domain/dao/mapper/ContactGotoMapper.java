@@ -6,6 +6,8 @@ import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
 
+import java.util.List;
+
 /**
  * 通讯信息路由表持久层
  */
@@ -19,4 +21,7 @@ public interface ContactGotoMapper extends BaseMapper<ContactGotoDO> {
 
     @Update("UPDATE t_contact_goto SET del_flag = 0 WHERE contact_id = #{contactId} AND owner_id = #{ownerId} AND del_flag = 1")
     int restoreContactGoto(@Param("contactId") String contactId, @Param("ownerId") String ownerId);
+
+    @Select("SELECT owner_id FROM t_contact_goto WHERE contact_id = #{contactId} AND del_flag = 0")
+    List<String> selectOwnerIdsByContactId(@Param("contactId") String contactId);
 }
