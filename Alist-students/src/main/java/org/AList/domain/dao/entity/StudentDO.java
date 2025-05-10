@@ -32,12 +32,12 @@ public class StudentDO extends BaseDO {
     private String name;
 
     /**
-     * 专业
+     * 所读专业--以专业号标识
      */
     private String major;
 
     /**
-     * 班级
+     * 班级--以班级号标识
      */
     private String className;
 
