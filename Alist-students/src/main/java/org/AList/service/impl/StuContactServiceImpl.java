@@ -150,10 +150,60 @@ public class StuContactServiceImpl extends ServiceImpl<ContactMapper, ContactDO>
         if (Objects.isNull(contact)) {
             throw new ClientException("通讯录信息不存在或已被删除");
         }
+        String employer=contact.getEmployer();
+        String city=contact.getCity();
+
+        LambdaQueryWrapper<StudentDO> studentInfoWrapper = Wrappers.lambdaQuery(StudentDO.class)
+                .eq(StudentDO::getStudentId, studentId)
+                .eq(StudentDO::getDelFlag, 0);
+        StudentDO student=studentMapper.selectOne(studentInfoWrapper);
+        if (Objects.isNull(student)) {
+            throw new ClientException("通讯录信息不存在或已被删除");
+        }
+        String name=student.getName();
+        String enrollmentYear=student.getEnrollmentYear();
+        String graduationYear=student.getGraduationYear();
+        String phone=student.getPhone();
+        String email=student.getEmail();
+
+        String majorNum=student.getMajor();
+
+        LambdaQueryWrapper<MajorAndAcademyDO> majorAndAcademyWrapper = Wrappers.lambdaQuery(MajorAndAcademyDO.class)
+                .eq(MajorAndAcademyDO::getMajorNum, majorNum)
+                .eq(MajorAndAcademyDO::getDelFlag, 0);
+        MajorAndAcademyDO majorAndAcademy=majorAndAcademyMapper.selectOne(majorAndAcademyWrapper);
+        if (Objects.isNull(majorAndAcademy)) {
+            throw new ClientException("通讯录信息不存在或已被删除");
+        }
+        String majorName=majorAndAcademy.getMajor();
+        String academyName=majorAndAcademy.getAcademy();
+
+
+        String classNum=student.getClassName();
+        LambdaQueryWrapper<ClassInfoDO> classInfoWrapper = Wrappers.lambdaQuery(ClassInfoDO.class)
+                .eq(ClassInfoDO::getClassNum, classNum)
+                .eq(ClassInfoDO::getDelFlag, 0);
+        ClassInfoDO classInfo = classInfoMapper.selectOne(classInfoWrapper);
+        if (Objects.isNull(classInfo)) {
+            throw new ClientException("通讯录信息不存在或已被删除");
+        }
+        String className=classInfo.getClassName();
 
         // 4. 转换为响应DTO
-        ContactQueryRespDTO respDTO = new ContactQueryRespDTO();
-        BeanUtils.copyProperties(contact, respDTO);
+
+        ContactQueryRespDTO response = ContactQueryRespDTO.builder()
+                .studentId(studentId)
+                .name(name)
+                .academy(academyName)
+                .major(majorName)
+                .className(className)
+                .enrollmentYear(enrollmentYear)
+                .graduationYear(graduationYear)
+                .employer(employer)
+                .city(city)
+                .phone(phone)
+                .email(email)
+                .build();
 
         return respDTO;
     }
