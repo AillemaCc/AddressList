@@ -6,30 +6,41 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.AList.common.biz.user.StuIdContext;
 import org.AList.common.convention.exception.ClientException;
-import org.AList.domain.dao.entity.ContactDO;
-import org.AList.domain.dao.entity.ContactGotoDO;
-import org.AList.domain.dao.mapper.ContactGotoMapper;
-import org.AList.domain.dao.mapper.ContactMapper;
+import org.AList.domain.dao.entity.*;
+import org.AList.domain.dao.mapper.*;
 import org.AList.domain.dto.req.*;
 import org.AList.domain.dto.resp.ContactQueryRespDTO;
 import org.AList.service.StuContactService;
 import org.springframework.beans.BeanUtils;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 /**
  * 通讯信息服务实现层
  */
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class StuContactServiceImpl extends ServiceImpl<ContactMapper, ContactDO> implements StuContactService {
     private final ContactMapper contactMapper;
     private final ContactGotoMapper contactGotoMapper;
+    private final StudentMapper studentMapper;
+    private final MajorAndAcademyMapper majorAndAcademyMapper;
+    private final ClassInfoMapper classInfoMapper;
+    private final StringRedisTemplate stringRedisTemplate;
+    private final ObjectMapper objectMapper;
+
     /**
      * 新增个人通讯信息
      *
@@ -37,6 +48,7 @@ public class StuContactServiceImpl extends ServiceImpl<ContactMapper, ContactDO>
      */
     @Override
     public void addStudentContact(ContactAddReqDTO requestParam) {
+
         StuIdContext.verifyLoginUser(requestParam.getStudentId());
         ContactDO contact =ContactDO.builder()
                 .studentId(requestParam.getStudentId())
@@ -44,6 +56,8 @@ public class StuContactServiceImpl extends ServiceImpl<ContactMapper, ContactDO>
                 .city(requestParam.getCity())
                 .build();
         contactMapper.insert(contact);
+        // 新增后清除并重建该学生的缓存
+        rebuildContactCache(requestParam.getStudentId());
     }
 
     /**
@@ -85,6 +99,17 @@ public class StuContactServiceImpl extends ServiceImpl<ContactMapper, ContactDO>
                 .eq(ContactGotoDO::getDelFlag, 0)
                 .set(ContactGotoDO::getDelFlag, 1);
         contactGotoMapper.update(null, gotoUpdateWrapper);
+
+        // 删除后清除相关缓存
+        String redisKey = String.format("contact:%s:%s", requestParam.getOwnerId(), requestParam.getContactId());
+        stringRedisTemplate.delete(redisKey);
+
+        // 同时清除其他可能包含该联系人的缓存
+        String patternKey = String.format("contact:*:%s", requestParam.getContactId());
+        Set<String> keys = stringRedisTemplate.keys(patternKey);
+        if (keys != null && !keys.isEmpty()) {
+            stringRedisTemplate.delete(keys);
+        }
     }
 
     /**
@@ -130,6 +155,22 @@ public class StuContactServiceImpl extends ServiceImpl<ContactMapper, ContactDO>
         // 1. 验证当前登录用户
         StuIdContext.verifyLoginUser(requestParam.getOwnerId());
 
+        // 构建Redis缓存key
+        String redisKey = String.format("contact:%s:%s",
+                requestParam.getOwnerId(),
+                requestParam.getContactId());
+
+        // 尝试从Redis获取缓存
+        try {
+            String cachedData = stringRedisTemplate.opsForValue().get(redisKey);
+            if (cachedData != null) {
+                // 反序列化缓存数据
+                return objectMapper.readValue(cachedData, ContactQueryRespDTO.class);
+            }
+        } catch (JsonProcessingException e) {
+            log.warn("反序列化缓存数据失败，将查询数据库。key: {}", redisKey, e);
+        }
+
         // 2. 首先检查goto表中是否存在该ownerId和contactId的记录，验证用户是否拥有该通讯录
         LambdaQueryWrapper<ContactGotoDO> gotoQueryWrapper = Wrappers.lambdaQuery(ContactGotoDO.class)
                 .eq(ContactGotoDO::getOwnerId, requestParam.getOwnerId())
@@ -140,10 +181,10 @@ public class StuContactServiceImpl extends ServiceImpl<ContactMapper, ContactDO>
         if (Objects.isNull(contactGoto)) {
             throw new ClientException("您没有权限查看此通讯录信息或记录不存在");
         }
-
+        String studentId=requestParam.getContactId();
         // 3. 从contact表中查询完整的通讯录信息
         LambdaQueryWrapper<ContactDO> contactQueryWrapper = Wrappers.lambdaQuery(ContactDO.class)
-                .eq(ContactDO::getStudentId, requestParam.getContactId())
+                .eq(ContactDO::getStudentId, studentId)
                 .eq(ContactDO::getDelFlag, 0);
         ContactDO contact = contactMapper.selectOne(contactQueryWrapper);
 
@@ -205,7 +246,19 @@ public class StuContactServiceImpl extends ServiceImpl<ContactMapper, ContactDO>
                 .email(email)
                 .build();
 
-        return respDTO;
+        try {
+            String jsonResponse = objectMapper.writeValueAsString(response);
+            stringRedisTemplate.opsForValue().set(
+                    redisKey,
+                    jsonResponse,
+                    1, // 缓存时间1小时
+                    TimeUnit.HOURS
+            );
+        } catch (JsonProcessingException e) {
+            log.error("序列化联系人数据失败，无法缓存。studentId: {}", requestParam.getContactId(), e);
+        }
+
+        return response;
     }
 
     /**
