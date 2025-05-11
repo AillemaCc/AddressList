@@ -50,7 +50,7 @@ public class StuInfoController {
     }
 
     /**
-     * 按学号修改个人通讯信息
+     * 按学号修改自己的个人通讯信息
      * @param requestParam 修改请求体
      * @return void
      */
