@@ -13,7 +13,24 @@ spring:
   redis:
     host: 127.0.0.1  # 确认是否是实际 Redis 地址
     port: 6379
-    database: 2       # 确认选择的数据库
+    database: 2 # 确认选择的数据库
+
+    lettuce:
+      pool:
+        max-active: 20
+        max-idle: 10
+        min-idle: 5
+        max-wait: 3000ms
+
+# 自定义 Redis Stream 配置
+app:
+  redis-stream:
+    key: contact-events
+    group: contact-group
+    consumer-id: consumer-1
+    poll-timeout: 1000
+
+
 mybatis-plus:
   configuration:
     # 日志
