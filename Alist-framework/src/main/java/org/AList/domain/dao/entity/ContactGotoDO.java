@@ -18,9 +18,6 @@ import org.AList.common.database.BaseDO;
 public class ContactGotoDO extends BaseDO {
     @TableId(type = IdType.AUTO)
 
-    /**
-     * 主键id
-     */
     private Integer id;
 
     /**

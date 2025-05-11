@@ -33,4 +33,9 @@ public class ClassInfoDO extends BaseDO {
      * 班级名称
      */
     private String className;
+
+    /**
+     * 专业标识号
+     */
+    private Integer majorNum;
 }

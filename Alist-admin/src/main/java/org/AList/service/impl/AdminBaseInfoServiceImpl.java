@@ -1,19 +1,25 @@
 package org.AList.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.RequiredArgsConstructor;
 import org.AList.common.convention.exception.ClientException;
 import org.AList.domain.dao.entity.ClassInfoDO;
+import org.AList.domain.dao.entity.ContactDO;
 import org.AList.domain.dao.entity.ContactGotoDO;
 import org.AList.domain.dao.entity.StudentDO;
 import org.AList.domain.dao.mapper.ClassInfoMapper;
 import org.AList.domain.dao.mapper.ContactGotoMapper;
+import org.AList.domain.dao.mapper.ContactMapper;
 import org.AList.domain.dao.mapper.StudentMapper;
 import org.AList.domain.dto.req.BaseClassInfoAddReqDTO;
+import org.AList.domain.dto.req.BaseClassInfoListStuReqDTO;
 import org.AList.domain.dto.req.BaseClassInfoUpdateReqDTO;
+import org.AList.domain.dto.resp.BaseClassInfoListStuRespDTO;
 import org.AList.service.AdminBaseInfoService;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
@@ -32,6 +38,7 @@ public class AdminBaseInfoServiceImpl implements AdminBaseInfoService {
     private final StudentMapper studentMapper;
     private final ContactGotoMapper contactGotoMapper;
     private final StringRedisTemplate stringRedisTemplate;
+    private final ContactMapper contactMapper;
     /**
      * 新增班级基础信息
      *
@@ -106,6 +113,56 @@ public class AdminBaseInfoServiceImpl implements AdminBaseInfoService {
         clearStudentContactCacheByClass(existingDO.getClassNum());
 
     }
+
+    /**
+     * 分页展示某个班级下的学生信息
+     *
+     * @param requestParam 查询班级下面的学生请求体
+     * @return 分页响应
+     */
+    @Override
+    public IPage<BaseClassInfoListStuRespDTO> listClassStu(BaseClassInfoListStuReqDTO requestParam) {
+        // 参数校验
+        if (requestParam == null || requestParam.getClassNum() == null) {
+            throw new ClientException("请求参数或班级编号不能为空");
+        }
+
+        // 创建分页对象
+        Page<StudentDO> page = new Page<>(1, 10);
+
+        // 查询学生基本信息（分页）
+        LambdaQueryWrapper<StudentDO> studentQueryWrapper = Wrappers.lambdaQuery(StudentDO.class)
+                .eq(StudentDO::getClassName, requestParam.getClassNum())
+                .eq(StudentDO::getDelFlag, 0)
+                .orderByAsc(StudentDO::getStudentId); // 按学号排序
+
+        IPage<StudentDO> studentPage = studentMapper.selectPage(page, studentQueryWrapper);
+
+        // 转换为响应DTO
+        return studentPage.convert(student -> {
+            // 查询通讯录信息
+            ContactDO contact = contactMapper.selectOne(Wrappers.lambdaQuery(ContactDO.class)
+                    .eq(ContactDO::getStudentId, student.getStudentId())
+                    .eq(ContactDO::getDelFlag, 0));
+
+            if (contact == null) {
+                throw new ClientException("学生ID为 " + student.getStudentId() + " 的通讯录信息不存在");
+            }
+
+            // 构建响应DTO
+            return BaseClassInfoListStuRespDTO.builder()
+                    .studentId(student.getStudentId())
+                    .name(student.getName())
+                    .enrollmentYear(student.getEnrollmentYear())
+                    .graduationYear(student.getGraduationYear())
+                    .phone(student.getPhone())
+                    .email(student.getEmail())
+                    .employer(contact.getEmployer())
+                    .city(contact.getCity())
+                    .build();
+        });
+    }
+
 
     /**
      * 重建缓存保证数据一致性
