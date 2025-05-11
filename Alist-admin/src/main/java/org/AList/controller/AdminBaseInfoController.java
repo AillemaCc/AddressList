@@ -4,11 +4,9 @@ import lombok.RequiredArgsConstructor;
 import org.AList.common.convention.result.Result;
 import org.AList.common.convention.result.Results;
 import org.AList.domain.dto.req.BaseClassInfoAddReqDTO;
+import org.AList.domain.dto.req.BaseClassInfoUpdateReqDTO;
 import org.AList.service.AdminBaseInfoService;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 /**
  * 管理员信息操作控制层
@@ -24,6 +22,14 @@ public class AdminBaseInfoController {
     @PutMapping("/add")
     public Result<Void> addBaseClassInfo(@RequestBody BaseClassInfoAddReqDTO requestParam){
         adminBaseInfoService.addBaseClassInfo(requestParam);
+        return Results.success();
+    }
+    /**
+     * 更新班级信息
+     */
+    @PostMapping("/update")
+    public Result<Void> updateBaseClassInfo(@RequestBody BaseClassInfoUpdateReqDTO requestParam){
+        adminBaseInfoService.updateBaseClassInfo(requestParam);
         return Results.success();
     }
 }
