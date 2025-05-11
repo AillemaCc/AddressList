@@ -44,4 +44,11 @@ public interface StuContactService {
      * @param requestParam 恢复通讯信息请求体
      */
     void restoreStudentContact(ContactRestoreReqDTO requestParam);
+
+    /**
+     * 分页展示已删除的通讯信息
+     * @param requestParam 请求体
+     * @return 分页返回
+     */
+    IPage<ContactQueryRespDTO> queryContactListAllDelete(ContactQueryAllOwnReqDTO requestParam);
 }

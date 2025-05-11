@@ -79,4 +79,13 @@ public class StuInfoController {
         return Results.success(stuContactService.queryContactList(requestParam));
     }
 
+    /**
+     * 分页展示所有个人拥有的已删除的通讯信息
+     */
+    @GetMapping("/contact/listAllDelete")
+    public Result<IPage<ContactQueryRespDTO>> queryContactListAllDelete(@RequestBody ContactQueryAllOwnReqDTO requestParam){
+        return Results.success(stuContactService.queryContactListAllDelete(requestParam));
+    }
+
+
 }

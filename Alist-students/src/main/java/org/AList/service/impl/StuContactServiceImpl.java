@@ -27,6 +27,7 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 /**
  * 通讯信息服务实现层
@@ -327,6 +328,84 @@ public class StuContactServiceImpl extends ServiceImpl<ContactMapper, ContactDO>
         if(restoreGoto!=1||restoreContact!=1){
             throw new ClientException("恢复失败，记录可能不存在或未被删除");
         }
+    }
+
+    /**
+     * 分页展示自己已删除的通讯信息
+     *
+     * @param requestParam 请求体
+     * @return 分页返回
+     */
+    @Override
+    public IPage<ContactQueryRespDTO> queryContactListAllDelete(ContactQueryAllOwnReqDTO requestParam) {
+        StuIdContext.verifyLoginUser(requestParam.getOwnerId());
+
+        // 查询已删除的联系人分页数据
+        Page<ContactGotoDO> page = new Page<>(1, 10);
+        IPage<ContactGotoDO> gotoResult = contactGotoMapper.selectDeletedContact(page, requestParam.getOwnerId());
+
+        // 将 IPage<ContactGotoDO> 转换为 List<ContactQueryRespDTO> 并过滤 null 值
+        List<ContactQueryRespDTO> dtoList = gotoResult.getRecords().stream()
+                .map(gotoRecord -> {
+                    // 找到对应的通讯信息 前提是这个通讯信息的学生用户没有删除自己的通讯信息
+                    ContactDO contact = contactMapper.selectOne(Wrappers.lambdaQuery(ContactDO.class)
+                            .eq(ContactDO::getStudentId,gotoRecord.getContactId())
+                            .eq(ContactDO::getDelFlag,0));
+                    if (contact == null) {
+                        return null;
+                    }
+
+                    StudentDO student = studentMapper.selectOne(Wrappers.lambdaQuery(StudentDO.class)
+                            .eq(StudentDO::getStudentId, gotoRecord.getContactId())
+                            .eq(StudentDO::getDelFlag, 0));
+                    if (student == null) {
+                        return null;
+                    }
+
+                    String majorName = "";
+                    String academyName = "";
+                    if (student.getMajor() != null) {
+                        MajorAndAcademyDO majorAndAcademy = majorAndAcademyMapper.selectOne(
+                                Wrappers.lambdaQuery(MajorAndAcademyDO.class)
+                                        .eq(MajorAndAcademyDO::getMajorNum, student.getMajor())
+                                        .eq(MajorAndAcademyDO::getDelFlag, 0));
+                        if (majorAndAcademy != null) {
+                            majorName = majorAndAcademy.getMajor();
+                            academyName = majorAndAcademy.getAcademy();
+                        }
+                    }
+
+                    String className = "";
+                    if (student.getClassName() != null) {
+                        ClassInfoDO classInfo = classInfoMapper.selectOne(
+                                Wrappers.lambdaQuery(ClassInfoDO.class)
+                                        .eq(ClassInfoDO::getClassNum, student.getClassName())
+                                        .eq(ClassInfoDO::getDelFlag, 0));
+                        if (classInfo != null) {
+                            className = classInfo.getClassName();
+                        }
+                    }
+
+                    return ContactQueryRespDTO.builder()
+                            .studentId(gotoRecord.getContactId())
+                            .name(student.getName())
+                            .academy(academyName)
+                            .major(majorName)
+                            .className(className)
+                            .enrollmentYear(student.getEnrollmentYear())
+                            .graduationYear(student.getGraduationYear())
+                            .employer(contact.getEmployer())
+                            .city(contact.getCity())
+                            .phone(student.getPhone())
+                            .email(student.getEmail())
+                            .build();
+                })
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+
+        // 手动构造一个新的 Page 对象并设置转换后的数据
+        return new Page<ContactQueryRespDTO>(gotoResult.getCurrent(), gotoResult.getSize(), gotoResult.getTotal())
+                .setRecords(dtoList);
     }
 
     /**

@@ -19,4 +19,7 @@ public interface ContactMapper extends BaseMapper<ContactDO> {
     // ContactMapper.java
     @Update("UPDATE t_student_contact SET del_flag = 0 WHERE student_id = #{contactId} AND del_flag = 1")
     int restoreContact(@Param("contactId") String contactId);
+
+    @Select("SELECT * FROM t_student_contact WHERE student_id = #{studentId} AND del_flag = 1")
+    ContactDO selectDeletedContactByStudentId(@Param("studentId") String studentId);
 }
