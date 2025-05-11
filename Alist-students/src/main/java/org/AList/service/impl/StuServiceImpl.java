@@ -53,7 +53,7 @@ public class StuServiceImpl extends ServiceImpl<StudentMapper,StudentDO> impleme
      * 用户登录接口实现类
      *
      * @param requestParam 用户登录请求实体
-     * @param request
+     * @param request 登录请求
      * @return 用户登录响应实体--token
      */
     @Override
