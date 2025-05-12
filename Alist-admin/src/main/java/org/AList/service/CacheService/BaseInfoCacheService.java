@@ -12,7 +12,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.AList.domain.dao.entity.ContactGotoDO;
 import org.AList.domain.dao.entity.StudentDO;
 import org.AList.domain.dao.mapper.ContactGotoMapper;
-import org.AList.domain.dao.mapper.ContactMapper;
 import org.AList.domain.dao.mapper.StudentMapper;
 import org.AList.domain.dto.resp.BaseClassInfoListStuRespDTO;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -31,7 +30,6 @@ import java.util.concurrent.TimeUnit;
 public class BaseInfoCacheService {
     private final StringRedisTemplate stringRedisTemplate;
     private final StudentMapper studentMapper;
-    private final ContactMapper contactMapper;
     private final ContactGotoMapper contactGotoMapper;
 
 
