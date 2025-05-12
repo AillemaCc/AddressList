@@ -1,5 +1,6 @@
 package org.AList.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
@@ -19,8 +20,11 @@ import org.AList.domain.dao.mapper.StudentMapper;
 import org.AList.domain.dto.req.BaseClassInfoAddReqDTO;
 import org.AList.domain.dto.req.BaseClassInfoListStuReqDTO;
 import org.AList.domain.dto.req.BaseClassInfoUpdateReqDTO;
+import org.AList.domain.dto.req.BaseMajorInfoListClassReqDTO;
 import org.AList.domain.dto.resp.BaseClassInfoListStuRespDTO;
+import org.AList.domain.dto.resp.BaseMajorInfoListClassRespDTO;
 import org.AList.service.AdminBaseInfoService;
+import org.springframework.beans.BeanUtils;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -160,6 +164,39 @@ public class AdminBaseInfoServiceImpl implements AdminBaseInfoService {
                     .employer(contact.getEmployer())
                     .city(contact.getCity())
                     .build();
+        });
+    }
+
+    /**
+     * 分页展示某个专业下的班级信息
+     *
+     * @param requestParam 查询专业下面的班级请求体
+     * @return 分页响应
+     */
+    @Override
+    public IPage<BaseMajorInfoListClassRespDTO> listMajorClass(BaseMajorInfoListClassReqDTO requestParam) {
+        // 参数校验
+        if (requestParam == null || requestParam.getMajorNum() == null) {
+            throw new ClientException("请求参数或专业编号不能为空");
+        }
+        // 创建分页对象
+        Page<ClassInfoDO> page = new Page<>(1, 10);
+        Wrapper<ClassInfoDO> queryWrapper = Wrappers.lambdaQuery(ClassInfoDO.class)
+                .eq(ClassInfoDO::getMajorNum, requestParam.getMajorNum())
+                .eq(ClassInfoDO::getDelFlag, 0)
+                .orderByDesc(ClassInfoDO::getClassNum);
+        // 执行分页查询
+        IPage<ClassInfoDO> classInfoPage = classInfoMapper.selectPage(page, queryWrapper);
+
+        // 转换为响应DTO
+        return classInfoPage.convert(classInfoDO -> {
+            BaseMajorInfoListClassRespDTO respDTO = new BaseMajorInfoListClassRespDTO();
+            BeanUtils.copyProperties(classInfoDO, respDTO);
+
+            // 可添加额外字段处理
+            // respDTO.setSomeField(convertSomeValue(classInfoDO.getXXX()));
+
+            return respDTO;
         });
     }
 

@@ -7,7 +7,9 @@ import org.AList.common.convention.result.Results;
 import org.AList.domain.dto.req.BaseClassInfoAddReqDTO;
 import org.AList.domain.dto.req.BaseClassInfoListStuReqDTO;
 import org.AList.domain.dto.req.BaseClassInfoUpdateReqDTO;
+import org.AList.domain.dto.req.BaseMajorInfoListClassReqDTO;
 import org.AList.domain.dto.resp.BaseClassInfoListStuRespDTO;
+import org.AList.domain.dto.resp.BaseMajorInfoListClassRespDTO;
 import org.AList.service.AdminBaseInfoService;
 import org.springframework.web.bind.annotation.*;
 
@@ -46,5 +48,12 @@ public class AdminBaseInfoController {
     @GetMapping("/listClassStu")
     public Result<IPage<BaseClassInfoListStuRespDTO>> listClassStu(@RequestBody BaseClassInfoListStuReqDTO requestParam){
         return Results.success(adminBaseInfoService.listClassStu(requestParam));
+    }
+
+    /**
+     * 分页展示某个专业下的班级信息
+     */
+    public Result<IPage<BaseMajorInfoListClassRespDTO>> listMajorClass(@RequestBody BaseMajorInfoListClassReqDTO requestParam){
+        return Results.success(adminBaseInfoService.listMajorClass(requestParam));
     }
 }
