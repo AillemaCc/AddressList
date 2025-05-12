@@ -17,4 +17,14 @@ public class BaseClassInfoListStuReqDTO {
      * 班级标识号
      */
     private Integer classNum;
+
+    /**
+     * 当前页码（从1开始，非必填，默认1）
+     */
+    private Integer current = 1;
+
+    /**
+     * 每页数量（非必填，默认10）
+     */
+    private Integer size = 10;
 }

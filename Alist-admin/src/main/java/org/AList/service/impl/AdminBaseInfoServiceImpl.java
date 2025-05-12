@@ -3,18 +3,16 @@ package org.AList.service.impl;
 import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
-import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.AList.common.convention.exception.ClientException;
 import org.AList.domain.dao.entity.ClassInfoDO;
 import org.AList.domain.dao.entity.ContactDO;
-import org.AList.domain.dao.entity.ContactGotoDO;
 import org.AList.domain.dao.entity.StudentDO;
 import org.AList.domain.dao.mapper.ClassInfoMapper;
-import org.AList.domain.dao.mapper.ContactGotoMapper;
 import org.AList.domain.dao.mapper.ContactMapper;
 import org.AList.domain.dao.mapper.StudentMapper;
 import org.AList.domain.dto.req.BaseClassInfoAddReqDTO;
@@ -24,30 +22,22 @@ import org.AList.domain.dto.req.BaseMajorInfoListClassReqDTO;
 import org.AList.domain.dto.resp.BaseClassInfoListStuRespDTO;
 import org.AList.domain.dto.resp.BaseMajorInfoListClassRespDTO;
 import org.AList.service.AdminBaseInfoService;
+import org.AList.service.CacheService.BaseInfoCacheService;
 import org.springframework.beans.BeanUtils;
-import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
 import java.util.Objects;
 
-/**
- * 管理员基础信息操作服务接口实现层
- */
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class AdminBaseInfoServiceImpl implements AdminBaseInfoService {
     private final ClassInfoMapper classInfoMapper;
     private final StudentMapper studentMapper;
-    private final ContactGotoMapper contactGotoMapper;
-    private final StringRedisTemplate stringRedisTemplate;
     private final ContactMapper contactMapper;
-    /**
-     * 新增班级基础信息
-     *
-     * @param requestParam 新增班级信息请求体
-     */
+    private final BaseInfoCacheService baseInfoCacheService;
+
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void addBaseClassInfo(BaseClassInfoAddReqDTO requestParam) {
@@ -75,21 +65,14 @@ public class AdminBaseInfoServiceImpl implements AdminBaseInfoService {
         }
     }
 
-    /**
-     * 更新班级基础信息
-     *
-     * @param requestParam 更新班级信息请求体
-     */
     @Override
     public void updateBaseClassInfo(BaseClassInfoUpdateReqDTO requestParam) {
-        // 参数校验
         Objects.requireNonNull(requestParam, "请求参数不能为空");
 
         if (requestParam.getClassNum() == null || StringUtils.isBlank(requestParam.getClassName())) {
             throw new ClientException("班级编号和名称不能为空");
         }
 
-        // 查询现有记录
         LambdaQueryWrapper<ClassInfoDO> queryWrapper = Wrappers.lambdaQuery(ClassInfoDO.class)
                 .eq(ClassInfoDO::getClassNum, requestParam.getClassNum())
                 .eq(ClassInfoDO::getClassName, requestParam.getClassName())
@@ -100,138 +83,102 @@ public class AdminBaseInfoServiceImpl implements AdminBaseInfoService {
             throw new ClientException("要更新的班级信息不存在");
         }
 
-        // 构建更新对象
         ClassInfoDO updateDO = ClassInfoDO.builder()
-                .id(existingDO.getId()) // 使用查询到的自增ID
                 .className(requestParam.getClassName())
                 .classNum(requestParam.getClassNum())
-                // 可以添加其他需要更新的字段
                 .build();
 
-        // 执行更新
         int affectedRows = classInfoMapper.updateById(updateDO);
         if (affectedRows != 1) {
             throw new ClientException("更新失败，请重试");
         }
-        // 清理关联学生的通讯录缓存
-        clearStudentContactCacheByClass(existingDO.getClassNum());
+        baseInfoCacheService.clearStudentContactCacheByClass(requestParam.getClassNum());
+        baseInfoCacheService.evictPageCacheByClass(requestParam.getClassNum());
 
     }
 
-    /**
-     * 分页展示某个班级下的学生信息
-     *
-     * @param requestParam 查询班级下面的学生请求体
-     * @return 分页响应
-     */
     @Override
     public IPage<BaseClassInfoListStuRespDTO> listClassStu(BaseClassInfoListStuReqDTO requestParam) {
-        // 参数校验
         if (requestParam == null || requestParam.getClassNum() == null) {
             throw new ClientException("请求参数或班级编号不能为空");
         }
 
-        // 创建分页对象
-        Page<StudentDO> page = new Page<>(1, 10);
+        Integer classNum = requestParam.getClassNum();
+        Integer current = requestParam.getCurrent() == null ? 1 : requestParam.getCurrent();
+        Integer size = requestParam.getSize() == null ? 10 : requestParam.getSize();
 
-        // 查询学生基本信息（分页）
-        LambdaQueryWrapper<StudentDO> studentQueryWrapper = Wrappers.lambdaQuery(StudentDO.class)
-                .eq(StudentDO::getClassName, requestParam.getClassNum())
-                .eq(StudentDO::getDelFlag, 0)
-                .orderByAsc(StudentDO::getStudentId); // 按学号排序
+        // 尝试从缓存中获取数据
+        IPage<BaseClassInfoListStuRespDTO> cachedPage = baseInfoCacheService.getPageCacheByClass(classNum, current, size);
+        if (cachedPage != null) {
+            return cachedPage;
+        }
 
-        IPage<StudentDO> studentPage = studentMapper.selectPage(page, studentQueryWrapper);
+        // 如果缓存未命中，则查询数据库
+        IPage<BaseClassInfoListStuRespDTO> page = queryStudentsFromCacheAndDatabase(requestParam);
 
-        // 转换为响应DTO
-        return studentPage.convert(student -> {
-            // 查询通讯录信息
-            ContactDO contact = contactMapper.selectOne(Wrappers.lambdaQuery(ContactDO.class)
-                    .eq(ContactDO::getStudentId, student.getStudentId())
-                    .eq(ContactDO::getDelFlag, 0));
+        // 查询成功后将结果写入缓存
+        baseInfoCacheService.putPageCacheByClass(classNum, current, size, page);
 
-            if (contact == null) {
-                throw new ClientException("学生ID为 " + student.getStudentId() + " 的通讯录信息不存在");
-            }
-
-            // 构建响应DTO
-            return BaseClassInfoListStuRespDTO.builder()
-                    .studentId(student.getStudentId())
-                    .name(student.getName())
-                    .enrollmentYear(student.getEnrollmentYear())
-                    .graduationYear(student.getGraduationYear())
-                    .phone(student.getPhone())
-                    .email(student.getEmail())
-                    .employer(contact.getEmployer())
-                    .city(contact.getCity())
-                    .build();
-        });
+        return page;
     }
 
-    /**
-     * 分页展示某个专业下的班级信息
-     *
-     * @param requestParam 查询专业下面的班级请求体
-     * @return 分页响应
-     */
     @Override
     public IPage<BaseMajorInfoListClassRespDTO> listMajorClass(BaseMajorInfoListClassReqDTO requestParam) {
-        // 参数校验
         if (requestParam == null || requestParam.getMajorNum() == null) {
             throw new ClientException("请求参数或专业编号不能为空");
         }
-        // 创建分页对象
         Page<ClassInfoDO> page = new Page<>(1, 10);
         Wrapper<ClassInfoDO> queryWrapper = Wrappers.lambdaQuery(ClassInfoDO.class)
                 .eq(ClassInfoDO::getMajorNum, requestParam.getMajorNum())
                 .eq(ClassInfoDO::getDelFlag, 0)
                 .orderByDesc(ClassInfoDO::getClassNum);
-        // 执行分页查询
         IPage<ClassInfoDO> classInfoPage = classInfoMapper.selectPage(page, queryWrapper);
 
-        // 转换为响应DTO
         return classInfoPage.convert(classInfoDO -> {
             BaseMajorInfoListClassRespDTO respDTO = new BaseMajorInfoListClassRespDTO();
             BeanUtils.copyProperties(classInfoDO, respDTO);
-
-            // 可添加额外字段处理
-            // respDTO.setSomeField(convertSomeValue(classInfoDO.getXXX()));
-
             return respDTO;
         });
     }
 
+    private IPage<BaseClassInfoListStuRespDTO> queryStudentsFromCacheAndDatabase(BaseClassInfoListStuReqDTO requestParam) {
+        int current = requestParam.getCurrent()==null?1:requestParam.getCurrent();
+        int size = requestParam.getSize()==null?10:requestParam.getSize();
+        Page<StudentDO> page = new Page<>(current, size);
 
-    /**
-     * 重建缓存保证数据一致性
-     * @param classNum 班级代码
-     */
-    private void clearStudentContactCacheByClass(Integer classNum) {
-        // 1. 查询该班级下的所有学生
-        LambdaQueryWrapper<StudentDO> studentQueryWrapper = Wrappers.lambdaQuery(StudentDO.class)
-                .eq(StudentDO::getClassName, classNum)
-                .eq(StudentDO::getDelFlag, 0);
+        LambdaQueryWrapper<StudentDO> queryWrapper = Wrappers.lambdaQuery(StudentDO.class)
+                .eq(StudentDO::getClassName, requestParam.getClassNum())
+                .eq(StudentDO::getDelFlag, 0)
+                .orderByAsc(StudentDO::getStudentId);
 
-        List<StudentDO> students = studentMapper.selectList(studentQueryWrapper);
-        if (CollectionUtils.isEmpty(students)) {
-            return;
-        }
+        IPage<StudentDO> studentPage = studentMapper.selectPage(page, queryWrapper);
 
-        // 2. 为每个学生清理通讯录缓存
-        students.forEach(student -> {
-            // 查询所有拥有该学生通讯录的用户
-            LambdaQueryWrapper<ContactGotoDO> gotoQueryWrapper = Wrappers.lambdaQuery(ContactGotoDO.class)
-                    .eq(ContactGotoDO::getContactId, student.getStudentId())
-                    .eq(ContactGotoDO::getDelFlag, 0);
-
-            List<ContactGotoDO> contactGotos = contactGotoMapper.selectList(gotoQueryWrapper);
-
-            // 删除所有相关的缓存键
-            contactGotos.forEach(gotoRecord -> {
-                String redisKey = String.format("contact:%s:%s",
-                        gotoRecord.getOwnerId(),
-                        gotoRecord.getContactId());
-                stringRedisTemplate.delete(redisKey);
-            });
+        return studentPage.convert(student -> {
+            String studentId = student.getStudentId();
+            // 尝试从缓存中获取学生的完整通讯信息
+            BaseClassInfoListStuRespDTO respDTO = baseInfoCacheService.getFullContactInfoFromCache(studentId);
+            if (respDTO == null) { // 缓存未命中，则构建响应并缓存
+                ContactDO contact = contactMapper.selectOne(Wrappers.lambdaQuery(ContactDO.class)
+                        .eq(ContactDO::getStudentId, studentId)
+                        .eq(ContactDO::getDelFlag, 0));
+                respDTO = buildFullResponse(student, contact);
+                // 将新的完整通讯信息存入缓存
+                baseInfoCacheService.putCacheStuFullContactInfo(studentId, respDTO);
+            }
+            return respDTO;
         });
+    }
+
+    private BaseClassInfoListStuRespDTO buildFullResponse(StudentDO student, ContactDO contact) {
+        return BaseClassInfoListStuRespDTO.builder()
+                .studentId(student.getStudentId())
+                .name(student.getName())
+                .enrollmentYear(student.getEnrollmentYear())
+                .graduationYear(student.getGraduationYear())
+                .phone(student.getPhone())
+                .email(student.getEmail())
+                .employer(contact != null ? contact.getEmployer() : null)
+                .city(contact != null ? contact.getCity() : null)
+                .build();
     }
 }

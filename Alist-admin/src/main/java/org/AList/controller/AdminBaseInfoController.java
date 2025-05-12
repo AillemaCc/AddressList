@@ -53,6 +53,7 @@ public class AdminBaseInfoController {
     /**
      * 分页展示某个专业下的班级信息
      */
+    @GetMapping("/listMajorClass")
     public Result<IPage<BaseMajorInfoListClassRespDTO>> listMajorClass(@RequestBody BaseMajorInfoListClassReqDTO requestParam){
         return Results.success(adminBaseInfoService.listMajorClass(requestParam));
     }

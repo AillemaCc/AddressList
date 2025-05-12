@@ -18,6 +18,19 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * 联系人缓存服务类。
+ *
+ * <p>提供联系人信息的缓存构建、更新、删除等功能，确保数据一致性。</p>
+ *
+ * <p>主要职责：</p>
+ * <ul>
+ *     <li>构建联系人缓存</li>
+ *     <li>重建联系人缓存</li>
+ *     <li>清除指定学生的相关缓存</li>
+ *     <li>获取联系人缓存</li>
+ * </ul>
+ */
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -31,38 +44,45 @@ public class ContactCacheService {
     private final ContactGotoMapper contactGotoMapper;
 
     /**
-     * 重建指定学生的缓存
-     * @param studentId 学生ID
+     * 重建指定学生的通讯录缓存。
+     *
+     * <p>该方法会先查询所有拥有该学生通讯录的用户ID（ownerIds），然后调用实际的缓存重建逻辑。</p>
+     *
+     * @param studentId 学生唯一标识
      */
     public void rebuildContactCache(String studentId) {
-        // 1. 获取所有拥有该学生通讯录的ownerIds
         List<String> ownerIds = contactGotoMapper.selectOwnerIdsByContactId(studentId);
-
-        // 2. 执行实际的重建逻辑
         doRebuildCache(studentId, ownerIds);
     }
 
     /**
-     * 实际执行缓存重建逻辑
-     * @param studentId 学生ID
-     * @param ownerIds 拥有该学生通讯录的所有者ID列表
+     * 实际执行缓存重建逻辑。
+     *
+     * <p>步骤如下：</p>
+     * <ol>
+     *     <li>清除旧缓存</li>
+     *     <li>构建完整的联系人响应数据</li>
+     *     <li>为每个拥有者设置新缓存</li>
+     * </ol>
+     *
+     * @param studentId 学生唯一标识
+     * @param ownerIds 拥有该联系人的用户ID列表
      */
     public void doRebuildCache(String studentId, List<String> ownerIds) {
-        // 1. 清除旧缓存
         clearContactCache(studentId);
-
-        // 2. 构建完整的联系人响应数据
         ContactQueryRespDTO response = buildContactResponse(studentId);
         if (response == null) {
             return;
         }
-
-        // 3. 为每个owner设置新缓存
         setContactCacheForOwners(studentId, ownerIds, response);
     }
 
     /**
-     * 清除指定学生的所有缓存
+     * 清除指定学生的所有相关缓存。
+     *
+     * <p>匹配格式为 "contact:*:{studentId}" 的 Redis 缓存键并删除。</p>
+     *
+     * @param studentId 学生唯一标识
      */
     public void clearContactCache(String studentId) {
         String patternKey = String.format("contact:*:%s", studentId);
@@ -73,10 +93,14 @@ public class ContactCacheService {
     }
 
     /**
-     * 构建联系人完整响应数据
+     * 构建联系人完整响应数据对象。
+     *
+     * <p>从数据库中查询联系人基础信息、学生信息、专业学院信息，并组装成 {@link ContactQueryRespDTO}。</p>
+     *
+     * @param studentId 学生唯一标识
+     * @return 构建完成的响应对象，若查询失败则返回 null
      */
     private ContactQueryRespDTO buildContactResponse(String studentId) {
-        // 1. 查询联系人基本信息
         ContactDO contact = contactMapper.selectOne(Wrappers.lambdaQuery(ContactDO.class)
                 .eq(ContactDO::getStudentId, studentId)
                 .eq(ContactDO::getDelFlag, 0));
@@ -86,7 +110,6 @@ public class ContactCacheService {
             return null;
         }
 
-        // 2. 查询学生基本信息
         StudentDO student = studentMapper.selectOne(Wrappers.lambdaQuery(StudentDO.class)
                 .eq(StudentDO::getStudentId, studentId)
                 .eq(StudentDO::getDelFlag, 0));
@@ -96,7 +119,6 @@ public class ContactCacheService {
             return null;
         }
 
-        // 3. 查询关联信息（专业、学院等）
         MajorAndAcademyDO majorAndAcademy = majorAndAcademyMapper.selectOne(
                 Wrappers.lambdaQuery(MajorAndAcademyDO.class)
                         .eq(MajorAndAcademyDO::getMajorNum, student.getMajor())
@@ -107,7 +129,6 @@ public class ContactCacheService {
                         .eq(ClassInfoDO::getClassNum, student.getClassName())
                         .eq(ClassInfoDO::getDelFlag, 0));
 
-        // 4. 构建完整响应DTO
         return ContactQueryRespDTO.builder()
                 .studentId(studentId)
                 .name(student.getName())
@@ -124,7 +145,11 @@ public class ContactCacheService {
     }
 
     /**
-     * 为多个owner设置联系人缓存
+     * 为多个拥有者设置联系人缓存。
+     *
+     * @param studentId 学生唯一标识
+     * @param ownerIds 拥有该联系人的用户ID列表
+     * @param response 联系人响应数据
      */
     private void setContactCacheForOwners(String studentId, List<String> ownerIds, ContactQueryRespDTO response) {
         for (String ownerId : ownerIds) {
@@ -133,18 +158,17 @@ public class ContactCacheService {
     }
 
     /**
-     * 设置单个owner的联系人缓存
+     * 为单个拥有者设置联系人缓存。
+     *
+     * @param ownerId 用户唯一标识
+     * @param studentId 学生唯一标识
+     * @param response 联系人响应数据
      */
     private void setContactCache(String ownerId, String studentId, ContactQueryRespDTO response) {
         String redisKey = String.format("contact:%s:%s", ownerId, studentId);
         try {
             String jsonResponse = objectMapper.writeValueAsString(response);
-            redisTemplate.opsForValue().set(
-                    redisKey,
-                    jsonResponse,
-                    1, // 1小时过期
-                    TimeUnit.HOURS
-            );
+            redisTemplate.opsForValue().set(redisKey, jsonResponse, 1, TimeUnit.HOURS);
             log.debug("Successfully set cache for owner: {}, student: {}", ownerId, studentId);
         } catch (JsonProcessingException e) {
             log.error("Failed to serialize contact data for caching, owner: {}, student: {}",
@@ -153,7 +177,11 @@ public class ContactCacheService {
     }
 
     /**
-     * 获取联系人缓存（供查询使用）
+     * 获取某个拥有者的联系人缓存。
+     *
+     * @param ownerId 拥有者用户ID
+     * @param studentId 学生唯一标识
+     * @return 反序列化后的联系人响应数据，若缓存不存在或反序列化失败则返回 null
      */
     public ContactQueryRespDTO getContactCache(String ownerId, String studentId) {
         String redisKey = String.format("contact:%s:%s", ownerId, studentId);
