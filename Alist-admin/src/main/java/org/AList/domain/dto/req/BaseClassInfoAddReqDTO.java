@@ -22,4 +22,24 @@ public class BaseClassInfoAddReqDTO {
      * 班级名称
      */
     private String className;
+
+    /**
+     * 专业标识号
+     */
+    private Integer majorNum;
+
+    /**
+     * 专业名称
+     */
+    private String majorName;
+
+    /**
+     * 学院名称
+     */
+    private String academyName;
+
+    /**
+     * 学院标识号
+     */
+    private Integer academyNum;
 }

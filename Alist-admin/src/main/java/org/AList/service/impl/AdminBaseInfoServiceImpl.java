@@ -56,6 +56,10 @@ public class AdminBaseInfoServiceImpl implements AdminBaseInfoService {
         }
         Integer classNum = requestParam.getClassNum();
         String className = requestParam.getClassName();
+        Integer majorNum = requestParam.getMajorNum();
+        String majorName = requestParam.getMajorName();
+        Integer academyNum = requestParam.getAcademyNum();
+        String academyName = requestParam.getAcademyName();
         LambdaQueryWrapper<ClassInfoDO> uniqueWrapper = Wrappers.lambdaQuery(ClassInfoDO.class)
                 .eq(ClassInfoDO::getClassNum, classNum)
                 .eq(ClassInfoDO::getClassName, className)
@@ -67,11 +71,43 @@ public class AdminBaseInfoServiceImpl implements AdminBaseInfoService {
         ClassInfoDO classInfoDO =ClassInfoDO.builder()
                 .className(className)
                 .classNum(classNum)
+                .majorNum(majorNum)
                 .build();
         int insert = classInfoMapper.insert(classInfoDO);
         if (insert!=1){
             throw new ClientException("新增异常，请重试");
         }
+        // 处理专业与学院信息
+        if (majorNum != null && academyNum != null) {
+            LambdaQueryWrapper<MajorAndAcademyDO> queryWrapper = Wrappers.lambdaQuery(MajorAndAcademyDO.class)
+                    .eq(MajorAndAcademyDO::getMajorNum, majorNum)
+                    .eq(MajorAndAcademyDO::getAcademyNum, academyNum)
+                    .eq(MajorAndAcademyDO::getDelFlag, 0);
+
+            MajorAndAcademyDO existingMajorAcademy = majorAndAcademyMapper.selectOne(queryWrapper);
+
+            MajorAndAcademyDO majorAndAcademyDO = MajorAndAcademyDO.builder()
+                    .major(majorName)
+                    .majorNum(majorNum)
+                    .academy(academyName)
+                    .academyNum(academyNum)
+                    .build();
+
+            if (existingMajorAcademy != null) {
+                // 更新现有记录
+                int updateResult = majorAndAcademyMapper.updateById(majorAndAcademyDO);
+                if (updateResult != 1) {
+                    throw new ClientException("更新专业与学院信息失败，请重试");
+                }
+            } else {
+                // 插入新记录
+                int insertResult = majorAndAcademyMapper.insert(majorAndAcademyDO);
+                if (insertResult != 1) {
+                    throw new ClientException("新增专业与学院信息失败，请重试");
+                }
+            }
+        }
+
     }
     /**
      * 更新班级基本信息。

@@ -22,7 +22,7 @@ public class AdminBaseInfoController {
     /**
      * 新增班级信息
      */
-    @PutMapping("/add")
+    @PutMapping("/addClass")
     public Result<Void> addBaseClassInfo(@RequestBody BaseClassInfoAddReqDTO requestParam){
         adminBaseInfoService.addBaseClassInfo(requestParam);
         return Results.success();
@@ -30,7 +30,7 @@ public class AdminBaseInfoController {
     /**
      * 更新班级信息
      */
-    @PostMapping("/update")
+    @PostMapping("/updateClass")
     public Result<Void> updateBaseClassInfo(@RequestBody BaseClassInfoUpdateReqDTO requestParam){
         adminBaseInfoService.updateBaseClassInfo(requestParam);
         return Results.success();
