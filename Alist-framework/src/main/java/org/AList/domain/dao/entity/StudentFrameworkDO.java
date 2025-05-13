@@ -17,7 +17,7 @@ import org.AList.common.database.BaseDO;
 @NoArgsConstructor
 @TableName("t_student_info")
 @Builder
-public class StudentDO extends BaseDO {
+public class StudentFrameworkDO extends BaseDO {
     @TableId(type = IdType.AUTO)
     /**
      * 主键ID
@@ -35,14 +35,14 @@ public class StudentDO extends BaseDO {
     private String name;
 
     /**
-     * 专业
+     * 专业编号
      */
-    private String major;
+    private String majorNum;
 
     /**
-     * 班级
+     * 班级编号
      */
-    private String className;
+    private String classNum;
 
     /**
      * 入学年份
