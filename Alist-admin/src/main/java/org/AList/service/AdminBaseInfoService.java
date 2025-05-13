@@ -42,4 +42,10 @@ public interface AdminBaseInfoService {
      * @return 分页相应
      */
     IPage<BaseAcademyInfoListMajorRespDTO> listAcademyMajor(BaseAcademyInfoListMajorReqDTO requestParam);
+
+    /**
+     * 更新班级所属的专业和学院信息，也就是班级信息的调整
+     * @param requestParam 请求参数
+     */
+    void updateBaseClassInfoMA(BaseClassInfoUpdateMAReqDTO requestParam);
 }

@@ -37,6 +37,14 @@ public class AdminBaseInfoController {
     }
 
     /**
+     * 更新班级所属的专业信息
+     */
+    @PostMapping("/updateClassMA")
+    public Result<Void> updateBaseClassInfoMA(@RequestBody BaseClassInfoUpdateMAReqDTO requestParam){
+        adminBaseInfoService.updateBaseClassInfoMA(requestParam);
+        return Results.success();
+    }
+    /**
      * 分页展示某个班级下的学生信息
      */
     @GetMapping("/listClassStu")
