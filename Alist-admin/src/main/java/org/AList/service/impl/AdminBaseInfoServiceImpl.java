@@ -28,7 +28,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Objects;
-
+/**
+ * 班级基本信息服务实现类。
+ * 提供班级信息的增删改查、学生列表展示等业务逻辑。
+ */
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -37,7 +40,12 @@ public class AdminBaseInfoServiceImpl implements AdminBaseInfoService {
     private final StudentMapper studentMapper;
     private final ContactMapper contactMapper;
     private final BaseInfoCacheService baseInfoCacheService;
-
+    /**
+     * 新增班级基本信息。
+     *
+     * @param requestParam 请求参数，包含班级编号和名称
+     * @throws ClientException 如果请求参数为空、班级编号或名称为空、或班级已存在时抛出异常
+     */
     @Override
     @Transactional(rollbackFor = Exception.class)
     public void addBaseClassInfo(BaseClassInfoAddReqDTO requestParam) {
@@ -64,7 +72,12 @@ public class AdminBaseInfoServiceImpl implements AdminBaseInfoService {
             throw new ClientException("新增异常，请重试");
         }
     }
-
+    /**
+     * 更新班级基本信息。
+     *
+     * @param requestParam 请求参数，包含班级编号和名称
+     * @throws ClientException 如果请求参数为空、班级编号或名称为空、或班级不存在时抛出异常
+     */
     @Override
     public void updateBaseClassInfo(BaseClassInfoUpdateReqDTO requestParam) {
         Objects.requireNonNull(requestParam, "请求参数不能为空");
@@ -96,7 +109,13 @@ public class AdminBaseInfoServiceImpl implements AdminBaseInfoService {
         baseInfoCacheService.evictPageCacheByClass(requestParam.getClassNum());
 
     }
-
+    /**
+     * 分页查询某个班级的学生信息，并尝试使用缓存加速访问。
+     *
+     * @param requestParam 包含班级编号、当前页码和页面大小的请求参数
+     * @return 学生信息分页结果
+     * @throws ClientException 如果请求参数为空或班级编号为空时抛出异常
+     */
     @Override
     public IPage<BaseClassInfoListStuRespDTO> listClassStu(BaseClassInfoListStuReqDTO requestParam) {
         if (requestParam == null || requestParam.getClassNum() == null) {
@@ -121,7 +140,13 @@ public class AdminBaseInfoServiceImpl implements AdminBaseInfoService {
 
         return page;
     }
-
+    /**
+     * 根据专业编号分页查询该专业下的所有班级信息。
+     *
+     * @param requestParam 请求参数，包含专业编号
+     * @return 班级信息分页结果
+     * @throws ClientException 如果请求参数为空或专业编号为空时抛出异常
+     */
     @Override
     public IPage<BaseMajorInfoListClassRespDTO> listMajorClass(BaseMajorInfoListClassReqDTO requestParam) {
         if (requestParam == null || requestParam.getMajorNum() == null) {
@@ -140,7 +165,13 @@ public class AdminBaseInfoServiceImpl implements AdminBaseInfoService {
             return respDTO;
         });
     }
-
+    /**
+     * 查询某个班级的学生列表（结合缓存）。
+     * 若缓存中没有学生通讯信息，则回退到数据库查询并写入缓存。
+     *
+     * @param requestParam 包含班级编号、当前页码和页面大小的请求参数
+     * @return 学生信息分页结果
+     */
     private IPage<BaseClassInfoListStuRespDTO> queryStudentsFromCacheAndDatabase(BaseClassInfoListStuReqDTO requestParam) {
         int current = requestParam.getCurrent()==null?1:requestParam.getCurrent();
         int size = requestParam.getSize()==null?10:requestParam.getSize();
@@ -168,7 +199,13 @@ public class AdminBaseInfoServiceImpl implements AdminBaseInfoService {
             return respDTO;
         });
     }
-
+    /**
+     * 构建完整的学生信息响应对象。
+     *
+     * @param student 学生实体对象
+     * @param contact 联系人实体对象（可为null）
+     * @return 包含学生和联系信息的响应DTO
+     */
     private BaseClassInfoListStuRespDTO buildFullResponse(StudentDO student, ContactDO contact) {
         return BaseClassInfoListStuRespDTO.builder()
                 .studentId(student.getStudentId())
