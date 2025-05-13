@@ -8,7 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.AList.domain.dao.entity.ClassInfoDO;
 import org.AList.domain.dao.entity.ContactDO;
 import org.AList.domain.dao.entity.MajorAndAcademyDO;
-import org.AList.domain.dao.entity.StudentDO;
+import org.AList.domain.dao.entity.StudentFrameworkDO;
 import org.AList.domain.dao.mapper.*;
 import org.AList.domain.dto.resp.ContactQueryRespDTO;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -38,7 +38,7 @@ public class ContactCacheService {
     private final StringRedisTemplate redisTemplate;
     private final ObjectMapper objectMapper;
     private final ContactMapper contactMapper;
-    private final StudentMapper studentMapper;
+    private final StudentFrameWorkMapper studentFrameWorkMapper;
     private final MajorAndAcademyMapper majorAndAcademyMapper;
     private final ClassInfoMapper classInfoMapper;
     private final ContactGotoMapper contactGotoMapper;
@@ -110,9 +110,9 @@ public class ContactCacheService {
             return null;
         }
 
-        StudentDO student = studentMapper.selectOne(Wrappers.lambdaQuery(StudentDO.class)
-                .eq(StudentDO::getStudentId, studentId)
-                .eq(StudentDO::getDelFlag, 0));
+        StudentFrameworkDO student = studentFrameWorkMapper.selectOne(Wrappers.lambdaQuery(StudentFrameworkDO.class)
+                .eq(StudentFrameworkDO::getStudentId, studentId)
+                .eq(StudentFrameworkDO::getDelFlag, 0));
 
         if (student == null) {
             log.warn("学生信息不存在，studentId: {}", studentId);
@@ -121,12 +121,12 @@ public class ContactCacheService {
 
         MajorAndAcademyDO majorAndAcademy = majorAndAcademyMapper.selectOne(
                 Wrappers.lambdaQuery(MajorAndAcademyDO.class)
-                        .eq(MajorAndAcademyDO::getMajorNum, student.getMajor())
+                        .eq(MajorAndAcademyDO::getMajorNum, student.getClassNum())
                         .eq(MajorAndAcademyDO::getDelFlag, 0));
 
         ClassInfoDO classInfo = classInfoMapper.selectOne(
                 Wrappers.lambdaQuery(ClassInfoDO.class)
-                        .eq(ClassInfoDO::getClassNum, student.getClassName())
+                        .eq(ClassInfoDO::getClassNum, student.getClassNum())
                         .eq(ClassInfoDO::getDelFlag, 0));
 
         return ContactQueryRespDTO.builder()

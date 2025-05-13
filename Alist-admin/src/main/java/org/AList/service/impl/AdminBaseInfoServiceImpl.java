@@ -2,6 +2,7 @@ package org.AList.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.Wrapper;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
@@ -9,14 +10,8 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.AList.common.convention.exception.ClientException;
-import org.AList.domain.dao.entity.ClassInfoDO;
-import org.AList.domain.dao.entity.ContactDO;
-import org.AList.domain.dao.entity.MajorAndAcademyDO;
-import org.AList.domain.dao.entity.StudentDO;
-import org.AList.domain.dao.mapper.ClassInfoMapper;
-import org.AList.domain.dao.mapper.ContactMapper;
-import org.AList.domain.dao.mapper.MajorAndAcademyMapper;
-import org.AList.domain.dao.mapper.StudentMapper;
+import org.AList.domain.dao.entity.*;
+import org.AList.domain.dao.mapper.*;
 import org.AList.domain.dto.req.*;
 import org.AList.domain.dto.resp.BaseAcademyInfoListMajorRespDTO;
 import org.AList.domain.dto.resp.BaseClassInfoListStuRespDTO;
@@ -37,10 +32,11 @@ import java.util.Objects;
 @Slf4j
 public class AdminBaseInfoServiceImpl implements AdminBaseInfoService {
     private final ClassInfoMapper classInfoMapper;
-    private final StudentMapper studentMapper;
+    private final StudentFrameWorkMapper studentFrameWorkMapper;
     private final ContactMapper contactMapper;
     private final MajorAndAcademyMapper majorAndAcademyMapper;
     private final BaseInfoCacheService baseInfoCacheService;
+    private final StudentDefaultInfoMapper studentDefaultInfoMapper;
     /**
      * 新增班级基本信息。
      *
@@ -231,6 +227,123 @@ public class AdminBaseInfoServiceImpl implements AdminBaseInfoService {
     }
 
     /**
+     * 更新班级所属的专业和学院信息，包括班级信息的调整
+     * 如果专业或班级信息变更，会同步更新相关学生表中的信息
+     *
+     * @param requestParam 请求参数
+     */
+    @Override
+    public void updateBaseClassInfoMA(BaseClassInfoUpdateMAReqDTO requestParam) {
+        // 参数校验
+        if (requestParam == null || requestParam.getClassNum() == null) {
+            throw new ClientException("请求参数或班级编号不能为空");
+        }
+
+        // 查询原始班级信息
+        LambdaQueryWrapper<ClassInfoDO> classInfoWrapper = Wrappers.lambdaQuery(ClassInfoDO.class)
+                .eq(ClassInfoDO::getClassNum, requestParam.getClassNum())
+                .eq(ClassInfoDO::getDelFlag, 0);
+        ClassInfoDO originalClassInfo = classInfoMapper.selectOne(classInfoWrapper);
+
+        if (originalClassInfo == null) {
+            throw new ClientException("您修改的班级不存在");
+        }
+
+        // 查询原始专业和学院信息
+        Integer originalMajorNum = originalClassInfo.getMajorNum();
+        LambdaQueryWrapper<MajorAndAcademyDO> MAWrapper = Wrappers.lambdaQuery(MajorAndAcademyDO.class)
+                .eq(MajorAndAcademyDO::getMajorNum, originalMajorNum);
+        MajorAndAcademyDO originalMAInfo = majorAndAcademyMapper.selectOne(MAWrapper);
+
+        if (originalMAInfo == null) {
+            throw new ClientException("关联的专业信息不存在");
+        }
+
+        // 检查哪些字段需要更新
+        boolean classNameChanged = StringUtils.isNotBlank(requestParam.getClassName())
+                && !requestParam.getClassName().equals(originalClassInfo.getClassName());
+        boolean majorNumChanged = requestParam.getMajorNum() != null
+                && !requestParam.getMajorNum().equals(originalMajorNum);
+
+        // 更新班级信息（如果有变更）
+        if (classNameChanged || majorNumChanged) {
+            ClassInfoDO updateClassInfoDO = new ClassInfoDO();
+            updateClassInfoDO.setId(originalClassInfo.getId());
+
+            if (classNameChanged) {
+                updateClassInfoDO.setClassName(requestParam.getClassName());
+            }
+            if (majorNumChanged) {
+                updateClassInfoDO.setMajorNum(requestParam.getMajorNum());
+            }
+
+            classInfoMapper.updateById(updateClassInfoDO);
+        }
+
+        // 检查专业和学院信息是否需要更新
+        boolean majorNameChanged = StringUtils.isNotBlank(requestParam.getMajorName())
+                && !requestParam.getMajorName().equals(originalMAInfo.getMajor());
+        boolean academyNumChanged = requestParam.getAcademyNum() != null
+                && !requestParam.getAcademyNum().equals(originalMAInfo.getAcademyNum());
+        boolean academyNameChanged = StringUtils.isNotBlank(requestParam.getAcademyName())
+                && !requestParam.getAcademyName().equals(originalMAInfo.getAcademy());
+
+        // 更新专业和学院信息（如果有变更）
+        if (majorNumChanged || majorNameChanged || academyNumChanged || academyNameChanged) {
+            MajorAndAcademyDO updateMA = new MajorAndAcademyDO();
+            updateMA.setId(originalMAInfo.getId());
+
+            if (majorNumChanged) {
+                updateMA.setMajorNum(requestParam.getMajorNum());
+            }
+            if (majorNameChanged) {
+                updateMA.setMajor(requestParam.getMajorName());
+            }
+            if (academyNumChanged) {
+                updateMA.setAcademyNum(requestParam.getAcademyNum());
+            }
+            if (academyNameChanged) {
+                updateMA.setAcademy(requestParam.getAcademyName());
+            }
+
+            majorAndAcademyMapper.updateById(updateMA);
+        }
+
+        // 如果专业编号或班级名称有变更，需要更新学生表
+        if (majorNumChanged || classNameChanged) {
+            updateStudentInfo(String.valueOf(requestParam.getClassNum()),
+                    majorNumChanged ? requestParam.getMajorNum() : originalMajorNum
+            );
+        }
+    }
+
+    /**
+     * 更新学生信息表中的专业和班级信息
+     *
+     * @param classNum 班级编号
+     * @param majorNum 专业编号
+     */
+    private void updateStudentInfo(String classNum, Integer majorNum) {
+        // 更新StudentDO表
+        StudentFrameworkDO studentUpdate = new StudentFrameworkDO();
+        studentUpdate.setMajorNum(String.valueOf(majorNum));
+        studentUpdate.setClassNum(classNum);
+
+        LambdaUpdateWrapper<StudentFrameworkDO> studentWrapper = Wrappers.lambdaUpdate(StudentFrameworkDO.class)
+                .eq(StudentFrameworkDO::getClassNum, classNum);
+        studentFrameWorkMapper.update(studentUpdate, studentWrapper);
+
+        // 更新StudentDefaultInfoDO表
+        StudentDefaultInfoDO studentDefaultUpdate = new StudentDefaultInfoDO();
+        studentDefaultUpdate.setMajorNum(String.valueOf(majorNum));
+        studentDefaultUpdate.setClassNum(classNum);
+
+        LambdaUpdateWrapper<StudentDefaultInfoDO> studentDefaultWrapper = Wrappers.lambdaUpdate(StudentDefaultInfoDO.class)
+                .eq(StudentDefaultInfoDO::getClassNum, classNum);
+        studentDefaultInfoMapper.update(studentDefaultUpdate, studentDefaultWrapper);
+    }
+
+    /**
      * 查询某个班级的学生列表（结合缓存）。
      * 若缓存中没有学生通讯信息，则回退到数据库查询并写入缓存。
      *
@@ -240,14 +353,14 @@ public class AdminBaseInfoServiceImpl implements AdminBaseInfoService {
     private IPage<BaseClassInfoListStuRespDTO> queryStudentsFromCacheAndDatabase(BaseClassInfoListStuReqDTO requestParam) {
         int current = requestParam.getCurrent()==null?1:requestParam.getCurrent();
         int size = requestParam.getSize()==null?10:requestParam.getSize();
-        Page<StudentDO> page = new Page<>(current, size);
+        Page<StudentFrameworkDO> page = new Page<>(current, size);
 
-        LambdaQueryWrapper<StudentDO> queryWrapper = Wrappers.lambdaQuery(StudentDO.class)
-                .eq(StudentDO::getClassName, requestParam.getClassNum())
-                .eq(StudentDO::getDelFlag, 0)
-                .orderByAsc(StudentDO::getStudentId);
+        LambdaQueryWrapper<StudentFrameworkDO> queryWrapper = Wrappers.lambdaQuery(StudentFrameworkDO.class)
+                .eq(StudentFrameworkDO::getClassNum, requestParam.getClassNum())
+                .eq(StudentFrameworkDO::getDelFlag, 0)
+                .orderByAsc(StudentFrameworkDO::getStudentId);
 
-        IPage<StudentDO> studentPage = studentMapper.selectPage(page, queryWrapper);
+        IPage<StudentFrameworkDO> studentPage = studentFrameWorkMapper.selectPage(page, queryWrapper);
 
         return studentPage.convert(student -> {
             String studentId = student.getStudentId();
@@ -271,7 +384,7 @@ public class AdminBaseInfoServiceImpl implements AdminBaseInfoService {
      * @param contact 联系人实体对象（可为null）
      * @return 包含学生和联系信息的响应DTO
      */
-    private BaseClassInfoListStuRespDTO buildFullResponse(StudentDO student, ContactDO contact) {
+    private BaseClassInfoListStuRespDTO buildFullResponse(StudentFrameworkDO student, ContactDO contact) {
         return BaseClassInfoListStuRespDTO.builder()
                 .studentId(student.getStudentId())
                 .name(student.getName())

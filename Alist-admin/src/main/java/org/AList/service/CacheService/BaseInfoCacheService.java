@@ -10,9 +10,9 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.AList.domain.dao.entity.ContactGotoDO;
-import org.AList.domain.dao.entity.StudentDO;
+import org.AList.domain.dao.entity.StudentFrameworkDO;
 import org.AList.domain.dao.mapper.ContactGotoMapper;
-import org.AList.domain.dao.mapper.StudentMapper;
+import org.AList.domain.dao.mapper.StudentFrameWorkMapper;
 import org.AList.domain.dto.resp.BaseClassInfoListStuRespDTO;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
@@ -29,7 +29,7 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 public class BaseInfoCacheService {
     private final StringRedisTemplate stringRedisTemplate;
-    private final StudentMapper studentMapper;
+    private final StudentFrameWorkMapper studentFrameWorkMapper;
     private final ContactGotoMapper contactGotoMapper;
 
 
@@ -49,11 +49,11 @@ public class BaseInfoCacheService {
      */
     public void clearStudentContactCacheByClass(Integer classNum) {
         // 1. 查询该班级下的所有学生
-        LambdaQueryWrapper<StudentDO> studentQueryWrapper = Wrappers.lambdaQuery(StudentDO.class)
-                .eq(StudentDO::getClassName, classNum)
-                .eq(StudentDO::getDelFlag, 0);
+        LambdaQueryWrapper<StudentFrameworkDO> studentQueryWrapper = Wrappers.lambdaQuery(StudentFrameworkDO.class)
+                .eq(StudentFrameworkDO::getClassNum, classNum)
+                .eq(StudentFrameworkDO::getDelFlag, 0);
 
-        List<StudentDO> students = studentMapper.selectList(studentQueryWrapper);
+        List<StudentFrameworkDO> students = studentFrameWorkMapper.selectList(studentQueryWrapper);
         if (CollectionUtils.isEmpty(students)) {
             return;
         }

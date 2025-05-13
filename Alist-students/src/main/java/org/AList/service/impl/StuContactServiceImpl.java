@@ -38,7 +38,7 @@ import java.util.stream.Collectors;
 public class StuContactServiceImpl extends ServiceImpl<ContactMapper, ContactDO> implements StuContactService {
     private final ContactMapper contactMapper;
     private final ContactGotoMapper contactGotoMapper;
-    private final StudentMapper studentMapper;
+    private final StudentFrameWorkMapper studentFrameWorkMapper;
     private final MajorAndAcademyMapper majorAndAcademyMapper;
     private final ClassInfoMapper classInfoMapper;
     private final StringRedisTemplate stringRedisTemplate;
@@ -203,10 +203,10 @@ public class StuContactServiceImpl extends ServiceImpl<ContactMapper, ContactDO>
         String employer=contact.getEmployer();
         String city=contact.getCity();
 
-        LambdaQueryWrapper<StudentDO> studentInfoWrapper = Wrappers.lambdaQuery(StudentDO.class)
-                .eq(StudentDO::getStudentId, studentId)
-                .eq(StudentDO::getDelFlag, 0);
-        StudentDO student=studentMapper.selectOne(studentInfoWrapper);
+        LambdaQueryWrapper<StudentFrameworkDO> studentInfoWrapper = Wrappers.lambdaQuery(StudentFrameworkDO.class)
+                .eq(StudentFrameworkDO::getStudentId, studentId)
+                .eq(StudentFrameworkDO::getDelFlag, 0);
+        StudentFrameworkDO student= studentFrameWorkMapper.selectOne(studentInfoWrapper);
         if (Objects.isNull(student)) {
             throw new ClientException("通讯录信息不存在或已被删除");
         }
@@ -216,7 +216,7 @@ public class StuContactServiceImpl extends ServiceImpl<ContactMapper, ContactDO>
         String phone=student.getPhone();
         String email=student.getEmail();
 
-        String majorNum=student.getMajor();
+        String majorNum=student.getMajorNum();
 
         LambdaQueryWrapper<MajorAndAcademyDO> majorAndAcademyWrapper = Wrappers.lambdaQuery(MajorAndAcademyDO.class)
                 .eq(MajorAndAcademyDO::getMajorNum, majorNum)
@@ -229,7 +229,7 @@ public class StuContactServiceImpl extends ServiceImpl<ContactMapper, ContactDO>
         String academyName=majorAndAcademy.getAcademy();
 
 
-        String classNum=student.getClassName();
+        String classNum=student.getClassNum();
         LambdaQueryWrapper<ClassInfoDO> classInfoWrapper = Wrappers.lambdaQuery(ClassInfoDO.class)
                 .eq(ClassInfoDO::getClassNum, classNum)
                 .eq(ClassInfoDO::getDelFlag, 0);
@@ -358,19 +358,19 @@ public class StuContactServiceImpl extends ServiceImpl<ContactMapper, ContactDO>
                         return null;
                     }
 
-                    StudentDO student = studentMapper.selectOne(Wrappers.lambdaQuery(StudentDO.class)
-                            .eq(StudentDO::getStudentId, gotoRecord.getContactId())
-                            .eq(StudentDO::getDelFlag, 0));
+                    StudentFrameworkDO student = studentFrameWorkMapper.selectOne(Wrappers.lambdaQuery(StudentFrameworkDO.class)
+                            .eq(StudentFrameworkDO::getStudentId, gotoRecord.getContactId())
+                            .eq(StudentFrameworkDO::getDelFlag, 0));
                     if (student == null) {
                         return null;
                     }
 
                     String majorName = "";
                     String academyName = "";
-                    if (student.getMajor() != null) {
+                    if (student.getMajorNum() != null) {
                         MajorAndAcademyDO majorAndAcademy = majorAndAcademyMapper.selectOne(
                                 Wrappers.lambdaQuery(MajorAndAcademyDO.class)
-                                        .eq(MajorAndAcademyDO::getMajorNum, student.getMajor())
+                                        .eq(MajorAndAcademyDO::getMajorNum, student.getMajorNum())
                                         .eq(MajorAndAcademyDO::getDelFlag, 0));
                         if (majorAndAcademy != null) {
                             majorName = majorAndAcademy.getMajor();
@@ -379,10 +379,10 @@ public class StuContactServiceImpl extends ServiceImpl<ContactMapper, ContactDO>
                     }
 
                     String className = "";
-                    if (student.getClassName() != null) {
+                    if (student.getClassNum() != null) {
                         ClassInfoDO classInfo = classInfoMapper.selectOne(
                                 Wrappers.lambdaQuery(ClassInfoDO.class)
-                                        .eq(ClassInfoDO::getClassNum, student.getClassName())
+                                        .eq(ClassInfoDO::getClassNum, student.getClassNum())
                                         .eq(ClassInfoDO::getDelFlag, 0));
                         if (classInfo != null) {
                             className = classInfo.getClassName();
