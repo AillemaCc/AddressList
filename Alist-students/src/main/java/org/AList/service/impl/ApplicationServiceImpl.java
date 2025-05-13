@@ -155,8 +155,10 @@ public class ApplicationServiceImpl extends ServiceImpl<ApplicationMapper, Appli
     @Override
 
     public IPage<ApplicationQueryPageRespDTO> listAllDeleteApplication(ApplicationReceiveQueryPageReqDTO requestParam) {
+        int current=requestParam.getCurrent()==null?1:requestParam.getCurrent();
+        int size=requestParam.getSize()==null?10:requestParam.getSize();
         // 1. 构造分页参数
-        Page<ApplicationDO> page = new Page<>(1,10);
+        Page<ApplicationDO> page = new Page<>(current,size);
 
         // 2. 调用自定义SQL查询
         IPage<ApplicationDO> resultPage = applicationMapper.selectDeletedApplications(

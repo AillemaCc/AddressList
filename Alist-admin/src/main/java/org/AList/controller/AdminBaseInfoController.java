@@ -38,10 +38,6 @@ public class AdminBaseInfoController {
         return Results.success();
     }
 
-    /*
-      删除班级信息--不应该实现
-     */
-
     /**
      * 分页展示某个班级下的学生信息
      */

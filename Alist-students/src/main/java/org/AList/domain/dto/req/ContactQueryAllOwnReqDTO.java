@@ -12,9 +12,19 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class ContactQueryAllOwnReqDTO {
+public class ContactQueryAllOwnReqDTO{
     /**
      * 通讯信息的owner学号
      */
     private String ownerId;
+
+    /**
+     * 当前页码（从1开始，非必填，默认1）
+     */
+    private Integer current = 1;
+
+    /**
+     * 每页数量（非必填，默认10）
+     */
+    private Integer size = 10;
 }

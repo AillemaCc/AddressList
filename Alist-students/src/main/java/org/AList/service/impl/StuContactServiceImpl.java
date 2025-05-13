@@ -278,12 +278,14 @@ public class StuContactServiceImpl extends ServiceImpl<ContactMapper, ContactDO>
     @Override
     public IPage<ContactQueryRespDTO> queryContactList(ContactQueryAllOwnReqDTO requestParam) {
         String ownerId=requestParam.getOwnerId();
+        int current=requestParam.getCurrent()==null?1:requestParam.getCurrent();
+        int size=requestParam.getSize()==null?10:requestParam.getSize();
         LambdaQueryWrapper<ContactGotoDO> queryWrapper = Wrappers.lambdaQuery(ContactGotoDO.class)
                 .eq(ContactGotoDO::getOwnerId, ownerId)
                 .eq(ContactGotoDO::getDelFlag, 0);
         List<ContactGotoDO> gotoList = contactGotoMapper.selectList(queryWrapper);
         if(Objects.isNull(gotoList)){
-            return new Page<>(1,10,0);
+            return new Page<>(current,size,0);
         }
         List<String> contactIds=gotoList.stream()
                 .map(ContactGotoDO::getContactId)
@@ -291,7 +293,7 @@ public class StuContactServiceImpl extends ServiceImpl<ContactMapper, ContactDO>
         LambdaQueryWrapper<ContactDO> contactQueryWrapper = Wrappers.lambdaQuery(ContactDO.class)
                 .in(ContactDO::getStudentId, contactIds)
                 .eq(ContactDO::getDelFlag, 0);
-        Page<ContactDO> page = new Page<>(1,10);
+        Page<ContactDO> page = new Page<>(current,size);
         IPage<ContactDO> contactPage = contactMapper.selectPage(page, contactQueryWrapper);
         return contactPage.convert(contactDO -> {
             ContactQueryRespDTO respDTO = new ContactQueryRespDTO();
@@ -339,9 +341,10 @@ public class StuContactServiceImpl extends ServiceImpl<ContactMapper, ContactDO>
     @Override
     public IPage<ContactQueryRespDTO> queryContactListAllDelete(ContactQueryAllOwnReqDTO requestParam) {
         StuIdContext.verifyLoginUser(requestParam.getOwnerId());
-
+        int current=requestParam.getCurrent()==null?1:requestParam.getCurrent();
+        int size=requestParam.getSize()==null?10:requestParam.getSize();
         // 查询已删除的联系人分页数据
-        Page<ContactGotoDO> page = new Page<>(1, 10);
+        Page<ContactGotoDO> page = new Page<>(current, size);
         IPage<ContactGotoDO> gotoResult = contactGotoMapper.selectDeletedContact(page, requestParam.getOwnerId());
 
         // 将 IPage<ContactGotoDO> 转换为 List<ContactQueryRespDTO> 并过滤 null 值

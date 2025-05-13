@@ -152,7 +152,9 @@ public class AdminBaseInfoServiceImpl implements AdminBaseInfoService {
         if (requestParam == null || requestParam.getMajorNum() == null) {
             throw new ClientException("请求参数或专业编号不能为空");
         }
-        Page<ClassInfoDO> page = new Page<>(1, 10);
+        int current = requestParam.getCurrent()==null?1:requestParam.getCurrent();
+        int size = requestParam.getSize()==null?10:requestParam.getSize();
+        Page<ClassInfoDO> page = new Page<>(current, size);
         Wrapper<ClassInfoDO> queryWrapper = Wrappers.lambdaQuery(ClassInfoDO.class)
                 .eq(ClassInfoDO::getMajorNum, requestParam.getMajorNum())
                 .eq(ClassInfoDO::getDelFlag, 0)

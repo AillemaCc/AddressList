@@ -52,7 +52,7 @@ public class AdministerAuditServiceImpl extends ServiceImpl<RegisterMapper, Regi
                 .eq(RegisterDO::getStatus, 0)
                 .eq(RegisterDO::getDelFlag, 0)
                 .orderByDesc(RegisterDO::getCreateTime);
-        IPage<RegisterDO> resultPage=baseMapper.selectPage(new Page<>(), queryWrapper);
+        IPage<RegisterDO> resultPage=baseMapper.selectPage(new Page<>(1,10), queryWrapper);
         return resultPage.convert(each -> BeanUtil.toBean(each,AuditUserPageRespDTO.class));
     }
 
@@ -160,7 +160,7 @@ public class AdministerAuditServiceImpl extends ServiceImpl<RegisterMapper, Regi
                 .eq(RegisterDO::getStatus, 1)
                 .eq(RegisterDO::getDelFlag, 0)
                 .orderByDesc(RegisterDO::getCreateTime);
-        IPage<RegisterDO> resultPage=baseMapper.selectPage(new Page<>(), queryWrapper);
+        IPage<RegisterDO> resultPage=baseMapper.selectPage(new Page<>(1,10), queryWrapper);
         return resultPage.convert(each -> BeanUtil.toBean(each,AuditUserPageRespDTO.class));
     }
 
@@ -175,7 +175,7 @@ public class AdministerAuditServiceImpl extends ServiceImpl<RegisterMapper, Regi
                 .eq(RegisterDO::getStatus, 2)
                 .eq(RegisterDO::getDelFlag, 0)
                 .orderByDesc(RegisterDO::getCreateTime);
-        IPage<RegisterDO> resultPage=baseMapper.selectPage(new Page<>(), queryWrapper);
+        IPage<RegisterDO> resultPage=baseMapper.selectPage(new Page<>(1,10), queryWrapper);
         return resultPage.convert(each -> BeanUtil.toBean(each,AuditUserPageRespDTO.class));
     }
 
