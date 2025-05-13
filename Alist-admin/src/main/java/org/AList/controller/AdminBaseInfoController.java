@@ -4,10 +4,8 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import lombok.RequiredArgsConstructor;
 import org.AList.common.convention.result.Result;
 import org.AList.common.convention.result.Results;
-import org.AList.domain.dto.req.BaseClassInfoAddReqDTO;
-import org.AList.domain.dto.req.BaseClassInfoListStuReqDTO;
-import org.AList.domain.dto.req.BaseClassInfoUpdateReqDTO;
-import org.AList.domain.dto.req.BaseMajorInfoListClassReqDTO;
+import org.AList.domain.dto.req.*;
+import org.AList.domain.dto.resp.BaseAcademyInfoListMajorRespDTO;
 import org.AList.domain.dto.resp.BaseClassInfoListStuRespDTO;
 import org.AList.domain.dto.resp.BaseMajorInfoListClassRespDTO;
 import org.AList.service.AdminBaseInfoService;
@@ -53,4 +51,13 @@ public class AdminBaseInfoController {
     public Result<IPage<BaseMajorInfoListClassRespDTO>> listMajorClass(@RequestBody BaseMajorInfoListClassReqDTO requestParam){
         return Results.success(adminBaseInfoService.listMajorClass(requestParam));
     }
+
+    /**
+     * 分页展示某个学院下的专业信息
+     */
+    @GetMapping("/listAcademyMajor")
+    public Result<IPage<BaseAcademyInfoListMajorRespDTO>> listAcademyMajor(@RequestBody BaseAcademyInfoListMajorReqDTO requestParam){
+        return Results.success(adminBaseInfoService.listAcademyMajor(requestParam));
+    }
+
 }

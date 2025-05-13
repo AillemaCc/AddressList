@@ -1,10 +1,8 @@
 package org.AList.service;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
-import org.AList.domain.dto.req.BaseClassInfoAddReqDTO;
-import org.AList.domain.dto.req.BaseClassInfoListStuReqDTO;
-import org.AList.domain.dto.req.BaseClassInfoUpdateReqDTO;
-import org.AList.domain.dto.req.BaseMajorInfoListClassReqDTO;
+import org.AList.domain.dto.req.*;
+import org.AList.domain.dto.resp.BaseAcademyInfoListMajorRespDTO;
 import org.AList.domain.dto.resp.BaseClassInfoListStuRespDTO;
 import org.AList.domain.dto.resp.BaseMajorInfoListClassRespDTO;
 
@@ -37,4 +35,11 @@ public interface AdminBaseInfoService {
      * @return 分页响应
      */
     IPage<BaseMajorInfoListClassRespDTO> listMajorClass(BaseMajorInfoListClassReqDTO requestParam);
+
+    /**
+     * 分页展示某个学院下的班级信息
+     * @param requestParam 查询学院下面的专业请求体
+     * @return 分页相应
+     */
+    IPage<BaseAcademyInfoListMajorRespDTO> listAcademyMajor(BaseAcademyInfoListMajorReqDTO requestParam);
 }

@@ -11,14 +11,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.AList.common.convention.exception.ClientException;
 import org.AList.domain.dao.entity.ClassInfoDO;
 import org.AList.domain.dao.entity.ContactDO;
+import org.AList.domain.dao.entity.MajorAndAcademyDO;
 import org.AList.domain.dao.entity.StudentDO;
 import org.AList.domain.dao.mapper.ClassInfoMapper;
 import org.AList.domain.dao.mapper.ContactMapper;
+import org.AList.domain.dao.mapper.MajorAndAcademyMapper;
 import org.AList.domain.dao.mapper.StudentMapper;
-import org.AList.domain.dto.req.BaseClassInfoAddReqDTO;
-import org.AList.domain.dto.req.BaseClassInfoListStuReqDTO;
-import org.AList.domain.dto.req.BaseClassInfoUpdateReqDTO;
-import org.AList.domain.dto.req.BaseMajorInfoListClassReqDTO;
+import org.AList.domain.dto.req.*;
+import org.AList.domain.dto.resp.BaseAcademyInfoListMajorRespDTO;
 import org.AList.domain.dto.resp.BaseClassInfoListStuRespDTO;
 import org.AList.domain.dto.resp.BaseMajorInfoListClassRespDTO;
 import org.AList.service.AdminBaseInfoService;
@@ -39,6 +39,7 @@ public class AdminBaseInfoServiceImpl implements AdminBaseInfoService {
     private final ClassInfoMapper classInfoMapper;
     private final StudentMapper studentMapper;
     private final ContactMapper contactMapper;
+    private final MajorAndAcademyMapper majorAndAcademyMapper;
     private final BaseInfoCacheService baseInfoCacheService;
     /**
      * 新增班级基本信息。
@@ -167,6 +168,32 @@ public class AdminBaseInfoServiceImpl implements AdminBaseInfoService {
             return respDTO;
         });
     }
+
+    /**
+     * 分页展示某个学院下的班级信息
+     *
+     * @param requestParam 查询学院下面的专业请求体
+     * @return 分页相应
+     */
+    @Override
+    public IPage<BaseAcademyInfoListMajorRespDTO> listAcademyMajor(BaseAcademyInfoListMajorReqDTO requestParam) {
+        if(requestParam==null||requestParam.getAcademyNum()==null){
+            throw new ClientException("请求参数或学院编号不能为空");
+        }
+        int current = requestParam.getCurrent()==null?1:requestParam.getCurrent();
+        int size = requestParam.getSize()==null?10:requestParam.getSize();
+        LambdaQueryWrapper<MajorAndAcademyDO> queryWrapper = Wrappers.lambdaQuery(MajorAndAcademyDO.class)
+                .eq(MajorAndAcademyDO::getAcademyNum, requestParam.getAcademyNum())
+                .eq(MajorAndAcademyDO::getDelFlag, 0);
+        Page<MajorAndAcademyDO> page=new Page<>(current, size);
+        IPage<MajorAndAcademyDO> majorPage=majorAndAcademyMapper.selectPage(page,queryWrapper);
+        return majorPage.convert(major->{
+            BaseAcademyInfoListMajorRespDTO responseDTO = new BaseAcademyInfoListMajorRespDTO();
+            BeanUtils.copyProperties(major, responseDTO);
+            return responseDTO;
+        });
+    }
+
     /**
      * 查询某个班级的学生列表（结合缓存）。
      * 若缓存中没有学生通讯信息，则回退到数据库查询并写入缓存。
