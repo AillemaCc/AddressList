@@ -58,7 +58,6 @@ public class ApplicationServiceImpl extends ServiceImpl<ApplicationMapper, Appli
             throw new ClientException("您不能给自己发送申请");
         }
 
-
         // 先判断接收者是不是存在 也就是接收者是不是注册过
         LambdaQueryWrapper<StudentFrameworkDO> validQueryWrapper = Wrappers.lambdaQuery(StudentFrameworkDO.class)
                 .eq(StudentFrameworkDO::getStudentId, requestParam.getReceiver())
