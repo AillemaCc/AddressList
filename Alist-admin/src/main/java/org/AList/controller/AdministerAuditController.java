@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.AList.common.convention.result.Result;
 import org.AList.common.convention.result.Results;
 import org.AList.domain.dto.req.AccpetRegistrationReqDTO;
+import org.AList.domain.dto.req.AuditListReqDTO;
 import org.AList.domain.dto.req.BanStudentReqDTO;
 import org.AList.domain.dto.req.RefuseRegistrationReqDTO;
 import org.AList.domain.dto.resp.AuditUserPageRespDTO;
@@ -25,8 +26,8 @@ public class AdministerAuditController {
      * @return 所有待审核请求
      */
     @GetMapping("/auditList")
-    public Result<IPage<AuditUserPageRespDTO>> listAuditRegister(){
-        return Results.success(administerAuditService.listAuditRegister());
+    public Result<IPage<AuditUserPageRespDTO>> listAuditRegister(@RequestBody AuditListReqDTO requestParam){
+        return Results.success(administerAuditService.listAuditRegister(requestParam));
     }
 
     /**
@@ -34,8 +35,8 @@ public class AdministerAuditController {
      * @return 所有已通过请求
      */
     @GetMapping("/validList")
-    public Result<IPage<AuditUserPageRespDTO>> listAuditRegisterValid(){
-        return Results.success(administerAuditService.listAuditRegisterValid());
+    public Result<IPage<AuditUserPageRespDTO>> listAuditRegisterValid(@RequestBody AuditListReqDTO requestParam){
+        return Results.success(administerAuditService.listAuditRegisterValid(requestParam));
     }
 
     /**
@@ -43,8 +44,8 @@ public class AdministerAuditController {
      * @return 所有被拒绝请求
      */
     @GetMapping("/refuseList")
-    public Result<IPage<AuditUserPageRespDTO>> listAuditRegisterRefuse(){
-        return Results.success(administerAuditService.listAuditRegisterRefuse());
+    public Result<IPage<AuditUserPageRespDTO>> listAuditRegisterRefuse(@RequestBody AuditListReqDTO requestParam){
+        return Results.success(administerAuditService.listAuditRegisterRefuse(requestParam));
     }
 
     /**

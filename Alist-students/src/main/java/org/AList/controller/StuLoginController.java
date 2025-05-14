@@ -1,6 +1,7 @@
 package org.AList.controller;
 
 import lombok.RequiredArgsConstructor;
+import org.AList.annotation.MyLog;
 import org.AList.common.convention.result.Result;
 import org.AList.common.convention.result.Results;
 import org.AList.domain.dto.req.StuLoginReqDTO;
@@ -27,6 +28,7 @@ public class StuLoginController {
      * @return 学生登录响应体
      */
     @PostMapping("/login")
+    @MyLog(title = "登录模块", content = "登录操作")
     public Result<StuLoginRespDTO> login(@RequestBody StuLoginReqDTO requestParam, HttpServletRequest request) {
         StuLoginRespDTO userLoginRespDTO= stuService.login(requestParam, request);
         return Results.success(userLoginRespDTO).setMessage("登录成功");

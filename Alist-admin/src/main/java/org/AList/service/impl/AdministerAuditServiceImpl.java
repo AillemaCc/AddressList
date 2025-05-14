@@ -17,6 +17,7 @@ import org.AList.domain.dao.mapper.RegisterMapper;
 import org.AList.domain.dao.mapper.StudentDefaultInfoMapper;
 import org.AList.domain.dao.mapper.StudentFrameWorkMapper;
 import org.AList.domain.dto.req.AccpetRegistrationReqDTO;
+import org.AList.domain.dto.req.AuditListReqDTO;
 import org.AList.domain.dto.req.BanStudentReqDTO;
 import org.AList.domain.dto.req.RefuseRegistrationReqDTO;
 import org.AList.domain.dto.resp.AuditUserPageRespDTO;
@@ -47,12 +48,14 @@ public class AdministerAuditServiceImpl extends ServiceImpl<RegisterMapper, Regi
      * @return 待审核用户列表
      */
     @Override
-    public IPage<AuditUserPageRespDTO> listAuditRegister() {
+    public IPage<AuditUserPageRespDTO> listAuditRegister(AuditListReqDTO requestParam) {
+        int current=requestParam.getCurrent()==null?1:requestParam.getCurrent();
+        int size=requestParam.getSize()==null?10:requestParam.getSize();
         LambdaQueryWrapper<RegisterDO> queryWrapper = Wrappers.lambdaQuery(RegisterDO.class)
                 .eq(RegisterDO::getStatus, 0)
                 .eq(RegisterDO::getDelFlag, 0)
                 .orderByDesc(RegisterDO::getCreateTime);
-        IPage<RegisterDO> resultPage=baseMapper.selectPage(new Page<>(1,10), queryWrapper);
+        IPage<RegisterDO> resultPage=baseMapper.selectPage(new Page<>(current,size), queryWrapper);
         return resultPage.convert(each -> BeanUtil.toBean(each,AuditUserPageRespDTO.class));
     }
 
@@ -155,12 +158,14 @@ public class AdministerAuditServiceImpl extends ServiceImpl<RegisterMapper, Regi
      * @return 合法用户分页信息
      */
     @Override
-    public IPage<AuditUserPageRespDTO> listAuditRegisterValid() {
+    public IPage<AuditUserPageRespDTO> listAuditRegisterValid(AuditListReqDTO requestParam) {
+        int current=requestParam.getCurrent()==null?1:requestParam.getCurrent();
+        int size=requestParam.getSize()==null?10:requestParam.getSize();
         LambdaQueryWrapper<RegisterDO> queryWrapper = Wrappers.lambdaQuery(RegisterDO.class)
                 .eq(RegisterDO::getStatus, 1)
                 .eq(RegisterDO::getDelFlag, 0)
                 .orderByDesc(RegisterDO::getCreateTime);
-        IPage<RegisterDO> resultPage=baseMapper.selectPage(new Page<>(1,10), queryWrapper);
+        IPage<RegisterDO> resultPage=baseMapper.selectPage(new Page<>(current,size), queryWrapper);
         return resultPage.convert(each -> BeanUtil.toBean(each,AuditUserPageRespDTO.class));
     }
 
@@ -170,12 +175,14 @@ public class AdministerAuditServiceImpl extends ServiceImpl<RegisterMapper, Regi
      * @return 被拒绝用户分页信息
      */
     @Override
-    public IPage<AuditUserPageRespDTO> listAuditRegisterRefuse() {
+    public IPage<AuditUserPageRespDTO> listAuditRegisterRefuse(AuditListReqDTO requestParam) {
+        int current=requestParam.getCurrent()==null?1:requestParam.getCurrent();
+        int size=requestParam.getSize()==null?10:requestParam.getSize();
         LambdaQueryWrapper<RegisterDO> queryWrapper = Wrappers.lambdaQuery(RegisterDO.class)
                 .eq(RegisterDO::getStatus, 2)
                 .eq(RegisterDO::getDelFlag, 0)
                 .orderByDesc(RegisterDO::getCreateTime);
-        IPage<RegisterDO> resultPage=baseMapper.selectPage(new Page<>(1,10), queryWrapper);
+        IPage<RegisterDO> resultPage=baseMapper.selectPage(new Page<>(current,size), queryWrapper);
         return resultPage.convert(each -> BeanUtil.toBean(each,AuditUserPageRespDTO.class));
     }
 

@@ -2,7 +2,7 @@ package org.AList.interceptor;
 
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.AList.annonation.EncryptField;
+import org.AList.annotation.EncryptField;
 import org.AList.utils.FieldEncryptUtil;
 import org.apache.ibatis.executor.Executor;
 import org.apache.ibatis.mapping.MappedStatement;
