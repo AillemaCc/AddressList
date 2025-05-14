@@ -16,15 +16,18 @@ import org.AList.domain.dao.entity.*;
 import org.AList.domain.dao.mapper.*;
 import org.AList.domain.dto.req.*;
 import org.AList.domain.dto.resp.ContactQueryRespDTO;
+import org.AList.service.CacheService.ContactCacheService;
 import org.AList.service.StuContactService;
+import org.AList.stream.event.StreamEvent;
+import org.AList.stream.producer.StreamEventProducer;
 import org.springframework.beans.BeanUtils;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 /**
  * 通讯信息服务实现层
@@ -35,11 +38,13 @@ import java.util.concurrent.TimeUnit;
 public class StuContactServiceImpl extends ServiceImpl<ContactMapper, ContactDO> implements StuContactService {
     private final ContactMapper contactMapper;
     private final ContactGotoMapper contactGotoMapper;
-    private final StudentMapper studentMapper;
+    private final StudentFrameWorkMapper studentFrameWorkMapper;
     private final MajorAndAcademyMapper majorAndAcademyMapper;
     private final ClassInfoMapper classInfoMapper;
     private final StringRedisTemplate stringRedisTemplate;
     private final ObjectMapper objectMapper;
+    private final StreamEventProducer streamEventProducer;
+    private final ContactCacheService contactCacheService;
 
     /**
      * 新增个人通讯信息
@@ -57,7 +62,7 @@ public class StuContactServiceImpl extends ServiceImpl<ContactMapper, ContactDO>
                 .build();
         contactMapper.insert(contact);
         // 新增后清除并重建该学生的缓存
-        rebuildContactCache(requestParam.getStudentId());
+        sendCacheRebuildEvent(requestParam.getStudentId());
     }
 
     /**
@@ -100,15 +105,19 @@ public class StuContactServiceImpl extends ServiceImpl<ContactMapper, ContactDO>
                 .set(ContactGotoDO::getDelFlag, 1);
         contactGotoMapper.update(null, gotoUpdateWrapper);
 
-        // 删除后清除相关缓存
-        String redisKey = String.format("contact:%s:%s", requestParam.getOwnerId(), requestParam.getContactId());
-        stringRedisTemplate.delete(redisKey);
+        // 删除后发送缓存清除事件
+        try {
+            StreamEvent event = StreamEvent.builder()
+                    .eventType("CACHE_CLEAR")
+                    .studentId(requestParam.getContactId())
+                    .timestamp(System.currentTimeMillis())
+                    .build();
 
-        // 同时清除其他可能包含该联系人的缓存
-        String patternKey = String.format("contact:*:%s", requestParam.getContactId());
-        Set<String> keys = stringRedisTemplate.keys(patternKey);
-        if (keys != null && !keys.isEmpty()) {
-            stringRedisTemplate.delete(keys);
+            streamEventProducer.sendEvent(event);
+        } catch (Exception e) {
+            log.error("Failed to send cache clear event", e);
+            // 降级同步清除
+            contactCacheService.clearContactCache(requestParam.getContactId());
         }
     }
 
@@ -141,7 +150,7 @@ public class StuContactServiceImpl extends ServiceImpl<ContactMapper, ContactDO>
         if (updated != 1) {
             throw new ClientException("修改错误");
         }
-        rebuildContactCache(requestParam.getStudentId());
+        sendCacheRebuildEvent(requestParam.getStudentId());
     }
 
     /**
@@ -194,10 +203,10 @@ public class StuContactServiceImpl extends ServiceImpl<ContactMapper, ContactDO>
         String employer=contact.getEmployer();
         String city=contact.getCity();
 
-        LambdaQueryWrapper<StudentDO> studentInfoWrapper = Wrappers.lambdaQuery(StudentDO.class)
-                .eq(StudentDO::getStudentId, studentId)
-                .eq(StudentDO::getDelFlag, 0);
-        StudentDO student=studentMapper.selectOne(studentInfoWrapper);
+        LambdaQueryWrapper<StudentFrameworkDO> studentInfoWrapper = Wrappers.lambdaQuery(StudentFrameworkDO.class)
+                .eq(StudentFrameworkDO::getStudentId, studentId)
+                .eq(StudentFrameworkDO::getDelFlag, 0);
+        StudentFrameworkDO student= studentFrameWorkMapper.selectOne(studentInfoWrapper);
         if (Objects.isNull(student)) {
             throw new ClientException("通讯录信息不存在或已被删除");
         }
@@ -207,7 +216,7 @@ public class StuContactServiceImpl extends ServiceImpl<ContactMapper, ContactDO>
         String phone=student.getPhone();
         String email=student.getEmail();
 
-        String majorNum=student.getMajor();
+        String majorNum=student.getMajorNum();
 
         LambdaQueryWrapper<MajorAndAcademyDO> majorAndAcademyWrapper = Wrappers.lambdaQuery(MajorAndAcademyDO.class)
                 .eq(MajorAndAcademyDO::getMajorNum, majorNum)
@@ -220,7 +229,7 @@ public class StuContactServiceImpl extends ServiceImpl<ContactMapper, ContactDO>
         String academyName=majorAndAcademy.getAcademy();
 
 
-        String classNum=student.getClassName();
+        String classNum=student.getClassNum();
         LambdaQueryWrapper<ClassInfoDO> classInfoWrapper = Wrappers.lambdaQuery(ClassInfoDO.class)
                 .eq(ClassInfoDO::getClassNum, classNum)
                 .eq(ClassInfoDO::getDelFlag, 0);
@@ -269,12 +278,14 @@ public class StuContactServiceImpl extends ServiceImpl<ContactMapper, ContactDO>
     @Override
     public IPage<ContactQueryRespDTO> queryContactList(ContactQueryAllOwnReqDTO requestParam) {
         String ownerId=requestParam.getOwnerId();
+        int current=requestParam.getCurrent()==null?1:requestParam.getCurrent();
+        int size=requestParam.getSize()==null?10:requestParam.getSize();
         LambdaQueryWrapper<ContactGotoDO> queryWrapper = Wrappers.lambdaQuery(ContactGotoDO.class)
                 .eq(ContactGotoDO::getOwnerId, ownerId)
                 .eq(ContactGotoDO::getDelFlag, 0);
         List<ContactGotoDO> gotoList = contactGotoMapper.selectList(queryWrapper);
         if(Objects.isNull(gotoList)){
-            return new Page<>(1,10,0);
+            return new Page<>(current,size,0);
         }
         List<String> contactIds=gotoList.stream()
                 .map(ContactGotoDO::getContactId)
@@ -282,7 +293,7 @@ public class StuContactServiceImpl extends ServiceImpl<ContactMapper, ContactDO>
         LambdaQueryWrapper<ContactDO> contactQueryWrapper = Wrappers.lambdaQuery(ContactDO.class)
                 .in(ContactDO::getStudentId, contactIds)
                 .eq(ContactDO::getDelFlag, 0);
-        Page<ContactDO> page = new Page<>(1,10);
+        Page<ContactDO> page = new Page<>(current,size);
         IPage<ContactDO> contactPage = contactMapper.selectPage(page, contactQueryWrapper);
         return contactPage.convert(contactDO -> {
             ContactQueryRespDTO respDTO = new ContactQueryRespDTO();
@@ -321,77 +332,100 @@ public class StuContactServiceImpl extends ServiceImpl<ContactMapper, ContactDO>
         }
     }
 
-    private void rebuildContactCache(String studentId) {
-        // 1. 先清除所有相关缓存
-        String patternKey = String.format("contact:*:%s", studentId);
-        Set<String> keys = stringRedisTemplate.keys(patternKey);
-        if (keys != null && !keys.isEmpty()) {
-            stringRedisTemplate.delete(keys);
-        }
+    /**
+     * 分页展示自己已删除的通讯信息
+     *
+     * @param requestParam 请求体
+     * @return 分页返回
+     */
+    @Override
+    public IPage<ContactQueryRespDTO> queryContactListAllDelete(ContactQueryAllOwnReqDTO requestParam) {
+        StuIdContext.verifyLoginUser(requestParam.getOwnerId());
+        int current=requestParam.getCurrent()==null?1:requestParam.getCurrent();
+        int size=requestParam.getSize()==null?10:requestParam.getSize();
+        // 查询已删除的联系人分页数据
+        Page<ContactGotoDO> page = new Page<>(current, size);
+        IPage<ContactGotoDO> gotoResult = contactGotoMapper.selectDeletedContact(page, requestParam.getOwnerId());
 
-        // 2. 查询联系人完整信息（只需查一次数据库）
-        ContactDO contact = contactMapper.selectOne(Wrappers.lambdaQuery(ContactDO.class)
-                .eq(ContactDO::getStudentId, studentId)
-                .eq(ContactDO::getDelFlag, 0));
+        // 将 IPage<ContactGotoDO> 转换为 List<ContactQueryRespDTO> 并过滤 null 值
+        List<ContactQueryRespDTO> dtoList = gotoResult.getRecords().stream()
+                .map(gotoRecord -> {
+                    // 找到对应的通讯信息 前提是这个通讯信息的学生用户没有删除自己的通讯信息
+                    ContactDO contact = contactMapper.selectOne(Wrappers.lambdaQuery(ContactDO.class)
+                            .eq(ContactDO::getStudentId,gotoRecord.getContactId())
+                            .eq(ContactDO::getDelFlag,0));
+                    if (contact == null) {
+                        return null;
+                    }
 
-        if (contact == null) {
-            return; // 如果联系人已被删除，直接返回
-        }
+                    StudentFrameworkDO student = studentFrameWorkMapper.selectOne(Wrappers.lambdaQuery(StudentFrameworkDO.class)
+                            .eq(StudentFrameworkDO::getStudentId, gotoRecord.getContactId())
+                            .eq(StudentFrameworkDO::getDelFlag, 0));
+                    if (student == null) {
+                        return null;
+                    }
 
-        // 3. 查询学生基本信息
-        StudentDO student = studentMapper.selectOne(Wrappers.lambdaQuery(StudentDO.class)
-                .eq(StudentDO::getStudentId, studentId)
-                .eq(StudentDO::getDelFlag, 0));
+                    String majorName = "";
+                    String academyName = "";
+                    if (student.getMajorNum() != null) {
+                        MajorAndAcademyDO majorAndAcademy = majorAndAcademyMapper.selectOne(
+                                Wrappers.lambdaQuery(MajorAndAcademyDO.class)
+                                        .eq(MajorAndAcademyDO::getMajorNum, student.getMajorNum())
+                                        .eq(MajorAndAcademyDO::getDelFlag, 0));
+                        if (majorAndAcademy != null) {
+                            majorName = majorAndAcademy.getMajor();
+                            academyName = majorAndAcademy.getAcademy();
+                        }
+                    }
 
-        if (student == null) {
-            return;
-        }
+                    String className = "";
+                    if (student.getClassNum() != null) {
+                        ClassInfoDO classInfo = classInfoMapper.selectOne(
+                                Wrappers.lambdaQuery(ClassInfoDO.class)
+                                        .eq(ClassInfoDO::getClassNum, student.getClassNum())
+                                        .eq(ClassInfoDO::getDelFlag, 0));
+                        if (classInfo != null) {
+                            className = classInfo.getClassName();
+                        }
+                    }
 
-        // 4. 查询关联信息（专业、学院等）
-        MajorAndAcademyDO majorAndAcademy = majorAndAcademyMapper.selectOne(
-                Wrappers.lambdaQuery(MajorAndAcademyDO.class)
-                        .eq(MajorAndAcademyDO::getMajorNum, student.getMajor())
-                        .eq(MajorAndAcademyDO::getDelFlag, 0));
+                    return ContactQueryRespDTO.builder()
+                            .studentId(gotoRecord.getContactId())
+                            .name(student.getName())
+                            .academy(academyName)
+                            .major(majorName)
+                            .className(className)
+                            .enrollmentYear(student.getEnrollmentYear())
+                            .graduationYear(student.getGraduationYear())
+                            .employer(contact.getEmployer())
+                            .city(contact.getCity())
+                            .phone(student.getPhone())
+                            .email(student.getEmail())
+                            .build();
+                })
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
 
-        ClassInfoDO classInfo = classInfoMapper.selectOne(
-                Wrappers.lambdaQuery(ClassInfoDO.class)
-                        .eq(ClassInfoDO::getClassNum, student.getClassName())
-                        .eq(ClassInfoDO::getDelFlag, 0));
+        // 手动构造一个新的 Page 对象并设置转换后的数据
+        return new Page<ContactQueryRespDTO>(gotoResult.getCurrent(), gotoResult.getSize(), gotoResult.getTotal())
+                .setRecords(dtoList);
+    }
 
-        // 5. 构建完整响应DTO
-        ContactQueryRespDTO response = ContactQueryRespDTO.builder()
-                .studentId(studentId)
-                .name(student.getName())
-                .academy(majorAndAcademy != null ? majorAndAcademy.getAcademy() : null)
-                .major(majorAndAcademy != null ? majorAndAcademy.getMajor() : null)
-                .className(classInfo != null ? classInfo.getClassName() : null)
-                .enrollmentYear(student.getEnrollmentYear())
-                .graduationYear(student.getGraduationYear())
-                .employer(contact.getEmployer())
-                .city(contact.getCity())
-                .phone(student.getPhone())
-                .email(student.getEmail())
-                .build();
+    /**
+     * 发送缓存重建事件（异步）
+     */
+    private void sendCacheRebuildEvent(String studentId) {
+        try {
+            // 获取所有ownerIds
+            List<String> ownerIds = contactGotoMapper.selectOwnerIdsByContactId(studentId);
 
-        // 6. 获取所有拥有者ID
-        List<String> ownerIds = contactGotoMapper.selectOwnerIdsByContactId(studentId);
-
-        // 7. 直接为每个拥有者设置缓存
-        for (String ownerId : ownerIds) {
-            String redisKey = String.format("contact:%s:%s", ownerId, studentId);
-            try {
-                // 使用Jackson将DTO转换为JSON字符串
-                String jsonResponse = objectMapper.writeValueAsString(response);
-                stringRedisTemplate.opsForValue().set(
-                        redisKey,
-                        jsonResponse,
-                        1,
-                        TimeUnit.HOURS
-                );
-            } catch (JsonProcessingException e) {
-                log.error("序列化联系人缓存失败，studentId: {}", studentId, e);
-                // 可以选择继续处理下一个ownerId或抛出运行时异常
-            }
+            // 发送事件到Redis Stream
+            streamEventProducer.sendRebuildEvent(studentId, ownerIds);
+            log.info("Sent cache rebuild event for student: {}", studentId);
+        } catch (Exception e) {
+            log.error("Failed to send cache rebuild event", e);
+            // 降级策略：同步执行缓存重建
+            contactCacheService.rebuildContactCache(studentId);
         }
     }
 }

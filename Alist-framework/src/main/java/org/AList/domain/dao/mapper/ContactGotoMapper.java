@@ -1,6 +1,8 @@
 package org.AList.domain.dao.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import org.AList.domain.dao.entity.ContactGotoDO;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
@@ -24,4 +26,9 @@ public interface ContactGotoMapper extends BaseMapper<ContactGotoDO> {
 
     @Select("SELECT owner_id FROM t_contact_goto WHERE contact_id = #{contactId} AND del_flag = 0")
     List<String> selectOwnerIdsByContactId(@Param("contactId") String contactId);
+
+    @Select("SELECT * FROM t_contact_goto WHERE owner_id=#{ownerId} AND del_flag = 1")
+    IPage<ContactGotoDO> selectDeletedContact(
+            Page<ContactGotoDO> page,
+            @Param("ownerId") String ownerId);
 }

@@ -4,9 +4,11 @@ import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.AList.common.database.BaseDO;
+
 /**
  * 学生实体类
  */
@@ -14,7 +16,8 @@ import org.AList.common.database.BaseDO;
 @AllArgsConstructor
 @NoArgsConstructor
 @TableName("t_student_info")
-public class StudentDO extends BaseDO {
+@Builder
+public class StudentFrameworkDO extends BaseDO {
     @TableId(type = IdType.AUTO)
     /**
      * 主键ID
@@ -32,14 +35,14 @@ public class StudentDO extends BaseDO {
     private String name;
 
     /**
-     * 所读专业--以专业号标识
+     * 专业编号
      */
-    private String major;
+    private String majorNum;
 
     /**
-     * 班级--以班级号标识
+     * 班级编号
      */
-    private String className;
+    private String classNum;
 
     /**
      * 入学年份

@@ -39,4 +39,9 @@ public class MajorAndAcademyDO extends BaseDO {
      * 学院名称
      */
     private String academy;
+
+    /**
+     * 学院标识号
+     */
+    private Integer academyNum;
 }

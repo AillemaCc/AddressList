@@ -35,12 +35,12 @@ public class StudentDefaultInfoDO extends BaseDO {
     /**
      * 专业
      */
-    private String major;
+    private String majorNum;
 
     /**
      * 班级
      */
-    private String className;
+    private String classNum;
 
     /**
      * 入学年份

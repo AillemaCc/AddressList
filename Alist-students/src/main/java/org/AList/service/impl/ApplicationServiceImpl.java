@@ -12,10 +12,10 @@ import org.AList.common.biz.user.StuIdContext;
 import org.AList.common.convention.exception.ClientException;
 import org.AList.domain.dao.entity.ApplicationDO;
 import org.AList.domain.dao.entity.ContactGotoDO;
-import org.AList.domain.dao.entity.StudentDO;
+import org.AList.domain.dao.entity.StudentFrameworkDO;
 import org.AList.domain.dao.mapper.ApplicationMapper;
 import org.AList.domain.dao.mapper.ContactGotoMapper;
-import org.AList.domain.dao.mapper.StudentMapper;
+import org.AList.domain.dao.mapper.StudentFrameWorkMapper;
 import org.AList.domain.dto.req.ApplicationReceiveQueryPageReqDTO;
 import org.AList.domain.dto.req.ApplicationSendMsgReqDTO;
 import org.AList.domain.dto.req.ApplicationSendQueryPageReqDTO;
@@ -36,7 +36,7 @@ import static org.AList.common.enums.UserErrorCodeEnum.USER_NULL;
 @Service
 @RequiredArgsConstructor
 public class ApplicationServiceImpl extends ServiceImpl<ApplicationMapper, ApplicationDO> implements ApplicationService {
-    private final StudentMapper studentMapper;
+    private final StudentFrameWorkMapper studentFrameWorkMapper;
     private final ApplicationMapper applicationMapper;
     private final ContactGotoMapper contactGotoMapper;
     private final StudentIdBloomFilterService studentIdBloomFilterService;
@@ -60,11 +60,11 @@ public class ApplicationServiceImpl extends ServiceImpl<ApplicationMapper, Appli
 
 
         // 先判断接收者是不是存在 也就是接收者是不是注册过
-        LambdaQueryWrapper<StudentDO> validQueryWrapper = Wrappers.lambdaQuery(StudentDO.class)
-                .eq(StudentDO::getStudentId, requestParam.getReceiver())
-                .eq(StudentDO::getStatus, 1)
-                .eq(StudentDO::getDelFlag, 0);
-        StudentDO receiverDO = studentMapper.selectOne(validQueryWrapper);
+        LambdaQueryWrapper<StudentFrameworkDO> validQueryWrapper = Wrappers.lambdaQuery(StudentFrameworkDO.class)
+                .eq(StudentFrameworkDO::getStudentId, requestParam.getReceiver())
+                .eq(StudentFrameworkDO::getStatus, 1)
+                .eq(StudentFrameworkDO::getDelFlag, 0);
+        StudentFrameworkDO receiverDO = studentFrameWorkMapper.selectOne(validQueryWrapper);
 
         if(receiverDO == null) {
             throw new ClientException("收信人状态异常，无法添加到通讯录");
@@ -80,9 +80,9 @@ public class ApplicationServiceImpl extends ServiceImpl<ApplicationMapper, Appli
         if(selectCount > 1){
             throw new ClientException("您已经给对方发送过申请，请等待对方处理请求");
         }
-        LambdaQueryWrapper<StudentDO> senderWrapper = Wrappers.lambdaQuery(StudentDO.class)
-                .eq(StudentDO::getStudentId, StuIdContext.getStudentId());
-        StudentDO sender = studentMapper.selectOne(senderWrapper);
+        LambdaQueryWrapper<StudentFrameworkDO> senderWrapper = Wrappers.lambdaQuery(StudentFrameworkDO.class)
+                .eq(StudentFrameworkDO::getStudentId, StuIdContext.getStudentId());
+        StudentFrameworkDO sender = studentFrameWorkMapper.selectOne(senderWrapper);
         String senderName=sender.getName();
         // 假如说这个接收者存在 直接写库是不是就行了
         ApplicationDO applicationDO =ApplicationDO.builder()

@@ -6,17 +6,17 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * 查询个人拥有的全量通讯信息请求体
+ * 通过学院号查询班级信息请求体
  */
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class ContactQueryAllOwnReqDTO{
+public class BaseAcademyInfoListMajorReqDTO {
     /**
-     * 通讯信息的owner学号
+     * 学院标识号
      */
-    private String ownerId;
+    private Integer academyNum;
 
     /**
      * 当前页码（从1开始，非必填，默认1）

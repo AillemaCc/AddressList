@@ -50,7 +50,7 @@ public class StuInfoController {
     }
 
     /**
-     * 按学号修改个人通讯信息
+     * 按学号修改自己的个人通讯信息
      * @param requestParam 修改请求体
      * @return void
      */
@@ -78,5 +78,14 @@ public class StuInfoController {
     public Result<IPage<ContactQueryRespDTO>> queryContactList(@RequestBody ContactQueryAllOwnReqDTO requestParam){
         return Results.success(stuContactService.queryContactList(requestParam));
     }
+
+    /**
+     * 分页展示所有个人拥有的已删除的通讯信息
+     */
+    @GetMapping("/contact/listAllDelete")
+    public Result<IPage<ContactQueryRespDTO>> queryContactListAllDelete(@RequestBody ContactQueryAllOwnReqDTO requestParam){
+        return Results.success(stuContactService.queryContactListAllDelete(requestParam));
+    }
+
 
 }

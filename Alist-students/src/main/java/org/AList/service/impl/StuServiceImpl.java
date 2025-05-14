@@ -9,12 +9,12 @@ import org.AList.common.constant.RedisCacheConstant;
 import org.AList.common.convention.exception.ClientException;
 import org.AList.domain.dao.entity.LoginLogDO;
 import org.AList.domain.dao.entity.RegisterDO;
-import org.AList.domain.dao.entity.StudentDO;
+import org.AList.domain.dao.entity.StudentFrameworkDO;
 import org.AList.domain.dao.entity.StudentDefaultInfoDO;
 import org.AList.domain.dao.mapper.LoginLogMapper;
 import org.AList.domain.dao.mapper.RegisterMapper;
 import org.AList.domain.dao.mapper.StudentDefaultInfoMapper;
-import org.AList.domain.dao.mapper.StudentMapper;
+import org.AList.domain.dao.mapper.StudentFrameWorkMapper;
 import org.AList.domain.dto.req.StuLoginReqDTO;
 import org.AList.domain.dto.req.StuRegisterRemarkReqDTO;
 import org.AList.domain.dto.req.StuRegisterReqDTO;
@@ -41,8 +41,8 @@ import static org.AList.common.enums.UserErrorCodeEnum.*;
  */
 @Service
 @RequiredArgsConstructor
-public class StuServiceImpl extends ServiceImpl<StudentMapper,StudentDO> implements StuService {
-    private final StudentMapper studentMapper;
+public class StuServiceImpl extends ServiceImpl<StudentFrameWorkMapper, StudentFrameworkDO> implements StuService {
+    private final StudentFrameWorkMapper studentFrameWorkMapper;
     private final RegisterMapper registerMapper;
     private final LoginLogMapper loginLogMapper;
     private final StudentDefaultInfoMapper studentDefaultInfoMapper;
@@ -53,18 +53,18 @@ public class StuServiceImpl extends ServiceImpl<StudentMapper,StudentDO> impleme
      * 用户登录接口实现类
      *
      * @param requestParam 用户登录请求实体
-     * @param request
+     * @param request 登录请求
      * @return 用户登录响应实体--token
      */
     @Override
     public StuLoginRespDTO login(StuLoginReqDTO requestParam, HttpServletRequest request) {
-        LambdaQueryWrapper<StudentDO> queryWrapper = Wrappers.lambdaQuery(StudentDO.class)
-                .eq(StudentDO::getStudentId, requestParam.getStudentId())
-                .eq(StudentDO::getPassword, requestParam.getPassword())
-                .eq(StudentDO::getDelFlag, 0)
-                .eq(StudentDO::getStatus, 1);
-        StudentDO studentDO=studentMapper.selectOne(queryWrapper);
-        if(studentDO==null){
+        LambdaQueryWrapper<StudentFrameworkDO> queryWrapper = Wrappers.lambdaQuery(StudentFrameworkDO.class)
+                .eq(StudentFrameworkDO::getStudentId, requestParam.getStudentId())
+                .eq(StudentFrameworkDO::getPassword, requestParam.getPassword())
+                .eq(StudentFrameworkDO::getDelFlag, 0)
+                .eq(StudentFrameworkDO::getStatus, 1);
+        StudentFrameworkDO studentFrameworkDO = studentFrameWorkMapper.selectOne(queryWrapper);
+        if(studentFrameworkDO ==null){
             throw new ClientException("学生不存在");
         }
         if(Boolean.TRUE.equals(stringRedisTemplate.hasKey("login:student:"+requestParam.getStudentId()))){
@@ -74,7 +74,7 @@ public class StuServiceImpl extends ServiceImpl<StudentMapper,StudentDO> impleme
         // 生成的uuid作为用户登录信息传入redis
         // 更清晰的键设计（使用冒号分隔）
         String redisKey = "login:student:" + requestParam.getStudentId();
-        stringRedisTemplate.opsForHash().put(redisKey, uuid, JSON.toJSONString(studentDO));
+        stringRedisTemplate.opsForHash().put(redisKey, uuid, JSON.toJSONString(studentFrameworkDO));
         stringRedisTemplate.expire(redisKey, 30, TimeUnit.MINUTES);
         recordLoginLog(request, requestParam.getStudentId());
         return new StuLoginRespDTO(uuid);

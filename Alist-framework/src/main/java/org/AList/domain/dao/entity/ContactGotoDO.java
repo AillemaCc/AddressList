@@ -3,34 +3,30 @@ package org.AList.domain.dao.entity;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.AList.common.database.BaseDO;
 
 /**
- * 班级路由表实体类
+ * 通讯信息路由表实体
  */
+@EqualsAndHashCode(callSuper = true)
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-@TableName("t_info_class")
-public class ClassInfoDO extends BaseDO {
+@TableName("t_contact_goto")
+public class ContactGotoDO extends BaseDO {
     @TableId(type = IdType.AUTO)
-    /**
-     * id
-     */
+
     private Integer id;
 
     /**
-     * 班级标识号
+     * 通讯录信息所属的学生id
      */
-    private Integer classNum;
+    private String contactId;
 
     /**
-     * 班级名称
+     * 拥有该信息的学号
      */
-    private String className;
+    private String ownerId;
 }

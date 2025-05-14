@@ -11,11 +11,11 @@ import lombok.RequiredArgsConstructor;
 import org.AList.common.convention.exception.ClientException;
 import org.AList.common.convention.exception.ServiceException;
 import org.AList.domain.dao.entity.RegisterDO;
-import org.AList.domain.dao.entity.StudentDO;
+import org.AList.domain.dao.entity.StudentFrameworkDO;
 import org.AList.domain.dao.entity.StudentDefaultInfoDO;
 import org.AList.domain.dao.mapper.RegisterMapper;
 import org.AList.domain.dao.mapper.StudentDefaultInfoMapper;
-import org.AList.domain.dao.mapper.StudentMapper;
+import org.AList.domain.dao.mapper.StudentFrameWorkMapper;
 import org.AList.domain.dto.req.AccpetRegistrationReqDTO;
 import org.AList.domain.dto.req.BanStudentReqDTO;
 import org.AList.domain.dto.req.RefuseRegistrationReqDTO;
@@ -38,7 +38,7 @@ import static org.AList.common.constant.RedisKeyConstant.LOCK_UPDATE_UNBAN_KEY;
 @Service
 @RequiredArgsConstructor
 public class AdministerAuditServiceImpl extends ServiceImpl<RegisterMapper, RegisterDO> implements AdministerAuditService {
-    private final StudentMapper studentMapper;
+    private final StudentFrameWorkMapper studentFrameWorkMapper;
     private final StudentDefaultInfoMapper studentDefaultInfoMapper;
     private final RedissonClient redissonClient;
     private final RegisterMapper registerMapper;
@@ -52,7 +52,7 @@ public class AdministerAuditServiceImpl extends ServiceImpl<RegisterMapper, Regi
                 .eq(RegisterDO::getStatus, 0)
                 .eq(RegisterDO::getDelFlag, 0)
                 .orderByDesc(RegisterDO::getCreateTime);
-        IPage<RegisterDO> resultPage=baseMapper.selectPage(new Page<>(), queryWrapper);
+        IPage<RegisterDO> resultPage=baseMapper.selectPage(new Page<>(1,10), queryWrapper);
         return resultPage.convert(each -> BeanUtil.toBean(each,AuditUserPageRespDTO.class));
     }
 
@@ -84,11 +84,11 @@ public class AdministerAuditServiceImpl extends ServiceImpl<RegisterMapper, Regi
         LambdaQueryWrapper<StudentDefaultInfoDO> infoDOLambdaQueryWrapper = Wrappers.lambdaQuery(StudentDefaultInfoDO.class)
                 .eq(StudentDefaultInfoDO::getStudentId, requestParam.getStudentId());
         StudentDefaultInfoDO studentDefaultInfoDO = studentDefaultInfoMapper.selectOne(infoDOLambdaQueryWrapper);
-        StudentDO studentDO=StudentDO.builder()
+        StudentFrameworkDO studentFrameworkDO = StudentFrameworkDO.builder()
                 .studentId(aDo.getStudentId())
                 .name(aDo.getName())
-                .major(studentDefaultInfoDO.getMajor())
-                .className(studentDefaultInfoDO.getClassName())
+                .majorNum(studentDefaultInfoDO.getMajorNum())
+                .classNum(studentDefaultInfoDO.getClassNum())
                 .enrollmentYear(studentDefaultInfoDO.getEnrollmentYear())
                 .graduationYear(studentDefaultInfoDO.getGraduationYear())
                 .phone(studentDefaultInfoDO.getPhone())
@@ -97,7 +97,7 @@ public class AdministerAuditServiceImpl extends ServiceImpl<RegisterMapper, Regi
                 .status(1)
                 .registerToken(aDo.getRegisterToken())
                 .build();
-        studentMapper.insert(studentDO);
+        studentFrameWorkMapper.insert(studentFrameworkDO);
     }
 
     /**
@@ -160,7 +160,7 @@ public class AdministerAuditServiceImpl extends ServiceImpl<RegisterMapper, Regi
                 .eq(RegisterDO::getStatus, 1)
                 .eq(RegisterDO::getDelFlag, 0)
                 .orderByDesc(RegisterDO::getCreateTime);
-        IPage<RegisterDO> resultPage=baseMapper.selectPage(new Page<>(), queryWrapper);
+        IPage<RegisterDO> resultPage=baseMapper.selectPage(new Page<>(1,10), queryWrapper);
         return resultPage.convert(each -> BeanUtil.toBean(each,AuditUserPageRespDTO.class));
     }
 
@@ -175,7 +175,7 @@ public class AdministerAuditServiceImpl extends ServiceImpl<RegisterMapper, Regi
                 .eq(RegisterDO::getStatus, 2)
                 .eq(RegisterDO::getDelFlag, 0)
                 .orderByDesc(RegisterDO::getCreateTime);
-        IPage<RegisterDO> resultPage=baseMapper.selectPage(new Page<>(), queryWrapper);
+        IPage<RegisterDO> resultPage=baseMapper.selectPage(new Page<>(1,10), queryWrapper);
         return resultPage.convert(each -> BeanUtil.toBean(each,AuditUserPageRespDTO.class));
     }
 
@@ -187,11 +187,11 @@ public class AdministerAuditServiceImpl extends ServiceImpl<RegisterMapper, Regi
     @Transactional
     @Override
     public void banStudentById(BanStudentReqDTO requestParam) {
-        LambdaQueryWrapper<StudentDO> queryWrapper = Wrappers.lambdaQuery(StudentDO.class)
-                .eq(StudentDO::getStudentId, requestParam.getStudentId())
-                .eq(StudentDO::getStatus, 1)
-                .eq(StudentDO::getDelFlag, 0);
-        StudentDO studentDO=studentMapper.selectOne(queryWrapper);
+        LambdaQueryWrapper<StudentFrameworkDO> queryWrapper = Wrappers.lambdaQuery(StudentFrameworkDO.class)
+                .eq(StudentFrameworkDO::getStudentId, requestParam.getStudentId())
+                .eq(StudentFrameworkDO::getStatus, 1)
+                .eq(StudentFrameworkDO::getDelFlag, 0);
+        StudentFrameworkDO studentFrameworkDO = studentFrameWorkMapper.selectOne(queryWrapper);
 
         LambdaQueryWrapper<RegisterDO> registerDOLambdaQueryWrapper = Wrappers.lambdaQuery(RegisterDO.class)
                 .eq(RegisterDO::getStudentId, requestParam.getStudentId())
@@ -199,16 +199,16 @@ public class AdministerAuditServiceImpl extends ServiceImpl<RegisterMapper, Regi
                 .eq(RegisterDO::getDelFlag, 0);
         RegisterDO registerDO=registerMapper.selectOne(registerDOLambdaQueryWrapper);
         // todo: 这里判空逻辑可能有问题，需要修改
-        if(Objects.isNull(studentDO)||Objects.isNull(registerDO)){
+        if(Objects.isNull(studentFrameworkDO)||Objects.isNull(registerDO)){
             throw new ClientException("该学生信息不存在，请重新查询");
         }
-        StudentDO updateStudentDO =StudentDO.builder()
+        StudentFrameworkDO updateStudentFrameworkDO = StudentFrameworkDO.builder()
                 .status(3)
                 .build();
         RegisterDO updateRegisterDO=RegisterDO.builder()
                 .status(3)
                 .build();
-        BanOrUnbanUpdate(requestParam, queryWrapper, registerDOLambdaQueryWrapper, updateStudentDO, updateRegisterDO, LOCK_UPDATE_BAN_KEY);
+        BanOrUnbanUpdate(requestParam, queryWrapper, registerDOLambdaQueryWrapper, updateStudentFrameworkDO, updateRegisterDO, LOCK_UPDATE_BAN_KEY);
     }
 
     /**
@@ -218,11 +218,11 @@ public class AdministerAuditServiceImpl extends ServiceImpl<RegisterMapper, Regi
      */
     @Override
     public void unBanStudentById(BanStudentReqDTO requestParam) {
-        LambdaQueryWrapper<StudentDO> queryWrapper = Wrappers.lambdaQuery(StudentDO.class)
-                .eq(StudentDO::getStudentId, requestParam.getStudentId())
-                .eq(StudentDO::getStatus, 3)
-                .eq(StudentDO::getDelFlag, 0);
-        StudentDO studentDO=studentMapper.selectOne(queryWrapper);
+        LambdaQueryWrapper<StudentFrameworkDO> queryWrapper = Wrappers.lambdaQuery(StudentFrameworkDO.class)
+                .eq(StudentFrameworkDO::getStudentId, requestParam.getStudentId())
+                .eq(StudentFrameworkDO::getStatus, 3)
+                .eq(StudentFrameworkDO::getDelFlag, 0);
+        StudentFrameworkDO studentFrameworkDO = studentFrameWorkMapper.selectOne(queryWrapper);
 
         LambdaQueryWrapper<RegisterDO> registerDOLambdaQueryWrapper = Wrappers.lambdaQuery(RegisterDO.class)
                 .eq(RegisterDO::getStudentId, requestParam.getStudentId())
@@ -230,17 +230,17 @@ public class AdministerAuditServiceImpl extends ServiceImpl<RegisterMapper, Regi
                 .eq(RegisterDO::getDelFlag, 0);
         RegisterDO registerDO=registerMapper.selectOne(registerDOLambdaQueryWrapper);
 
-        if(Objects.isNull(studentDO)||Objects.isNull(registerDO)){
+        if(Objects.isNull(studentFrameworkDO)||Objects.isNull(registerDO)){
             throw new ClientException("该学生信息不存在，请重新查询");
         }
 
-        StudentDO updateStudentDO =StudentDO.builder()
+        StudentFrameworkDO updateStudentFrameworkDO = StudentFrameworkDO.builder()
                 .status(1)
                 .build();
         RegisterDO updateRegisterDO=RegisterDO.builder()
                 .status(1)
                 .build();
-        BanOrUnbanUpdate(requestParam, queryWrapper, registerDOLambdaQueryWrapper, updateStudentDO, updateRegisterDO, LOCK_UPDATE_UNBAN_KEY);
+        BanOrUnbanUpdate(requestParam, queryWrapper, registerDOLambdaQueryWrapper, updateStudentFrameworkDO, updateRegisterDO, LOCK_UPDATE_UNBAN_KEY);
     }
 
     /**
@@ -248,18 +248,18 @@ public class AdministerAuditServiceImpl extends ServiceImpl<RegisterMapper, Regi
      * @param requestParam 学号请求体
      * @param queryWrapper 审核通过的学生信息查询参数
      * @param registerDOLambdaQueryWrapper 注册类学生信息查询参数
-     * @param updateStudentDO 更新学生信息实体
+     * @param updateStudentFrameworkDO 更新学生信息实体
      * @param updateRegisterDO 更新注册信息实体
      * @param lockUpdateUnbanKey 读写锁key
      */
-    private void BanOrUnbanUpdate(BanStudentReqDTO requestParam, LambdaQueryWrapper<StudentDO> queryWrapper, LambdaQueryWrapper<RegisterDO> registerDOLambdaQueryWrapper, StudentDO updateStudentDO, RegisterDO updateRegisterDO, String lockUpdateUnbanKey) {
+    private void BanOrUnbanUpdate(BanStudentReqDTO requestParam, LambdaQueryWrapper<StudentFrameworkDO> queryWrapper, LambdaQueryWrapper<RegisterDO> registerDOLambdaQueryWrapper, StudentFrameworkDO updateStudentFrameworkDO, RegisterDO updateRegisterDO, String lockUpdateUnbanKey) {
         RReadWriteLock readWriteLock=redissonClient.getReadWriteLock(String.format(lockUpdateUnbanKey,requestParam.getStudentId()));
         RLock rLock=readWriteLock.writeLock();
         if(!rLock.tryLock()){
             throw new ServiceException("该用户状态信息正在被其他管理员修改，请稍后再试...");
         }
         try{
-            int updateStudentInfo = studentMapper.update(updateStudentDO, queryWrapper);
+            int updateStudentInfo = studentFrameWorkMapper.update(updateStudentFrameworkDO, queryWrapper);
             if(updateStudentInfo<1){
                 throw new ClientException("禁用学生账户信息操作失败");
             }
