@@ -44,6 +44,16 @@ public class AdminBaseInfoController {
         adminBaseInfoService.updateBaseClassInfoMA(requestParam);
         return Results.success();
     }
+
+    /**
+     * 更新专业信息
+     */
+    @PostMapping("/updateMajor")
+    public Result<Void> updateBaseMajorInfo(@RequestBody BaseMajorInfoUpdateReqDTO requestParam){
+        adminBaseInfoService.updateBaseMajorInfo(requestParam);
+        return Results.success();
+    }
+
     /**
      * 分页展示某个班级下的学生信息
      */

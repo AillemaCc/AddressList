@@ -291,7 +291,7 @@ public class AdminBaseInfoServiceImpl implements AdminBaseInfoService {
         // 更新专业和学院信息（如果有变更）
         if (majorNumChanged || majorNameChanged || academyNumChanged || academyNameChanged) {
             MajorAndAcademyDO updateMA = new MajorAndAcademyDO();
-            updateMA.setId(originalMAInfo.getId());
+            // updateMA.setId(originalMAInfo.getId());
 
             if (majorNumChanged) {
                 updateMA.setMajorNum(requestParam.getMajorNum());
@@ -309,12 +309,51 @@ public class AdminBaseInfoServiceImpl implements AdminBaseInfoService {
             majorAndAcademyMapper.updateById(updateMA);
         }
 
-        // 如果专业编号或班级名称有变更，需要更新学生表
+        // 如果专业编号或班级名称有变更，需要更新学生表，并且清理缓存
         if (majorNumChanged || classNameChanged) {
             updateStudentInfo(String.valueOf(requestParam.getClassNum()),
                     majorNumChanged ? requestParam.getMajorNum() : originalMajorNum
             );
+            baseInfoCacheService.clearStudentContactCacheByClass(requestParam.getClassNum());
+            baseInfoCacheService.evictPageCacheByClass(requestParam.getClassNum());
         }
+    }
+
+    /**
+     * 更新专业信息
+     *
+     * @param requestParam 请求参数
+     */
+    @Override
+    public void updateBaseMajorInfo(BaseMajorInfoUpdateReqDTO requestParam) {
+        if(requestParam==null){
+            throw new ClientException("请求参数不能为空");
+        }
+        LambdaQueryWrapper<MajorAndAcademyDO> originalWrapper = Wrappers.lambdaQuery(MajorAndAcademyDO.class)
+                .eq(MajorAndAcademyDO::getMajorNum, requestParam.getMajorNum())
+                .eq(MajorAndAcademyDO::getDelFlag, 0);
+        MajorAndAcademyDO originalMADO = majorAndAcademyMapper.selectOne(originalWrapper);
+        if (originalMADO == null) {
+            throw new ClientException("您查询的专业不存在");
+        }
+        boolean majorNameChanged = StringUtils.isNotBlank(requestParam.getMajorName())
+                && !requestParam.getMajorName().equals(originalMADO.getMajor());
+        boolean academyNameChanged = StringUtils.isNotBlank(requestParam.getAcademyName())
+                && !requestParam.getAcademyName().equals(originalMADO.getAcademy());
+        if(majorNameChanged || academyNameChanged){
+            MajorAndAcademyDO updateMADO = new MajorAndAcademyDO();
+            if(majorNameChanged){
+                updateMADO.setMajor(requestParam.getMajorName());
+            }
+            if(academyNameChanged){
+                updateMADO.setAcademy(requestParam.getAcademyName());
+            }
+            majorAndAcademyMapper.updateById(updateMADO);
+            baseInfoCacheService.clearStudentContactCacheByMajor(requestParam.getMajorNum());
+        }
+
+
+
     }
 
     /**
@@ -341,6 +380,8 @@ public class AdminBaseInfoServiceImpl implements AdminBaseInfoService {
         LambdaUpdateWrapper<StudentDefaultInfoDO> studentDefaultWrapper = Wrappers.lambdaUpdate(StudentDefaultInfoDO.class)
                 .eq(StudentDefaultInfoDO::getClassNum, classNum);
         studentDefaultInfoMapper.update(studentDefaultUpdate, studentDefaultWrapper);
+        baseInfoCacheService.clearStudentContactCacheByClass(Integer.valueOf(classNum));
+        baseInfoCacheService.evictPageCacheByClass(Integer.valueOf(classNum));
     }
 
     /**

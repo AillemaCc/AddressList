@@ -53,6 +53,10 @@ public class BaseInfoCacheService {
                 .eq(StudentFrameworkDO::getClassNum, classNum)
                 .eq(StudentFrameworkDO::getDelFlag, 0);
 
+        extractedCleanCache(studentQueryWrapper);
+    }
+
+    private void extractedCleanCache(LambdaQueryWrapper<StudentFrameworkDO> studentQueryWrapper) {
         List<StudentFrameworkDO> students = studentFrameWorkMapper.selectList(studentQueryWrapper);
         if (CollectionUtils.isEmpty(students)) {
             return;
@@ -77,6 +81,29 @@ public class BaseInfoCacheService {
 
             evictFullContactCache(student.getStudentId());
         });
+    }
+
+    /**
+     * 专业信息变更之后，清理指定专业下所有学生的通讯录相关缓存，以保证数据一致性。
+     *
+     * <p>该方法的主要逻辑如下：</p>
+     * <ol>
+     *     <li>根据专业编号查询所有有效学生（未被逻辑删除的学生）</li>
+     *     <li>对于每个学生，查询与其关联的所有 通讯录跳转记录 （即谁将其加入通讯录）</li>
+     *     <li>根据这些跳转记录，构建出对应的 Redis 缓存键，并逐个删除，实现缓存清理</li>
+     * </ol>
+     *
+     * <p>此方法通常用于在学生或通讯录信息变更时重建缓存，确保其他用户获取到的是最新数据。</p>
+     *
+     * @param majorNum 专业编号，用于定位需要清理缓存的学生群体
+     */
+    public void clearStudentContactCacheByMajor(Integer majorNum) {
+        // 1. 查询该班级下的所有学生
+        LambdaQueryWrapper<StudentFrameworkDO> studentQueryWrapper = Wrappers.lambdaQuery(StudentFrameworkDO.class)
+                .eq(StudentFrameworkDO::getMajorNum, majorNum)
+                .eq(StudentFrameworkDO::getDelFlag, 0);
+
+        extractedCleanCache(studentQueryWrapper);
     }
 
     /**

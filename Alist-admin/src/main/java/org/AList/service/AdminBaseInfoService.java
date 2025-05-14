@@ -48,4 +48,10 @@ public interface AdminBaseInfoService {
      * @param requestParam 请求参数
      */
     void updateBaseClassInfoMA(BaseClassInfoUpdateMAReqDTO requestParam);
+
+    /**
+     * 更新专业基础信息
+     * @param requestParam 请求参数
+     */
+    void updateBaseMajorInfo(BaseMajorInfoUpdateReqDTO requestParam);
 }
