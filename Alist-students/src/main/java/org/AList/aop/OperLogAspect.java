@@ -1,9 +1,12 @@
 package org.AList.aop;
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.serializer.SerializerFeature;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.AList.annotation.MyLog;
 import org.AList.common.biz.user.StuIdContext;
+import org.AList.common.convention.exception.AbstractException;
 import org.AList.common.convention.exception.ClientException;
 import org.AList.common.limiter.LogRateLimiter;
 import org.AList.common.limiter.UserLogRateLimiter;
@@ -18,6 +21,7 @@ import org.springframework.web.context.request.RequestAttributes;
 import org.springframework.web.context.request.RequestContextHolder;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import java.lang.reflect.Method;
 import java.util.Date;
 
@@ -28,6 +32,7 @@ import java.util.Date;
 @Aspect
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class OperLogAspect{
     private final OperLogMapper operLogMapper;
     private final LogRateLimiter logRateLimiter;
@@ -174,6 +179,9 @@ public class OperLogAspect{
                 operLog.setRequestMethod(request.getMethod());//设置请求方式
             }
             operLog.setRequestParam(params); // 请求参数
+            if(StuIdContext.getStudentId()==null){
+                operLog.setOperName("Login");
+            }
             operLog.setOperName(StuIdContext.getStudentId());
             if (request != null) {
                 operLog.setIp(LinkUtil.getActualIp(request));
@@ -183,25 +191,82 @@ public class OperLogAspect{
             }
             operLog.setOperTime(new Date()); // 时间
             operLog.setStatus(1);//操作状态（0正常 1异常）
-            operLog.setErrorMsg(stackTraceToString(e.getClass().getName(), e.getMessage(), e.getStackTrace()));//记录异常信息
+            operLog.setErrorMsg(stackTraceToString(e));//记录异常信息
             operLogMapper.insert(operLog);
 
         }catch (Exception e2) {
-            throw new ClientException(e2.getMessage());
+            log.error("记录异常日志失败", e2);
         }
 
     }
     /**
-     * 转换异常信息为字符串
+     * 转换异常信息为字符串（适配AbstractException体系）
      */
-    public String stackTraceToString(String exceptionName, String exceptionMessage, StackTraceElement[] elements) {
-        StringBuilder stringBuilder = new StringBuilder();
-        for (StackTraceElement stet : elements) {
-            stringBuilder.append(stet).append("\n");
+    public String stackTraceToString(Throwable e) {
+        // 1. 处理AbstractException及其子类
+        if (e instanceof AbstractException ae) {
+            StringBuilder sb = new StringBuilder();
+
+            // 添加错误码和错误信息
+            sb.append("ErrorCode: ").append(ae.getErrorCode()).append("\n");
+            sb.append("ErrorMessage: ").append(ae.getErrorMessage()).append("\n");
+
+            // 添加原始异常信息（如果有）
+            if (e.getCause() != null) {
+                sb.append("RootCause: ").append(e.getCause().getClass().getName()).append("\n");
+                sb.append("RootMessage: ").append(e.getCause().getMessage()).append("\n");
+            }
+
+            // 添加关键堆栈信息（限制行数）
+            appendRelevantStackTrace(e, sb, 10);
+
+            return substring(sb.toString(), 0, 2000);
         }
-        String message = exceptionName + ":" + exceptionMessage + "\n\t" + stringBuilder.toString();
-        message = substring(message,0 ,2000);
-        return message;
+
+        // 2. 处理普通异常
+        return stackTraceToString(e.getClass().getName(), e.getMessage(), e.getStackTrace());
+    }
+
+    /**
+     * 添加最相关的堆栈信息（限制行数）
+     */
+    private void appendRelevantStackTrace(Throwable e, StringBuilder sb, int maxLines) {
+        sb.append("StackTrace: \n");
+        StackTraceElement[] stackTrace = e.getStackTrace();
+        int lines = Math.min(stackTrace.length, maxLines);
+
+        for (int i = 0; i < lines; i++) {
+            sb.append("\tat ").append(stackTrace[i]).append("\n");
+        }
+
+        if (stackTrace.length > maxLines) {
+            sb.append("\t... ").append(stackTrace.length - maxLines)
+                    .append(" more lines omitted\n");
+        }
+    }
+
+    /**
+     * 保留原有方法作为兼容
+     */
+    public String stackTraceToString(String exceptionName, String exceptionMessage,
+                                     StackTraceElement[] elements) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(exceptionName).append(": ").append(exceptionMessage).append("\n");
+        appendRelevantStackTraceElements(sb, elements, 15);
+        return substring(sb.toString(), 0, 2000);
+    }
+
+    private void appendRelevantStackTraceElements(StringBuilder sb,
+                                                  StackTraceElement[] elements,
+                                                  int maxLines) {
+        int lines = Math.min(elements.length, maxLines);
+        for (int i = 0; i < lines; i++) {
+            sb.append("\tat ").append(elements[i]).append("\n");
+        }
+        if (elements.length > maxLines) {
+            sb.append("\t... ").append(elements.length - maxLines)
+                    .append(" more lines omitted\n");
+        }
     }
 
     //字符串截取
@@ -238,30 +303,70 @@ public class OperLogAspect{
 
 
     /**
-     * 参数拼装
+     * 安全的参数拼装方法
      */
-    private String argsArrayToString(Object[] paramsArray)
-    {
-        StringBuilder params = new StringBuilder();
-        if (paramsArray != null)
-        {
-            for (Object o : paramsArray)
-            {
-                if (o != null)
-                {
-                    try
-                    {
-                        Object jsonObj = JSON.toJSON(o);
-                        params.append(jsonObj.toString()).append(" ");
-                    }
-                    catch (Exception e)
-                    {
-                        throw new ClientException(e.getMessage());
-                    }
+    private String argsArrayToString(Object[] paramsArray) {
+        if (paramsArray == null || paramsArray.length == 0) {
+            return "[]";
+        }
+
+        StringBuilder params = new StringBuilder("[");
+        for (Object o : paramsArray) {
+            try {
+                if (o == null) {
+                    params.append("null");
+                } else if (isBasicType(o)) {
+                    // 基本类型直接输出
+                    params.append(o.toString());
+                } else if (o instanceof HttpServletRequest || o instanceof HttpServletResponse) {
+                    // 特殊Web对象处理
+                    params.append(o.getClass().getSimpleName());
+                } else {
+                    // 其他对象尝试JSON序列化
+                    params.append(toSafeJsonString(o));
                 }
+                params.append(", ");
+            } catch (Exception e) {
+                // 记录错误但继续处理其他参数
+                params.append("<JSON_ERROR: ").append(e.getClass().getSimpleName())
+                        .append(" - ").append(e.getMessage()).append(">, ");
+                log.warn("参数JSON序列化失败: {}", e.getMessage());
             }
         }
-        return params.toString().trim();
+
+        // 移除最后的逗号和空格
+        if (params.length() > 1) {
+            params.setLength(params.length() - 2);
+        }
+        params.append("]");
+
+        return params.toString();
+    }
+
+    /**
+     * 判断是否是基本类型
+     */
+    private boolean isBasicType(Object o) {
+        return o instanceof String || o instanceof Number || o instanceof Boolean
+                || o instanceof Character || o instanceof Date;
+    }
+
+    /**
+     * 安全的JSON序列化
+     */
+    private String toSafeJsonString(Object o) {
+        try {
+            return JSON.toJSONString(o,
+                    SerializerFeature.DisableCircularReferenceDetect,
+                    SerializerFeature.IgnoreNonFieldGetter,
+                    SerializerFeature.WriteDateUseDateFormat);
+        } catch (Exception e) {
+            // 序列化失败时返回简化信息
+            return "{" +
+                    "\"class\":\"" + o.getClass().getName() + "\"," +
+                    "\"toString\":\"" + o.toString().replace("\"", "'") + "\"" +
+                    "}";
+        }
     }
 
 
