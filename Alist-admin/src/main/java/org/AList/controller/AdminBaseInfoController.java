@@ -55,6 +55,16 @@ public class AdminBaseInfoController {
     }
 
     /**
+     * 更新学院信息
+     */
+    @PostMapping("/updateAcademy")
+    public Result<Void> updateBaseAcademyInfo(@RequestBody BaseAcademyInfoUpdateReqDTO requestParam){
+        adminBaseInfoService.updateBaseAcademyInfo(requestParam);
+        return Results.success();
+    }
+
+
+    /**
      * 分页展示某个班级下的学生信息
      */
     @GetMapping("/listClassStu")

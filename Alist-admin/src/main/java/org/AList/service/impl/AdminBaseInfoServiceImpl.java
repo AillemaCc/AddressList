@@ -357,6 +357,33 @@ public class AdminBaseInfoServiceImpl implements AdminBaseInfoService {
     }
 
     /**
+     * 更新学院基础信息
+     *
+     * @param requestParam 请求参数
+     */
+    @Override
+    public void updateBaseAcademyInfo(BaseAcademyInfoUpdateReqDTO requestParam) {
+        if(requestParam==null){
+            throw new ClientException("请求参数不能为空");
+        }
+        LambdaQueryWrapper<MajorAndAcademyDO> originalWrapper = Wrappers.lambdaQuery(MajorAndAcademyDO.class)
+                .eq(MajorAndAcademyDO::getAcademyNum, requestParam.getAcademyNum())
+                .eq(MajorAndAcademyDO::getDelFlag, 0);
+        MajorAndAcademyDO originalMADO = majorAndAcademyMapper.selectOne(originalWrapper);
+        if (originalMADO == null) {
+            throw new ClientException("您查询的学院不存在");
+        }
+        boolean academyNameChanged = StringUtils.isNotBlank(requestParam.getAcademyName())
+                && !requestParam.getAcademyName().equals(originalMADO.getAcademy());
+        if(academyNameChanged){
+            MajorAndAcademyDO updateMADO = new MajorAndAcademyDO();
+            updateMADO.setAcademy(requestParam.getAcademyName());
+            majorAndAcademyMapper.updateById(updateMADO);
+            baseInfoCacheService.clearStudentContactCacheByAcademy(requestParam.getAcademyNum());
+        }
+    }
+
+    /**
      * 更新学生信息表中的专业和班级信息
      *
      * @param classNum 班级编号

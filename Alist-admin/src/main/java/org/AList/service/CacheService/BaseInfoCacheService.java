@@ -10,8 +10,10 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.AList.domain.dao.entity.ContactGotoDO;
+import org.AList.domain.dao.entity.MajorAndAcademyDO;
 import org.AList.domain.dao.entity.StudentFrameworkDO;
 import org.AList.domain.dao.mapper.ContactGotoMapper;
+import org.AList.domain.dao.mapper.MajorAndAcademyMapper;
 import org.AList.domain.dao.mapper.StudentFrameWorkMapper;
 import org.AList.domain.dto.resp.BaseClassInfoListStuRespDTO;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -31,6 +33,7 @@ public class BaseInfoCacheService {
     private final StringRedisTemplate stringRedisTemplate;
     private final StudentFrameWorkMapper studentFrameWorkMapper;
     private final ContactGotoMapper contactGotoMapper;
+    private final MajorAndAcademyMapper majorAndAcademyMapper;
 
 
     /**
@@ -54,6 +57,57 @@ public class BaseInfoCacheService {
                 .eq(StudentFrameworkDO::getDelFlag, 0);
 
         extractedCleanCache(studentQueryWrapper);
+    }
+
+    /**
+     * 专业信息变更之后，清理指定专业下所有学生的通讯录相关缓存，以保证数据一致性。
+     *
+     * <p>该方法的主要逻辑如下：</p>
+     * <ol>
+     *     <li>根据专业编号查询所有有效学生（未被逻辑删除的学生）</li>
+     *     <li>对于每个学生，查询与其关联的所有 通讯录跳转记录 （即谁将其加入通讯录）</li>
+     *     <li>根据这些跳转记录，构建出对应的 Redis 缓存键，并逐个删除，实现缓存清理</li>
+     * </ol>
+     *
+     * <p>此方法通常用于在学生或通讯录信息变更时重建缓存，确保其他用户获取到的是最新数据。</p>
+     *
+     * @param majorNum 专业编号，用于定位需要清理缓存的学生群体
+     */
+    public void clearStudentContactCacheByMajor(Integer majorNum) {
+        // 1. 查询该班级下的所有学生
+        LambdaQueryWrapper<StudentFrameworkDO> studentQueryWrapper = Wrappers.lambdaQuery(StudentFrameworkDO.class)
+                .eq(StudentFrameworkDO::getMajorNum, majorNum)
+                .eq(StudentFrameworkDO::getDelFlag, 0);
+
+        extractedCleanCache(studentQueryWrapper);
+    }
+
+    /**
+     * 专业信息变更之后，清理指定专业下所有学生的通讯录相关缓存，以保证数据一致性。
+     *
+     * <p>该方法的主要逻辑如下：</p>
+     * <ol>
+     *     <li>根据专业编号查询所有有效学生（未被逻辑删除的学生）</li>
+     *     <li>对于每个学生，查询与其关联的所有 通讯录跳转记录 （即谁将其加入通讯录）</li>
+     *     <li>根据这些跳转记录，构建出对应的 Redis 缓存键，并逐个删除，实现缓存清理</li>
+     * </ol>
+     *
+     * <p>此方法通常用于在学生或通讯录信息变更时重建缓存，确保其他用户获取到的是最新数据。</p>
+     *
+     * @param AcademyNum 专业编号，用于定位需要清理缓存的学生群体
+     */
+    public void clearStudentContactCacheByAcademy(Integer AcademyNum) {
+        // 1. 查询该学院下的所有专业
+        LambdaQueryWrapper<MajorAndAcademyDO> queryWrapper = Wrappers.lambdaQuery(MajorAndAcademyDO.class)
+                .eq(MajorAndAcademyDO::getAcademyNum, AcademyNum)
+                .eq(MajorAndAcademyDO::getDelFlag, 0);
+        List<MajorAndAcademyDO> majors=majorAndAcademyMapper.selectList(queryWrapper);
+        majors.forEach(major->{
+            LambdaQueryWrapper<StudentFrameworkDO> studentWrapper = Wrappers.lambdaQuery(StudentFrameworkDO.class)
+                    .eq(StudentFrameworkDO::getMajorNum, major.getMajorNum())
+                    .eq(StudentFrameworkDO::getDelFlag, 0);
+            extractedCleanCache(studentWrapper);
+        });
     }
 
     private void extractedCleanCache(LambdaQueryWrapper<StudentFrameworkDO> studentQueryWrapper) {
@@ -83,28 +137,7 @@ public class BaseInfoCacheService {
         });
     }
 
-    /**
-     * 专业信息变更之后，清理指定专业下所有学生的通讯录相关缓存，以保证数据一致性。
-     *
-     * <p>该方法的主要逻辑如下：</p>
-     * <ol>
-     *     <li>根据专业编号查询所有有效学生（未被逻辑删除的学生）</li>
-     *     <li>对于每个学生，查询与其关联的所有 通讯录跳转记录 （即谁将其加入通讯录）</li>
-     *     <li>根据这些跳转记录，构建出对应的 Redis 缓存键，并逐个删除，实现缓存清理</li>
-     * </ol>
-     *
-     * <p>此方法通常用于在学生或通讯录信息变更时重建缓存，确保其他用户获取到的是最新数据。</p>
-     *
-     * @param majorNum 专业编号，用于定位需要清理缓存的学生群体
-     */
-    public void clearStudentContactCacheByMajor(Integer majorNum) {
-        // 1. 查询该班级下的所有学生
-        LambdaQueryWrapper<StudentFrameworkDO> studentQueryWrapper = Wrappers.lambdaQuery(StudentFrameworkDO.class)
-                .eq(StudentFrameworkDO::getMajorNum, majorNum)
-                .eq(StudentFrameworkDO::getDelFlag, 0);
 
-        extractedCleanCache(studentQueryWrapper);
-    }
 
     /**
      * 获取完整通讯信息缓存键
