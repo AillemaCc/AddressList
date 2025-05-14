@@ -5,7 +5,7 @@ import cn.hutool.core.util.ReflectUtil;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.AList.annonation.EncryptField;
+import org.AList.annotation.EncryptField;
 import org.AList.service.FieldEncryptService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.annotation.AnnotationUtils;

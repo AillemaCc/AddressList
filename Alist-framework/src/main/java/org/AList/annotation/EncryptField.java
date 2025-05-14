@@ -1,4 +1,4 @@
-package org.AList.annonation;
+package org.AList.annotation;
 
 import java.lang.annotation.*;
 

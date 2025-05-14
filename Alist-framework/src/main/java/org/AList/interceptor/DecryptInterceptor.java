@@ -3,7 +3,7 @@ package org.AList.interceptor;
 import cn.hutool.core.util.ClassUtil;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.AList.annonation.EncryptField;
+import org.AList.annotation.EncryptField;
 import org.AList.utils.FieldEncryptUtil;
 import org.apache.ibatis.executor.resultset.ResultSetHandler;
 import org.apache.ibatis.plugin.Interceptor;

@@ -7,7 +7,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.AList.annonation.EncryptField;
+import org.AList.annotation.EncryptField;
 import org.AList.common.database.BaseDO;
 @AllArgsConstructor
 @NoArgsConstructor
