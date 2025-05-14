@@ -74,6 +74,7 @@ public class StuInfoController {
      * 分页查询个人全量通讯信息
      * @return 分页查询
      */
+
     @GetMapping("/contact/list")
     public Result<IPage<ContactQueryRespDTO>> queryContactList(@RequestBody ContactQueryAllOwnReqDTO requestParam){
         return Results.success(stuContactService.queryContactList(requestParam));
