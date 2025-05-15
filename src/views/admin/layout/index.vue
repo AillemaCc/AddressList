@@ -33,11 +33,11 @@
           </el-sub-menu>
 
           <el-menu-item index="/admin/query">
-            <span>查询班级</span>
+            <span>信息查询</span>
           </el-menu-item>
 
           <el-menu-item index="/admin/bulletin">
-            <span>发布公告</span>
+            <span>公告系统</span>
           </el-menu-item>
         </el-menu>
       </div>

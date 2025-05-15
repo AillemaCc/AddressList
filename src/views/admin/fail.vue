@@ -247,14 +247,15 @@ function rejectClick(studentId) {
     <div class="title">待审核请求</div>
     <div class="data-exist" v-if="fail_request.length > 0">
       <el-table :data="fail_request" style="width: 100%">
-        <el-table-column prop="id" label="id" width="60" />
-        <el-table-column prop="studentId" label="studentId" width="180" />
-        <el-table-column prop="name" label="name" width="100" />
-        <el-table-column prop="phone" label="phone" width="180" />
-        <el-table-column prop="email" label="email" width="220" />
-        <el-table-column prop="password" label="password" width="220" />
-        <el-table-column prop="status" label="status" width="90" />
-        <el-table-column prop="remark" label="remark" width="90" />
+        <el-table-column prop="id" label="学生ID" width="80" />
+        <el-table-column prop="studentId" label="学号" width="180" />
+        <el-table-column prop="name" label="姓名" width="100" />
+        <el-table-column prop="phone" label="手机号码" width="180" />
+        <el-table-column prop="email" label="邮箱" width="220" />
+        <el-table-column prop="password" label="密码" width="220" />
+        <el-table-column prop="status" label="状态" width="90" />
+        <el-table-column prop="remark" label="备注" width="90" />
+        <el-table-column prop="registerToken" label="注册Token" width="220" />
         <el-table-column
           prop="registerToken"
           label="registerToken"
@@ -300,11 +301,14 @@ function rejectClick(studentId) {
     font-family: 'micro yahei';
     font-weight: 400;
   }
+  .data-exist {
+    margin: 0 auto;
+    transform: translateX(-100px);
+  }
   .example-pagination-block {
     display: flex;
     justify-content: center;
     margin-top: 10px;
-    transform: translateX(-100px);
   }
 }
 </style>
