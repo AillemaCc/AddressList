@@ -42,4 +42,9 @@ public interface BoardService {
      * 根据公告标识号恢复已删除公告
      */
     void restoreBoard(BoardRestoreReqDTO requestParam);
+
+    /**
+     * 根据公告标识号下架公告
+     */
+    void pullOffBoard(BoardPullOffReqDTO requestParam);
 }

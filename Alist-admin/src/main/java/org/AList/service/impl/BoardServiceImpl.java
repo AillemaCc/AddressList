@@ -214,6 +214,33 @@ public class BoardServiceImpl extends ServiceImpl<BoardMapper, BoardDO> implemen
         }
     }
 
+    /**
+     * 根据公告标识号下架公告
+     */
+    @Override
+    public void pullOffBoard(BoardPullOffReqDTO requestParam) {
+        Integer boardId=requestParam.getBoardId();
+        // 1. 参数校验
+        if (boardId == null || boardId <= 0) {
+            throw new ClientException("无效的公告标识号");
+        }
+
+        // 2. 根据boardId获取公告
+        BoardDO existingBoard = lambdaQuery()
+                .eq(BoardDO::getBoardId, boardId)
+                .eq(BoardDO::getDelFlag, 0)
+                .eq(BoardDO::getStatus, 1)
+                .one();
+        if (existingBoard == null) {
+            throw new ServiceException("公告不存在或已被删除");
+        }
+        existingBoard.setStatus(2);
+        int update = boardMapper.update(existingBoard, null);
+        if (update==0) {
+            throw new ServiceException("公告下架失败");
+        }
+    }
+
     private <T extends BoardBaseDTO> void validateAOURequestParam(T requestParam) {
         if (requestParam == null) {
             throw new ClientException("请求参数不能为空");

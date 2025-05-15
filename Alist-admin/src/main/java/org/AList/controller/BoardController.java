@@ -20,7 +20,7 @@ public class BoardController {
     private final BoardService boardService;
 
     /**
-     * 新增公告
+     * 新增公告--默认保存为草稿
      */
     @PutMapping("/add")
     public Result<Void> addBoard(@RequestBody BoardAddReqDTO requestParam){
@@ -77,6 +77,15 @@ public class BoardController {
     @PostMapping("/restore")
     public Result<Void> restoreBoard(@RequestBody BoardRestoreReqDTO requestParam){
         boardService.restoreBoard(requestParam);
+        return Results.success();
+    }
+
+    /**
+     * 根据公告标识号下架公告
+     */
+    @PostMapping("/pullOff")
+    public Result<Void> pullOffBoard(@RequestBody BoardPullOffReqDTO requestParam){
+        boardService.pullOffBoard(requestParam);
         return Results.success();
     }
 
