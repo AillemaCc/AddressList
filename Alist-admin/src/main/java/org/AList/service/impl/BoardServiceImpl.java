@@ -1,6 +1,7 @@
 package org.AList.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.metadata.OrderItem;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
@@ -13,10 +14,7 @@ import org.AList.common.convention.exception.ServiceException;
 import org.AList.domain.dao.entity.BoardDO;
 import org.AList.domain.dao.mapper.BoardMapper;
 import org.AList.domain.dto.baseDTO.BoardBaseDTO;
-import org.AList.domain.dto.req.BoardAddReqDTO;
-import org.AList.domain.dto.req.BoardDeleteReqDTO;
-import org.AList.domain.dto.req.BoardQueryReqDTO;
-import org.AList.domain.dto.req.BoardUpdateReqDTO;
+import org.AList.domain.dto.req.*;
 import org.AList.domain.dto.resp.BoardQueryRespDTO;
 import org.AList.service.BoardService;
 import org.springframework.stereotype.Service;
@@ -33,7 +31,7 @@ public class BoardServiceImpl extends ServiceImpl<BoardMapper, BoardDO> implemen
     @Override
     public void addBoard(BoardAddReqDTO requestParam) {
         // 1. 参数校验
-        validateRequestParam(requestParam);
+        validateAOURequestParam(requestParam);
 
         // 2. 检查boardId是否已存在
         if (requestParam.getBoardId() != null) {
@@ -59,7 +57,7 @@ public class BoardServiceImpl extends ServiceImpl<BoardMapper, BoardDO> implemen
         if (boardId == null || boardId <= 0) {
             throw new ClientException("无效的公告标识号");
         }
-        validateRequestParam(requestParam);
+        validateAOURequestParam(requestParam);
 
         // 2. 根据boardId获取公告
         BoardDO existingBoard = lambdaQuery()
@@ -167,7 +165,35 @@ public class BoardServiceImpl extends ServiceImpl<BoardMapper, BoardDO> implemen
 
     }
 
-    private <T extends BoardBaseDTO> void validateRequestParam(T requestParam) {
+    /**
+     * 根据公告标识号发布草稿
+     */
+    @Override
+    public void releaseBoard(BoardReleaseReqDTO requestParam) {
+        Integer boardId=requestParam.getBoardId();
+        // 1. 参数校验
+        if (boardId == null || boardId <= 0) {
+            throw new ClientException("无效的公告标识号");
+        }
+        // 2. 根据boardId获取公告
+        BoardDO existingBoard = lambdaQuery()
+                .eq(BoardDO::getBoardId, boardId)
+                .eq(BoardDO::getDelFlag, 0)
+                .one();
+
+        if (existingBoard == null) {
+            throw new ServiceException("公告不存在或已被删除");
+        }
+        LambdaUpdateWrapper<BoardDO> set = Wrappers.lambdaUpdate(BoardDO.class)
+                .set(BoardDO::getStatus, 1);
+        int update = boardMapper.update(existingBoard, set);
+        if (update==0) {
+            throw new ServiceException("公告发布失败");
+        }
+
+    }
+
+    private <T extends BoardBaseDTO> void validateAOURequestParam(T requestParam) {
         if (requestParam == null) {
             throw new ClientException("请求参数不能为空");
         }

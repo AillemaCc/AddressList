@@ -4,10 +4,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import lombok.RequiredArgsConstructor;
 import org.AList.common.convention.result.Result;
 import org.AList.common.convention.result.Results;
-import org.AList.domain.dto.req.BoardAddReqDTO;
-import org.AList.domain.dto.req.BoardDeleteReqDTO;
-import org.AList.domain.dto.req.BoardQueryReqDTO;
-import org.AList.domain.dto.req.BoardUpdateReqDTO;
+import org.AList.domain.dto.req.*;
 import org.AList.domain.dto.resp.BoardQueryRespDTO;
 import org.AList.service.BoardService;
 import org.springframework.web.bind.annotation.*;
@@ -64,4 +61,15 @@ public class BoardController {
     public Result<IPage<BoardQueryRespDTO>> queryAllDeleted(@RequestBody BoardQueryReqDTO requestParam){
         return Results.success(boardService.queryAllDeleted(requestParam));
     }
+
+    /**
+     * 根据公告标识号发布草稿
+     */
+    @PostMapping("/release")
+    public Result<Void> releaseBoard(@RequestBody BoardReleaseReqDTO requestParam){
+        boardService.releaseBoard(requestParam);
+        return Results.success();
+    }
+
+
 }

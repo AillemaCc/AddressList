@@ -1,10 +1,7 @@
 package org.AList.service;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
-import org.AList.domain.dto.req.BoardAddReqDTO;
-import org.AList.domain.dto.req.BoardDeleteReqDTO;
-import org.AList.domain.dto.req.BoardQueryReqDTO;
-import org.AList.domain.dto.req.BoardUpdateReqDTO;
+import org.AList.domain.dto.req.*;
 import org.AList.domain.dto.resp.BoardQueryRespDTO;
 
 /**
@@ -35,4 +32,9 @@ public interface BoardService {
      * 分页查询所有已删除公告
      */
     IPage<BoardQueryRespDTO> queryAllDeleted(BoardQueryReqDTO requestParam);
+
+    /**
+     * 根据公告标识号发布草稿
+     */
+    void releaseBoard(BoardReleaseReqDTO requestParam);
 }
