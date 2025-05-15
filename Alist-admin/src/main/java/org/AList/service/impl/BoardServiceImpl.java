@@ -1,6 +1,10 @@
 package org.AList.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
+import com.baomidou.mybatisplus.core.toolkit.Wrappers;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.AList.common.convention.exception.ClientException;
@@ -10,7 +14,9 @@ import org.AList.domain.dao.mapper.BoardMapper;
 import org.AList.domain.dto.baseDTO.BoardBaseDTO;
 import org.AList.domain.dto.req.BoardAddReqDTO;
 import org.AList.domain.dto.req.BoardDeleteReqDTO;
+import org.AList.domain.dto.req.BoardQueryAllValidReqDTO;
 import org.AList.domain.dto.req.BoardUpdateReqDTO;
+import org.AList.domain.dto.resp.BoardQueryAllValidRespDTO;
 import org.AList.service.BoardService;
 import org.springframework.stereotype.Service;
 
@@ -101,6 +107,29 @@ public class BoardServiceImpl extends ServiceImpl<BoardMapper, BoardDO> implemen
         if (!deleteResult) {
             throw new ServiceException("公告删除失败");
         }
+    }
+
+    /**
+     * 分页查询所有未删除公告
+     */
+    @Override
+    public IPage<BoardQueryAllValidRespDTO> queryAllValid(BoardQueryAllValidReqDTO requestParam) {
+        int current=requestParam.getCurrent()==null?0:requestParam.getCurrent();
+        int size=requestParam.getSize()==null?10:requestParam.getSize();
+        LambdaQueryWrapper<BoardDO> queryWrapper = Wrappers.lambdaQuery(BoardDO.class)
+                .eq(BoardDO::getDelFlag, 0)
+                .orderByDesc(BoardDO::getStatus)
+                .orderByDesc(BoardDO::getPriority) // 按优先级降序
+                .orderByDesc(BoardDO::getCreateTime);// 再按创建时间降序
+        IPage<BoardDO> boardPage=page(new Page<>(current,size),queryWrapper);
+        return boardPage.convert(boardDO -> BoardQueryAllValidRespDTO.builder()
+                .title(boardDO.getTitle())
+                .boardId(boardDO.getBoardId())
+                .category(boardDO.getCategory())
+                .content(boardDO.getContent())
+                .status(boardDO.getStatus())
+                .priority(boardDO.getPriority())
+                .build());
     }
 
     private <T extends BoardBaseDTO> void validateRequestParam(T requestParam) {
