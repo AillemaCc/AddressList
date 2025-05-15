@@ -37,4 +37,9 @@ public interface BoardService {
      * 根据公告标识号发布草稿
      */
     void releaseBoard(BoardReleaseReqDTO requestParam);
+
+    /**
+     * 根据公告标识号恢复已删除公告
+     */
+    void restoreBoard(BoardRestoreReqDTO requestParam);
 }

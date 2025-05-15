@@ -193,6 +193,27 @@ public class BoardServiceImpl extends ServiceImpl<BoardMapper, BoardDO> implemen
 
     }
 
+    /**
+     * 根据公告标识号恢复已删除公告
+     */
+    @Override
+    public void restoreBoard(BoardRestoreReqDTO requestParam) {
+        Integer boardId=requestParam.getBoardId();
+        // 1. 参数校验
+        if (boardId == null || boardId <= 0) {
+            throw new ClientException("无效的公告标识号");
+        }
+        BoardDO restoredBoard = boardMapper.selectRestoreByBoardId(1,requestParam.getBoardId());
+        if (restoredBoard == null) {
+            throw new ServiceException("公告不存在或已被删除");
+        }
+        restoredBoard.setDelFlag(0);
+        int update = boardMapper.restoreBoard(restoredBoard.getBoardId());
+        if (update==0) {
+            throw new ServiceException("公告恢复失败");
+        }
+    }
+
     private <T extends BoardBaseDTO> void validateAOURequestParam(T requestParam) {
         if (requestParam == null) {
             throw new ClientException("请求参数不能为空");

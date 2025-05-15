@@ -71,5 +71,14 @@ public class BoardController {
         return Results.success();
     }
 
+    /**
+     * 根据公告标识号恢复已删除公告
+     */
+    @PostMapping("/restore")
+    public Result<Void> restoreBoard(@RequestBody BoardRestoreReqDTO requestParam){
+        boardService.restoreBoard(requestParam);
+        return Results.success();
+    }
+
 
 }
