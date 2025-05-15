@@ -2,6 +2,7 @@ package org.AList.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.metadata.OrderItem;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -14,9 +15,9 @@ import org.AList.domain.dao.mapper.BoardMapper;
 import org.AList.domain.dto.baseDTO.BoardBaseDTO;
 import org.AList.domain.dto.req.BoardAddReqDTO;
 import org.AList.domain.dto.req.BoardDeleteReqDTO;
-import org.AList.domain.dto.req.BoardQueryAllValidReqDTO;
+import org.AList.domain.dto.req.BoardQueryReqDTO;
 import org.AList.domain.dto.req.BoardUpdateReqDTO;
-import org.AList.domain.dto.resp.BoardQueryAllValidRespDTO;
+import org.AList.domain.dto.resp.BoardQueryRespDTO;
 import org.AList.service.BoardService;
 import org.springframework.stereotype.Service;
 
@@ -113,7 +114,7 @@ public class BoardServiceImpl extends ServiceImpl<BoardMapper, BoardDO> implemen
      * 分页查询所有未删除公告
      */
     @Override
-    public IPage<BoardQueryAllValidRespDTO> queryAllValid(BoardQueryAllValidReqDTO requestParam) {
+    public IPage<BoardQueryRespDTO> queryAllValid(BoardQueryReqDTO requestParam) {
         int current=requestParam.getCurrent()==null?0:requestParam.getCurrent();
         int size=requestParam.getSize()==null?10:requestParam.getSize();
         LambdaQueryWrapper<BoardDO> queryWrapper = Wrappers.lambdaQuery(BoardDO.class)
@@ -122,14 +123,48 @@ public class BoardServiceImpl extends ServiceImpl<BoardMapper, BoardDO> implemen
                 .orderByDesc(BoardDO::getPriority) // 按优先级降序
                 .orderByDesc(BoardDO::getCreateTime);// 再按创建时间降序
         IPage<BoardDO> boardPage=page(new Page<>(current,size),queryWrapper);
-        return boardPage.convert(boardDO -> BoardQueryAllValidRespDTO.builder()
+        return boardPage.convert(boardDO -> BoardQueryRespDTO.builder()
                 .title(boardDO.getTitle())
                 .boardId(boardDO.getBoardId())
                 .category(boardDO.getCategory())
                 .content(boardDO.getContent())
                 .status(boardDO.getStatus())
                 .priority(boardDO.getPriority())
+                .createTime(boardDO.getCreateTime())
+                .updateTime(boardDO.getUpdateTime())
                 .build());
+    }
+
+    /**
+     * 分页查询所有已删除公告
+     */
+    @Override
+    public IPage<BoardQueryRespDTO> queryAllDeleted(BoardQueryReqDTO requestParam) {
+        // 1. 参数处理
+        int current = requestParam.getCurrent() == null || requestParam.getCurrent() <= 0 ? 1 : requestParam.getCurrent();
+        int size = requestParam.getSize() == null || requestParam.getSize() <= 0 ? 10 : requestParam.getSize();
+
+        // 2. 创建分页对象并设置排序
+        Page<BoardDO> page = new Page<>(current, size);
+        page.addOrder(OrderItem.desc("status"));      // 按状态降序
+        page.addOrder(OrderItem.desc("priority"));    // 按优先级降序
+        page.addOrder(OrderItem.desc("create_time")); // 按创建时间降序
+
+        // 3. 调用Mapper方法（结合@Select注解）
+        IPage<BoardDO> boardPage = boardMapper.selectByDelFlag(page, 0); // delFlag=0表示未删除
+
+        // 4. 转换为响应DTO
+        return boardPage.convert(boardDO -> BoardQueryRespDTO.builder()
+                .title(boardDO.getTitle())
+                .boardId(boardDO.getBoardId())
+                .category(boardDO.getCategory())
+                .content(boardDO.getContent())
+                .status(boardDO.getStatus())
+                .priority(boardDO.getPriority())
+                .createTime(boardDO.getCreateTime())
+                .updateTime(boardDO.getUpdateTime())
+                .build());
+
     }
 
     private <T extends BoardBaseDTO> void validateRequestParam(T requestParam) {

@@ -6,9 +6,9 @@ import org.AList.common.convention.result.Result;
 import org.AList.common.convention.result.Results;
 import org.AList.domain.dto.req.BoardAddReqDTO;
 import org.AList.domain.dto.req.BoardDeleteReqDTO;
-import org.AList.domain.dto.req.BoardQueryAllValidReqDTO;
+import org.AList.domain.dto.req.BoardQueryReqDTO;
 import org.AList.domain.dto.req.BoardUpdateReqDTO;
-import org.AList.domain.dto.resp.BoardQueryAllValidRespDTO;
+import org.AList.domain.dto.resp.BoardQueryRespDTO;
 import org.AList.service.BoardService;
 import org.springframework.web.bind.annotation.*;
 
@@ -53,8 +53,15 @@ public class BoardController {
      * 分页查询所有未删除公告
      */
     @GetMapping("/queryAllValid")
-    public Result<IPage<BoardQueryAllValidRespDTO>> queryAllValid(@RequestBody BoardQueryAllValidReqDTO requestParam){
+    public Result<IPage<BoardQueryRespDTO>> queryAllValid(@RequestBody BoardQueryReqDTO requestParam){
         return Results.success(boardService.queryAllValid(requestParam));
+    }
 
+    /**
+     * 分页查询所有已删除公告
+     */
+    @GetMapping("/queryAllDeleted")
+    public Result<IPage<BoardQueryRespDTO>> queryAllDeleted(@RequestBody BoardQueryReqDTO requestParam){
+        return Results.success(boardService.queryAllDeleted(requestParam));
     }
 }

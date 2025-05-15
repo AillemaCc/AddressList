@@ -5,14 +5,16 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.Date;
+
 /**
- * 分页查询所有未删除公告响应体
+ * 分页查询公告响应体
  */
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class BoardQueryAllValidRespDTO {
+public class BoardQueryRespDTO {
 
     /**
      * 公告标题
@@ -43,5 +45,15 @@ public class BoardQueryAllValidRespDTO {
      * 优先级，数字越大优先级越高
      */
     private String priority;
+
+    /**
+     * 创建时间
+     */
+    private Date createTime;
+
+    /**
+     * 创建时间
+     */
+    private Date updateTime;
 
 }

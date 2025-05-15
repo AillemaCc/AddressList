@@ -6,13 +6,13 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * 分页查询所有未删除公告请求体
+ * 分页查询公告请求体
  */
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class BoardQueryAllValidReqDTO {
+public class BoardQueryReqDTO {
 
     private Integer current;
     private Integer size;
