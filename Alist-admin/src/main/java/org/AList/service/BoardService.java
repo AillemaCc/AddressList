@@ -34,6 +34,11 @@ public interface BoardService {
     IPage<BoardQueryRespDTO> queryAllDeleted(BoardQueryReqDTO requestParam);
 
     /**
+     * 分页查询所有已发布公告
+     */
+    IPage<BoardQueryRespDTO> queryAllReleased(BoardQueryReqDTO requestParam);
+
+    /**
      * 根据公告标识号发布草稿
      */
     void releaseBoard(BoardReleaseReqDTO requestParam);
@@ -47,4 +52,6 @@ public interface BoardService {
      * 根据公告标识号下架公告
      */
     void pullOffBoard(BoardPullOffReqDTO requestParam);
+
+
 }

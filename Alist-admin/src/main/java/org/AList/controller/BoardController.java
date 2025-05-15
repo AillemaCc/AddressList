@@ -63,6 +63,14 @@ public class BoardController {
     }
 
     /**
+     * 分页查询所有已发布公告
+     */
+    @GetMapping("/queryAllReleased")
+    public Result<IPage<BoardQueryRespDTO>> queryAllReleased(@RequestBody BoardQueryReqDTO requestParam){
+        return Results.success(boardService.queryAllReleased(requestParam));
+    }
+
+    /**
      * 根据公告标识号发布草稿
      */
     @PostMapping("/release")

@@ -166,6 +166,31 @@ public class BoardServiceImpl extends ServiceImpl<BoardMapper, BoardDO> implemen
     }
 
     /**
+     * 分页查询所有已发布公告
+     */
+    @Override
+    public IPage<BoardQueryRespDTO> queryAllReleased(BoardQueryReqDTO requestParam) {
+        int current=requestParam.getCurrent()==null?0:requestParam.getCurrent();
+        int size=requestParam.getSize()==null?10:requestParam.getSize();
+        LambdaQueryWrapper<BoardDO> queryWrapper = Wrappers.lambdaQuery(BoardDO.class)
+                .eq(BoardDO::getDelFlag, 0)
+                .eq(BoardDO::getStatus, 1)
+                .orderByDesc(BoardDO::getPriority) // 按优先级降序
+                .orderByDesc(BoardDO::getCreateTime);// 再按创建时间降序
+        IPage<BoardDO> boardPage=page(new Page<>(current,size),queryWrapper);
+        return boardPage.convert(boardDO -> BoardQueryRespDTO.builder()
+                .title(boardDO.getTitle())
+                .boardId(boardDO.getBoardId())
+                .category(boardDO.getCategory())
+                .content(boardDO.getContent())
+                .status(boardDO.getStatus())
+                .priority(boardDO.getPriority())
+                .createTime(boardDO.getCreateTime())
+                .updateTime(boardDO.getUpdateTime())
+                .build());
+    }
+
+    /**
      * 根据公告标识号发布草稿
      */
     @Override
