@@ -1,18 +1,18 @@
 <script setup>
 import { ref } from 'vue'
-const studentId = ref('')
+const username = ref('')
 const password = ref('')
 // 小眼睛状态
 const isPasswordVisible = ref(false)
 // 各个框的的标签上移状态
-const hasStudentIdFocused = ref(false)
+const hasUsernameFocused = ref(false)
 const hasPasswordFocused = ref(false)
 
 function changePasswordVisible() {
   isPasswordVisible.value = !isPasswordVisible.value
 }
-function handleStudentIdFocus() {
-  hasStudentIdFocused.value = true
+function handleUsernameFocus() {
+  hasUsernameFocused.value = true
 }
 
 function handlePasswordFocus() {
@@ -41,19 +41,17 @@ function handlePasswordFocus() {
         </div>
         <div class="form-container">
           <div class="loginForm">
-            <h1>学生登录</h1>
-            <div class="studentId">
+            <h1>管理员登录</h1>
+            <div class="username">
               <input
-                class="studentIdInput"
+                class="usernameInput"
                 type="text"
-                id="studentId"
-                v-model="studentId"
-                @focus="handleStudentIdFocus"
+                id="username"
+                v-model="username"
+                @focus="handleUsernameFocus"
               />
-              <label
-                for="studentId"
-                :class="{ 'label-up': hasStudentIdFocused }"
-                >学号</label
+              <label for="username" :class="{ 'label-up': hasUsernameFocused }"
+                >用户名</label
               >
               <div class="icon"><i class="iconfont icon-yonghu"></i></div>
             </div>
@@ -84,9 +82,6 @@ function handlePasswordFocus() {
             <div class="loginButtonContainer">
               <button class="loginButton">登录</button>
             </div>
-            <div class="toRigister">
-              还没有账号？<router-link to="/stu/register">立即注册</router-link>
-            </div>
           </div>
         </div>
       </div>
@@ -95,6 +90,8 @@ function handlePasswordFocus() {
 </template>
 <style scoped lang="scss">
 .container {
+  min-width: 680px;
+  min-height: 1000px;
   height: 100vh;
   display: flex;
   flex-direction: column;
@@ -172,16 +169,19 @@ function handlePasswordFocus() {
     color: $mainColor;
     margin-bottom: 20px;
   }
-  .studentId,
+  .username,
   .password,
   .toRigister {
     display: flex;
     position: relative;
   }
-  .studentId,
+  .username,
   .password {
     transition: 0.3s;
     border-bottom: 1px solid #000;
+  }
+  .password {
+    transform: translateY(-20px);
   }
   label {
     position: absolute;
@@ -194,7 +194,7 @@ function handlePasswordFocus() {
       transform: translateY(-180%);
     }
   }
-  .studentIdInput,
+  .usernameInput,
   .passwordInput {
     width: 330px;
     height: 40px;
@@ -202,13 +202,13 @@ function handlePasswordFocus() {
     border: none;
     outline: none;
   }
-  .studentIdInput:focus + label {
+  .usernameInput:focus + label {
     color: $mainColor;
   }
   .passwordInput:focus + label {
     color: $mainColor;
   }
-  .studentId:focus-within,
+  .username:focus-within,
   .password:focus-within {
     border-bottom: 1px solid $mainColor;
   }

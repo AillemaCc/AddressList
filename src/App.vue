@@ -7,5 +7,6 @@
 <style>
 body {
   min-width: 680px;
+  min-height: 800px;
 }
 </style>

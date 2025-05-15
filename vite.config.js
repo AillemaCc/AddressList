@@ -12,6 +12,15 @@ import { ElementPlusResolver } from 'unplugin-vue-components/resolvers'
 export default defineConfig({
   plugins: [
     vue(),
+    Components({
+      resolvers: [
+        ElementPlusResolver({
+          importStyle: 'sass',
+          // directives: true,
+          // version: "2.1.5",
+        }),
+      ],
+    }),
     vueDevTools(),
     AutoImport({
       resolvers: [ElementPlusResolver()],
@@ -23,6 +32,16 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
+    },
+  },
+  css: {
+    preprocessorOptions: {
+      scss: {
+        additionalData: `
+        @use "@/styles/element/index.scss" as *;
+        @use "@/styles/var.scss" as *;
+        `,
+      },
     },
   },
 })

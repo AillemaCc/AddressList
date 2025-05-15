@@ -12,7 +12,11 @@ function goToAdministrator() {
 <template>
   <div class="header">
     <div class="academic-logo-container">
-      <img class="academic-logo" src="../../assets/imgs/academic_logo.png" alt="" />
+      <img
+        class="academic-logo"
+        src="../../assets/imgs/academic_logo.png"
+        alt=""
+      />
     </div>
   </div>
   <div class="main-container">
@@ -60,7 +64,7 @@ function goToAdministrator() {
   margin: 20px auto;
   .title {
     font-size: 40px;
-    color: #275dbb;
+    color: $mainColor;
   }
 }
 .subtitle {
@@ -96,7 +100,7 @@ function goToAdministrator() {
     }
     &:hover .iconfont,
     &:hover .card-name {
-      color: #275dbb;
+      color: $mainColor;
     }
     .card-icon {
       width: 60px;
