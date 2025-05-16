@@ -71,7 +71,15 @@ public class BoardController {
     }
 
     /**
-     * 分页查询所有已下架公告
+     * 分页查询所有草稿
+     */
+    @GetMapping("/queryAllDraft")
+    public Result<IPage<BoardQueryRespDTO>> queryAllDraft(@RequestBody BoardQueryReqDTO requestParam){
+        return Results.success(boardService.queryAllDraft(requestParam));
+    }
+
+    /**
+     * 分页查询所有草稿
      */
     @GetMapping("/queryAllPullOff")
     public Result<IPage<BoardQueryRespDTO>> queryAllPullOff(@RequestBody BoardQueryReqDTO requestParam){

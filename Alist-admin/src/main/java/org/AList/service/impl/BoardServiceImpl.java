@@ -255,6 +255,22 @@ public class BoardServiceImpl extends ServiceImpl<BoardMapper, BoardDO> implemen
         return boardPage.convert(this::convertToBoardQueryRespDTO);
     }
 
+    /**
+     * 分页查询所有草稿
+     */
+    @Override
+    public IPage<BoardQueryRespDTO> queryAllDraft(BoardQueryReqDTO requestParam) {
+        int current=requestParam.getCurrent()==null?0:requestParam.getCurrent();
+        int size=requestParam.getSize()==null?10:requestParam.getSize();
+        LambdaQueryWrapper<BoardDO> queryWrapper = Wrappers.lambdaQuery(BoardDO.class)
+                .eq(BoardDO::getDelFlag, 0)
+                .eq(BoardDO::getStatus, 0)
+                .orderByDesc(BoardDO::getPriority) // 按优先级降序
+                .orderByDesc(BoardDO::getCreateTime);// 再按创建时间降序
+        IPage<BoardDO> boardPage=page(new Page<>(current,size),queryWrapper);
+        return boardPage.convert(this::convertToBoardQueryRespDTO);
+    }
+
     private <T extends BoardBaseDTO> void validateAOURequestParam(T requestParam) {
         if (requestParam == null) {
             throw new ClientException("请求参数不能为空");
