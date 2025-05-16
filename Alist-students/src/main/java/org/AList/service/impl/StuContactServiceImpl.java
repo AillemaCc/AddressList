@@ -48,20 +48,19 @@ public class StuContactServiceImpl extends ServiceImpl<ContactMapper, ContactDO>
 
     /**
      * 新增个人通讯信息
-     *
-     * @param requestParam 新增通讯信息请求体
      */
     @Override
     public void addStudentContact(ContactAddReqDTO requestParam) {
-
         StuIdContext.verifyLoginUser(requestParam.getStudentId());
+        if (checkContactExist(requestParam.getStudentId())) {
+            throw new ClientException("该学生的通讯信息已存在");
+        }
         ContactDO contact =ContactDO.builder()
                 .studentId(requestParam.getStudentId())
                 .employer(requestParam.getEmployer())
                 .city(requestParam.getCity())
                 .build();
         contactMapper.insert(contact);
-        // 新增后清除并重建该学生的缓存
         sendCacheRebuildEvent(requestParam.getStudentId());
     }
 
@@ -72,80 +71,56 @@ public class StuContactServiceImpl extends ServiceImpl<ContactMapper, ContactDO>
      */
     @Override
     public void deleteStudentContact(ContactDeleteReqDTO requestParam) {
-        // 1. 验证当前登录用户
         StuIdContext.verifyLoginUser(requestParam.getOwnerId());
-
-        // 2. 首先检查goto表中是否存在该ownerId和contactId的记录，验证用户是否拥有该通讯录
         LambdaQueryWrapper<ContactGotoDO> gotoQueryWrapper = Wrappers.lambdaQuery(ContactGotoDO.class)
                 .eq(ContactGotoDO::getOwnerId, requestParam.getOwnerId())
                 .eq(ContactGotoDO::getContactId, requestParam.getContactId())
                 .eq(ContactGotoDO::getDelFlag, 0);
         ContactGotoDO contactGoto = contactGotoMapper.selectOne(gotoQueryWrapper);
-
         if (Objects.isNull(contactGoto)) {
             throw new ClientException("您没有权限删除此通讯录信息或记录不存在");
         }
-
-        // 3. 逻辑删除Contact表中的记录（设置del_flag=1）
         LambdaUpdateWrapper<ContactDO> updateWrapper = Wrappers.lambdaUpdate(ContactDO.class)
                 .eq(ContactDO::getStudentId, requestParam.getContactId())
                 .eq(ContactDO::getDelFlag, 0)
                 .set(ContactDO::getDelFlag, 1);
         int updated = contactMapper.update(null, updateWrapper);
-
         if (updated == 0) {
             throw new ClientException("删除个人通讯信息出现异常，请重试");
         }
-
-        // 4. 同时逻辑删除goto表中的关联记录（根据业务需求决定）
         LambdaUpdateWrapper<ContactGotoDO> gotoUpdateWrapper = Wrappers.lambdaUpdate(ContactGotoDO.class)
                 .eq(ContactGotoDO::getOwnerId, requestParam.getOwnerId())
                 .eq(ContactGotoDO::getContactId, requestParam.getContactId())
                 .eq(ContactGotoDO::getDelFlag, 0)
                 .set(ContactGotoDO::getDelFlag, 1);
         contactGotoMapper.update(null, gotoUpdateWrapper);
-
-        // 删除后发送缓存清除事件
         try {
             StreamEvent event = StreamEvent.builder()
                     .eventType("CACHE_CLEAR")
                     .studentId(requestParam.getContactId())
                     .timestamp(System.currentTimeMillis())
                     .build();
-
             streamEventProducer.sendEvent(event);
         } catch (Exception e) {
             log.error("Failed to send cache clear event", e);
-            // 降级同步清除
             contactCacheService.clearContactCache(requestParam.getContactId());
         }
     }
 
     /**
      * 修改个人通讯信息
-     *
-     * @param requestParam 修改通讯信息请求体
      */
     @Override
     public void updateStudentContact(ContactUpdateReqDTO requestParam) {
-        // 1. 验证当前登录用户
         StuIdContext.verifyLoginUser(requestParam.getStudentId());
-
-        // 2. 检查记录是否存在
-        LambdaQueryWrapper<ContactDO> queryWrapper = Wrappers.lambdaQuery(ContactDO.class)
-                .eq(ContactDO::getStudentId, requestParam.getStudentId())
-                .eq(ContactDO::getDelFlag, 0);
-        if (contactMapper.selectOne(queryWrapper) == null) {
+        if (!checkContactExist(requestParam.getStudentId())) {
             throw new ClientException("修改的记录不存在");
         }
-
-        // 3. 构建更新内容和条件
         LambdaUpdateWrapper<ContactDO> updateWrapper = Wrappers.lambdaUpdate(ContactDO.class)
                 .eq(ContactDO::getStudentId, requestParam.getStudentId())
                 .eq(ContactDO::getDelFlag, 0)
-                .set(ContactDO::getEmployer, requestParam.getEmployer())  // 设置要更新的字段
+                .set(ContactDO::getEmployer, requestParam.getEmployer())
                 .set(ContactDO::getCity, requestParam.getCity());
-        // 4. 执行更新
         int updated = contactMapper.update(null, updateWrapper);
         if (updated != 1) {
             throw new ClientException("修改错误");
@@ -161,14 +136,10 @@ public class StuContactServiceImpl extends ServiceImpl<ContactMapper, ContactDO>
      */
     @Override
     public ContactQueryRespDTO queryContactById(ContactQueryByIdReqDTO requestParam) {
-        // 1. 验证当前登录用户
         StuIdContext.verifyLoginUser(requestParam.getOwnerId());
-
-        // 构建Redis缓存key
         String redisKey = String.format("contact:%s:%s",
                 requestParam.getOwnerId(),
                 requestParam.getContactId());
-
         // 尝试从Redis获取缓存
         try {
             String cachedData = stringRedisTemplate.opsForValue().get(redisKey);
@@ -427,5 +398,18 @@ public class StuContactServiceImpl extends ServiceImpl<ContactMapper, ContactDO>
             // 降级策略：同步执行缓存重建
             contactCacheService.rebuildContactCache(studentId);
         }
+    }
+
+    /**
+     * 检查指定学生的通讯信息是否存在
+     * @param studentId 学生ID
+     * @return true-存在，false-不存在
+     */
+    private boolean checkContactExist(String studentId) {
+        return contactMapper.selectCount(
+                new LambdaQueryWrapper<ContactDO>()
+                        .eq(ContactDO::getStudentId, studentId)
+                        .eq(ContactDO::getDelFlag, 0)
+        ) > 0;
     }
 }
