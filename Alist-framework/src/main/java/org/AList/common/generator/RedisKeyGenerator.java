@@ -10,8 +10,8 @@ public class RedisKeyGenerator {
     /**
      * 生成联系人单条缓存 Key
      */
-    public static String genContactKey(String ownerId, String studentId) {
-        return String.format(RedisKeyTemplates.CONTACT_SINGLE, ownerId, studentId);
+    public static String genContactKey(String ownerId, String contactId) {
+        return String.format(RedisKeyTemplates.CONTACT_SINGLE, ownerId, contactId);
     }
     
     /**

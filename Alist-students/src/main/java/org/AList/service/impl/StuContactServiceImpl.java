@@ -12,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.AList.common.biz.user.StuIdContext;
 import org.AList.common.convention.exception.ClientException;
+import org.AList.common.generator.RedisKeyGenerator;
 import org.AList.domain.dao.entity.*;
 import org.AList.domain.dao.mapper.*;
 import org.AList.domain.dto.req.*;
@@ -137,9 +138,7 @@ public class StuContactServiceImpl extends ServiceImpl<ContactMapper, ContactDO>
     @Override
     public ContactQueryRespDTO queryContactById(ContactQueryByIdReqDTO requestParam) {
         StuIdContext.verifyLoginUser(requestParam.getOwnerId());
-        String redisKey = String.format("contact:%s:%s",
-                requestParam.getOwnerId(),
-                requestParam.getContactId());
+        String redisKey = RedisKeyGenerator.genContactKey(requestParam.getOwnerId(), requestParam.getContactId());
         // 尝试从Redis获取缓存
         try {
             String cachedData = stringRedisTemplate.opsForValue().get(redisKey);
