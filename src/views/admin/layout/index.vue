@@ -27,18 +27,23 @@
             <template #title>
               <span>请求概览</span>
             </template>
-            <el-menu-item index="/admin/fail">待审核</el-menu-item>
-            <el-menu-item index="/admin/success">已通过</el-menu-item>
-            <el-menu-item index="/admin/reject">已拒绝</el-menu-item>
+            <el-menu-item index="/admin/request_fail">待审核</el-menu-item>
+            <el-menu-item index="/admin/request_success">已通过</el-menu-item>
+            <el-menu-item index="/admin/request_reject">已拒绝</el-menu-item>
           </el-sub-menu>
 
           <el-menu-item index="/admin/query">
             <span>信息查询</span>
           </el-menu-item>
-
-          <el-menu-item index="/admin/bulletin">
-            <span>公告系统</span>
-          </el-menu-item>
+          <el-sub-menu index="4">
+            <template #title>
+              <span>公告系统</span>
+            </template>
+            <el-menu-item index="/admin/bulletin_draft">草稿</el-menu-item>
+            <el-menu-item index="/admin/bulletin_released">已发布</el-menu-item>
+            <el-menu-item index="/admin/bulletin_pulledOf">已下架</el-menu-item>
+            <el-menu-item index="/admin/bulletin_deleted">已删除</el-menu-item>
+          </el-sub-menu>
         </el-menu>
       </div>
       <div class="router-container">
@@ -59,6 +64,7 @@
     align-items: center;
     padding-left: 60px;
     height: 96px;
+    min-height: 96px;
     .logo-container {
       width: 80px;
       height: 80px;

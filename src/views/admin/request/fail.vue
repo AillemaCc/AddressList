@@ -303,7 +303,6 @@ function rejectClick(studentId) {
   }
   .data-exist {
     margin: 0 auto;
-    transform: translateX(-100px);
   }
   .example-pagination-block {
     display: flex;

@@ -14,12 +14,15 @@ import stu_register from '@/views/stu/register/index.vue'
 
 import admin_layout from '@/views/admin/layout/index.vue'
 import admin_home from '@/views/admin/home/index.vue'
-import admin_fail from '@/views/admin/fail.vue'
-import admin_success from '@/views/admin/success.vue'
-import admin_reject from '@/views/admin/reject.vue'
+import admin_request_fail from '@/views/admin/request/fail.vue'
+import admin_request_success from '@/views/admin/request/success.vue'
+import admin_request_reject from '@/views/admin/request/reject.vue'
 import admin_query from '@/views/admin/query/index.vue'
 import admin_login from '@/views/admin/login/index.vue'
-import admin_bulletin from '@/views/admin/bulletin/index.vue'
+import admin_bulletin_draft from '@/views/admin/bulletin/draft.vue'
+import admin_bulletin_released from '@/views/admin/bulletin/released.vue'
+import admin_bulletin_pulledOf from '@/views/admin/bulletin/pulledOf.vue'
+import admin_bulletin_deleted from '@/views/admin/bulletin/deleted.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -71,13 +74,25 @@ const router = createRouter({
           redirect: '/admin/home',
           children: [
             { path: 'home', component: admin_home },
-            { path: 'fail', component: admin_fail },
-            { path: 'success', component: admin_success },
-            { path: 'reject', component: admin_reject },
+            { path: 'request_fail', component: admin_request_fail },
+            { path: 'request_success', component: admin_request_success },
+            { path: 'request_reject', component: admin_request_reject },
             { path: 'query', component: admin_query },
             {
-              path: 'bulletin',
-              component: admin_bulletin,
+              path: 'bulletin_draft',
+              component: admin_bulletin_draft,
+            },
+            {
+              path: 'bulletin_released',
+              component: admin_bulletin_released,
+            },
+            {
+              path: 'bulletin_pulledOf',
+              component: admin_bulletin_pulledOf,
+            },
+            {
+              path: 'bulletin_deleted',
+              component: admin_bulletin_deleted,
             },
           ],
         },

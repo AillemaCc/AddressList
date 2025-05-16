@@ -1,6 +1,7 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 const radio1 = ref('')
+const searchInput = ref('')
 const majors = ref([
   {
     majorNum: 1,
@@ -86,6 +87,22 @@ const classes = ref([
   },
 ])
 const students = ref([])
+
+const inputPlaceHolder = computed(() => {
+  if (radio1.value === '查询个人') {
+    return '请输入班级编号'
+  } else if (radio1.value === '查询班级') {
+    return '请输入专业编号'
+  } else if (radio1.value === '查询专业') {
+    return '请输入学院编号'
+  } else {
+    return '请选择查询类别'
+  }
+})
+
+function clearInput() {
+  searchInput.value = ''
+}
 </script>
 
 <template>
@@ -93,12 +110,16 @@ const students = ref([])
     <div class="search-form">
       <div class="search-radio">
         <el-radio-group v-model="radio1" size="large">
-          <el-radio-button label="查询个人" />
-          <el-radio-button label="查询班级" />
-          <el-radio-button label="查询专业" />
+          <el-radio-button label="查询个人" @click="clearInput" />
+          <el-radio-button label="查询班级" @click="clearInput" />
+          <el-radio-button label="查询专业" @click="clearInput" />
         </el-radio-group>
       </div>
-      <input class="search-input" />
+      <input
+        class="search-input"
+        v-model="searchInput"
+        :placeholder="inputPlaceHolder"
+      />
       <button class="search-button">
         <i class="iconfont icon-sousuo"></i>
       </button>
@@ -166,6 +187,7 @@ const students = ref([])
 
 <style scoped lang="scss">
 .container {
+  min-width: 720px;
   .search-form {
     display: flex;
     justify-content: space-around;
@@ -178,7 +200,7 @@ const students = ref([])
         margin-left: 15%;
       }
       @media screen and (max-width: 1200px) {
-        margin-left: 10%;
+        margin-left: 5%;
       }
     }
     .search-input {
@@ -213,7 +235,7 @@ const students = ref([])
         margin-right: 15%;
       }
       @media screen and (max-width: 1200px) {
-        margin-right: 10%;
+        margin-right: 5%;
       }
       .iconfont {
         font-size: 18px;
@@ -229,7 +251,6 @@ const students = ref([])
   .class-data-exist,
   .stu-data-exist {
     margin: 0 auto;
-    transform: translateX(-100px);
   }
   .example-pagination-block {
     display: flex;

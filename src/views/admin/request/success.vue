@@ -3,21 +3,21 @@ import { ref } from 'vue'
 
 const fail_request = ref([
   {
-    id: 27,
-    studentId: '9646857155',
-    name: '陈詩涵',
-    phone: '2132594034',
-    email: 'chenshih@gmail.com',
-    status: 2,
-    remark: null,
-    registerToken: '5PaH5oD3sR',
+    id: 46,
+    studentId: '9109222268',
+    name: '学生1',
+    phone: '15682496592',
+    email: 'vacsbt_om0@qq.com',
+    status: 1,
+    remark: '111',
+    registerToken: '2c4b7820-3a1f-4b76-9b0d-795358fa8209',
   },
 ])
 </script>
 
 <template>
   <div class="container">
-    <div class="title">已拒绝请求</div>
+    <div class="title">已通过请求</div>
     <div class="data-exist" v-if="fail_request.length > 0">
       <el-table :data="fail_request" style="width: 100%">
         <el-table-column prop="id" label="id" width="60" />
@@ -57,7 +57,6 @@ const fail_request = ref([
   }
   .data-exist {
     margin: 0 auto;
-    transform: translateX(-100px);
   }
   .example-pagination-block {
     display: flex;
