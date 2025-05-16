@@ -5,6 +5,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.AList.common.generator.RedisKeyGenerator;
 import org.AList.domain.dao.entity.ClassInfoDO;
 import org.AList.domain.dao.entity.ContactDO;
 import org.AList.domain.dao.entity.MajorAndAcademyDO;
@@ -85,7 +86,7 @@ public class ContactCacheService {
      * @param studentId 学生唯一标识
      */
     public void clearContactCache(String studentId) {
-        String patternKey = String.format("contact:*:%s", studentId);
+        String patternKey = RedisKeyGenerator.genContactPatternForStudent(studentId);
         Set<String> keys = redisTemplate.keys(patternKey);
         if (keys != null && !keys.isEmpty()) {
             redisTemplate.delete(keys);
@@ -104,31 +105,25 @@ public class ContactCacheService {
         ContactDO contact = contactMapper.selectOne(Wrappers.lambdaQuery(ContactDO.class)
                 .eq(ContactDO::getStudentId, studentId)
                 .eq(ContactDO::getDelFlag, 0));
-
         if (contact == null) {
             log.warn("联系人不存在或已被删除，studentId: {}", studentId);
             return null;
         }
-
         StudentFrameworkDO student = studentFrameWorkMapper.selectOne(Wrappers.lambdaQuery(StudentFrameworkDO.class)
                 .eq(StudentFrameworkDO::getStudentId, studentId)
                 .eq(StudentFrameworkDO::getDelFlag, 0));
-
         if (student == null) {
             log.warn("学生信息不存在，studentId: {}", studentId);
             return null;
         }
-
         MajorAndAcademyDO majorAndAcademy = majorAndAcademyMapper.selectOne(
                 Wrappers.lambdaQuery(MajorAndAcademyDO.class)
                         .eq(MajorAndAcademyDO::getMajorNum, student.getClassNum())
                         .eq(MajorAndAcademyDO::getDelFlag, 0));
-
         ClassInfoDO classInfo = classInfoMapper.selectOne(
                 Wrappers.lambdaQuery(ClassInfoDO.class)
                         .eq(ClassInfoDO::getClassNum, student.getClassNum())
                         .eq(ClassInfoDO::getDelFlag, 0));
-
         return ContactQueryRespDTO.builder()
                 .studentId(studentId)
                 .name(student.getName())
@@ -165,7 +160,7 @@ public class ContactCacheService {
      * @param response 联系人响应数据
      */
     private void setContactCache(String ownerId, String studentId, ContactQueryRespDTO response) {
-        String redisKey = String.format("contact:%s:%s", ownerId, studentId);
+        String redisKey = RedisKeyGenerator.genContactKey(ownerId, studentId);
         try {
             String jsonResponse = objectMapper.writeValueAsString(response);
             redisTemplate.opsForValue().set(redisKey, jsonResponse, 1, TimeUnit.HOURS);
@@ -184,7 +179,7 @@ public class ContactCacheService {
      * @return 反序列化后的联系人响应数据，若缓存不存在或反序列化失败则返回 null
      */
     public ContactQueryRespDTO getContactCache(String ownerId, String studentId) {
-        String redisKey = String.format("contact:%s:%s", ownerId, studentId);
+        String redisKey = RedisKeyGenerator.genContactKey(ownerId, studentId);
         try {
             String cachedData = redisTemplate.opsForValue().get(redisKey);
             if (cachedData != null) {
