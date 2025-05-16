@@ -18,7 +18,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.PrintWriter;
 import java.util.Optional;
 
-import static org.AList.common.convention.errorcode.BaseErrorCode.FLOW_LIMIT_ERROR;
+import static org.AList.common.convention.errorcode.BaseErrorCode.FLOW_LIMIT_ERR;
 
 /**
  * 用户操作流量风控过滤器
@@ -44,10 +44,10 @@ public class StuFlowRiskControlFilter implements Filter {
             result = stringRedisTemplate.execute(redisScript, Lists.newArrayList(username), Long.parseLong(userFlowRiskControlConfiguration.getTimeWindow()));
         } catch (Throwable ex) {
             log.error("执行用户请求流量限制LUA脚本出错", ex);
-            returnJson((HttpServletResponse) response, JSON.toJSONString(Results.failure(new ClientException(FLOW_LIMIT_ERROR))));
+            returnJson((HttpServletResponse) response, JSON.toJSONString(Results.failure(new ClientException(FLOW_LIMIT_ERR))));
         }
         if (result == null || result > userFlowRiskControlConfiguration.getMaxAccessCount()) {
-            returnJson((HttpServletResponse) response, JSON.toJSONString(Results.failure(new ClientException(FLOW_LIMIT_ERROR))));
+            returnJson((HttpServletResponse) response, JSON.toJSONString(Results.failure(new ClientException(FLOW_LIMIT_ERR))));
         }
         filterChain.doFilter(request, response);
     }

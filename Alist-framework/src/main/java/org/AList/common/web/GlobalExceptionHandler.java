@@ -42,7 +42,7 @@ public class GlobalExceptionHandler {
                 .map(FieldError::getDefaultMessage)
                 .orElse(StrUtil.EMPTY);
         log.error("[{}] {} [ex] {}", request.getMethod(), getUrl(request), exceptionStr);
-        return Results.failure(BaseErrorCode.CLIENT_ERROR.code(), exceptionStr);
+        return Results.failure(BaseErrorCode.CLIENT_ERR.code(), exceptionStr);
     }
 
     /**

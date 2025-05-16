@@ -14,7 +14,7 @@ public class ClientException extends AbstractException {
     }
 
     public ClientException(String message) {
-        this(message, null, BaseErrorCode.CLIENT_ERROR);
+        this(message, null, BaseErrorCode.CLIENT_ERR);
     }
 
     public ClientException(String message, IErrorCode errorCode) {
