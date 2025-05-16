@@ -37,7 +37,11 @@ import java.util.concurrent.TimeUnit;
 import static org.AList.common.enums.UserErrorCodeEnum.*;
 
 /**
- * 学生客户端接口服务实现层
+ * 学生服务接口实现类
+ * <p>
+ * 该类实现了学生相关的核心业务逻辑，包括登录、注册、登出等功能，
+ * 使用了布隆过滤器、分布式锁等机制保证系统的高性能和安全性。
+ * </p>
  */
 @Service
 @RequiredArgsConstructor
@@ -49,12 +53,19 @@ public class StuServiceImpl extends ServiceImpl<StudentFrameWorkMapper, StudentF
     private final StringRedisTemplate stringRedisTemplate;
     private final StudentIdBloomFilterService studentIdBloomFilterService;
     private final RedissonClient redissonClient;
+
     /**
-     * 用户登录接口实现类
+     * 学生登录接口实现
+     * <p>
+     * 处理学生登录请求，验证学号和密码，生成登录token并记录登录日志。
+     * </p>
      *
-     * @param requestParam 用户登录请求实体
-     * @param request 登录请求
-     * @return 用户登录响应实体--token
+     * @param requestParam 包含学生登录请求参数的DTO对象，必须有学号和密码
+     * @param request HTTP请求对象，用于获取客户端信息
+     * @return 包含登录token的响应DTO
+     * @throws ClientException 如果学生不存在、密码错误或已登录
+     * @see StuLoginReqDTO
+     * @see StuLoginRespDTO
      */
     @Override
     public StuLoginRespDTO login(StuLoginReqDTO requestParam, HttpServletRequest request) {
@@ -81,10 +92,14 @@ public class StuServiceImpl extends ServiceImpl<StudentFrameWorkMapper, StudentF
     }
 
     /**
-     * 检查用户是否登录
-     * @param studentId 学号
-     * @param token 登录生成的token
-     * @return 是否登录的结果
+     * 检查学生登录状态
+     * <p>
+     * 根据学号和token验证学生是否处于登录状态。
+     * </p>
+     *
+     * @param studentId 学生学号
+     * @param token 登录时生成的token
+     * @return true表示已登录，false表示未登录
      */
     @Override
     public Boolean checkLogin(String studentId, String token) {
@@ -92,9 +107,14 @@ public class StuServiceImpl extends ServiceImpl<StudentFrameWorkMapper, StudentF
     }
 
     /**
-     * 用户登出
-     * @param studentId 学号
-     * @param token 用户登录产生的token
+     * 学生登出接口
+     * <p>
+     * 处理学生登出请求，清除Redis中的登录状态。
+     * </p>
+     *
+     * @param studentId 学生学号
+     * @param token 登录时生成的token
+     * @throws ClientException 如果token无效或学生未登录
      */
     @Override
     public void logout(String studentId, String token) {
@@ -106,10 +126,16 @@ public class StuServiceImpl extends ServiceImpl<StudentFrameWorkMapper, StudentF
     }
 
     /**
-     * 用户注册接口
+     * 学生注册接口
+     * <p>
+     * 处理学生注册请求，使用布隆过滤器和分布式锁保证注册过程的正确性和安全性。
+     * 注册后需要管理员审核才能生效。
+     * </p>
      *
-     * @param requestParam 用户注册请求实体
-     * @return 用户注册返回的唯一key
+     * @param requestParam 包含学生注册信息的DTO对象
+     * @return 注册token，用于后续查询注册状态
+     * @throws ClientException 如果学号不存在、重复注册或保存失败
+     * @see StuRegisterReqDTO
      */
     @Override
     public String register(StuRegisterReqDTO requestParam) {
@@ -169,10 +195,16 @@ public class StuServiceImpl extends ServiceImpl<StudentFrameWorkMapper, StudentF
     }
 
     /**
-     * 用户查询注册结果
+     * 查询注册结果
+     * <p>
+     * 学生使用注册时获得的token查询注册审核结果和备注信息。
+     * </p>
      *
-     * @param requestParam 用户查询注册结果请求体
-     * @return 用户查询注册结果响应体
+     * @param requestParam 包含学号和注册token的请求DTO
+     * @return 包含注册状态和备注信息的响应DTO
+     * @throws ClientException 如果注册记录不存在
+     * @see StuRegisterRemarkReqDTO
+     * @see StuRegisterRemarkRespDTO
      */
     @Override
     public StuRegisterRemarkRespDTO getReamrk(StuRegisterRemarkReqDTO requestParam) {
@@ -196,9 +228,14 @@ public class StuServiceImpl extends ServiceImpl<StudentFrameWorkMapper, StudentF
     }
 
     /**
-     * 记录登录日志
-     * @param request 网络请求
-     * @param studentId 登录的学号
+     * 记录学生登录日志
+     * <p>
+     * 记录学生登录的IP、操作系统、浏览器等信息，并统计登录次数。
+     * 如果是首次登录，创建新记录；否则更新现有记录。
+     * </p>
+     *
+     * @param request HTTP请求对象，用于获取客户端信息
+     * @param studentId 登录的学生学号
      */
     private void recordLoginLog(HttpServletRequest request, String studentId) {
         // 获取客户端信息
