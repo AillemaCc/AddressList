@@ -71,6 +71,14 @@ public class BoardController {
     }
 
     /**
+     * 分页查询所有已下架公告
+     */
+    @GetMapping("/queryAllPullOff")
+    public Result<IPage<BoardQueryRespDTO>> queryAllPullOff(@RequestBody BoardQueryReqDTO requestParam){
+        return Results.success(boardService.queryAllPullOff(requestParam));
+    }
+
+    /**
      * 根据公告标识号发布草稿
      */
     @PostMapping("/release")

@@ -121,16 +121,7 @@ public class BoardServiceImpl extends ServiceImpl<BoardMapper, BoardDO> implemen
                 .orderByDesc(BoardDO::getPriority) // 按优先级降序
                 .orderByDesc(BoardDO::getCreateTime);// 再按创建时间降序
         IPage<BoardDO> boardPage=page(new Page<>(current,size),queryWrapper);
-        return boardPage.convert(boardDO -> BoardQueryRespDTO.builder()
-                .title(boardDO.getTitle())
-                .boardId(boardDO.getBoardId())
-                .category(boardDO.getCategory())
-                .content(boardDO.getContent())
-                .status(boardDO.getStatus())
-                .priority(boardDO.getPriority())
-                .createTime(boardDO.getCreateTime())
-                .updateTime(boardDO.getUpdateTime())
-                .build());
+        return boardPage.convert(this::convertToBoardQueryRespDTO);
     }
 
     /**
@@ -152,16 +143,7 @@ public class BoardServiceImpl extends ServiceImpl<BoardMapper, BoardDO> implemen
         IPage<BoardDO> boardPage = boardMapper.selectByDelFlag(page, 0); // delFlag=0表示未删除
 
         // 4. 转换为响应DTO
-        return boardPage.convert(boardDO -> BoardQueryRespDTO.builder()
-                .title(boardDO.getTitle())
-                .boardId(boardDO.getBoardId())
-                .category(boardDO.getCategory())
-                .content(boardDO.getContent())
-                .status(boardDO.getStatus())
-                .priority(boardDO.getPriority())
-                .createTime(boardDO.getCreateTime())
-                .updateTime(boardDO.getUpdateTime())
-                .build());
+        return boardPage.convert(this::convertToBoardQueryRespDTO);
 
     }
 
@@ -178,16 +160,7 @@ public class BoardServiceImpl extends ServiceImpl<BoardMapper, BoardDO> implemen
                 .orderByDesc(BoardDO::getPriority) // 按优先级降序
                 .orderByDesc(BoardDO::getCreateTime);// 再按创建时间降序
         IPage<BoardDO> boardPage=page(new Page<>(current,size),queryWrapper);
-        return boardPage.convert(boardDO -> BoardQueryRespDTO.builder()
-                .title(boardDO.getTitle())
-                .boardId(boardDO.getBoardId())
-                .category(boardDO.getCategory())
-                .content(boardDO.getContent())
-                .status(boardDO.getStatus())
-                .priority(boardDO.getPriority())
-                .createTime(boardDO.getCreateTime())
-                .updateTime(boardDO.getUpdateTime())
-                .build());
+        return boardPage.convert(this::convertToBoardQueryRespDTO);
     }
 
     /**
@@ -266,6 +239,22 @@ public class BoardServiceImpl extends ServiceImpl<BoardMapper, BoardDO> implemen
         }
     }
 
+    /**
+     * 分页查询所有已下架公告
+     */
+    @Override
+    public IPage<BoardQueryRespDTO> queryAllPullOff(BoardQueryReqDTO requestParam) {
+        int current=requestParam.getCurrent()==null?0:requestParam.getCurrent();
+        int size=requestParam.getSize()==null?10:requestParam.getSize();
+        LambdaQueryWrapper<BoardDO> queryWrapper = Wrappers.lambdaQuery(BoardDO.class)
+                .eq(BoardDO::getDelFlag, 0)
+                .eq(BoardDO::getStatus, 2)
+                .orderByDesc(BoardDO::getPriority) // 按优先级降序
+                .orderByDesc(BoardDO::getCreateTime);// 再按创建时间降序
+        IPage<BoardDO> boardPage=page(new Page<>(current,size),queryWrapper);
+        return boardPage.convert(this::convertToBoardQueryRespDTO);
+    }
+
     private <T extends BoardBaseDTO> void validateAOURequestParam(T requestParam) {
         if (requestParam == null) {
             throw new ClientException("请求参数不能为空");
@@ -309,4 +298,18 @@ public class BoardServiceImpl extends ServiceImpl<BoardMapper, BoardDO> implemen
                 .coverImage(requestParam.getCoverImage())
                 .build();
     }
+
+    private BoardQueryRespDTO convertToBoardQueryRespDTO(BoardDO boardDO) {
+        return BoardQueryRespDTO.builder()
+                .title(boardDO.getTitle())
+                .boardId(boardDO.getBoardId())
+                .category(boardDO.getCategory())
+                .content(boardDO.getContent())
+                .status(boardDO.getStatus())
+                .priority(boardDO.getPriority())
+                .createTime(boardDO.getCreateTime())
+                .updateTime(boardDO.getUpdateTime())
+                .build();
+    }
+
 }
