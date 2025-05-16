@@ -13,6 +13,10 @@ public class UserLogRateLimiter {
     }
 
     public boolean tryAcquire(String userId) {
+        // todo 登陆的时候怎么拿用户id
+        if(userId == null || userId.isEmpty()) {
+            userId="default";
+        }
         // 为每个用户创建独立的限流器（懒加载）
         LogRateLimiter userLimiter = userLimiters.computeIfAbsent(
             userId, k -> new LogRateLimiter(normalRate, burstRate)

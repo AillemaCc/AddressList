@@ -1,0 +1,20 @@
+package org.AList.common.constant;
+
+/**
+ * Redis Key 模板常量（统一管理所有 Key 格式）
+ */
+public final class RedisKeyTemplates {
+    
+    // 联系人相关
+    public static final String CONTACT_SINGLE = "contact:%s:%s";
+    public static final String CONTACT_ALL_FOR_STUDENT = "contact:*:%s";
+    
+    // 管理员操作锁
+    public static final String LOCK_ADMIN_UPDATE_BAN = "lock:admin:update:ban:%s";
+    public static final String LOCK_ADMIN_UPDATE_UNBAN = "lock:admin:update:unban:%s";
+
+    public static final String LOCK_STUDENT_REGISTER_KEY="AddressList:lock:student:register:%s";
+    
+    // 禁止实例化
+    private RedisKeyTemplates() {}
+}

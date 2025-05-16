@@ -3,6 +3,7 @@ package org.AList.service.impl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -12,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.AList.common.biz.user.StuIdContext;
 import org.AList.common.convention.exception.ClientException;
+import org.AList.common.generator.RedisKeyGenerator;
 import org.AList.domain.dao.entity.*;
 import org.AList.domain.dao.mapper.*;
 import org.AList.domain.dto.req.*;
@@ -20,12 +22,13 @@ import org.AList.service.CacheService.ContactCacheService;
 import org.AList.service.StuContactService;
 import org.AList.stream.event.StreamEvent;
 import org.AList.stream.producer.StreamEventProducer;
+import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.beans.BeanUtils;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -48,104 +51,95 @@ public class StuContactServiceImpl extends ServiceImpl<ContactMapper, ContactDO>
 
     /**
      * 新增个人通讯信息
+     * 该方法用于为指定学生添加通讯信息，包括工作单位和所在城市等
+     * 操作前会验证用户身份，并检查该学生是否已存在通讯信息
+     * 操作成功后会触发缓存重建事件
      *
-     * @param requestParam 新增通讯信息请求体
+     * @param requestParam 新增通讯信息请求参数，包含学生ID、工作单位和城市等信息
+     * @throws ClientException 当用户身份验证失败、通讯信息已存在或操作异常时抛出
      */
     @Override
     public void addStudentContact(ContactAddReqDTO requestParam) {
-
         StuIdContext.verifyLoginUser(requestParam.getStudentId());
+        if (checkContactExist(requestParam.getStudentId())) {
+            throw new ClientException("该学生的通讯信息已存在");
+        }
         ContactDO contact =ContactDO.builder()
                 .studentId(requestParam.getStudentId())
                 .employer(requestParam.getEmployer())
                 .city(requestParam.getCity())
                 .build();
         contactMapper.insert(contact);
-        // 新增后清除并重建该学生的缓存
         sendCacheRebuildEvent(requestParam.getStudentId());
     }
 
     /**
      * 删除个人通讯信息
+     * 该方法用于删除指定学生的通讯信息，支持逻辑删除
+     * 操作前会验证用户权限，确保用户有权限删除该通讯信息
+     * 操作成功后会触发缓存清除事件
      *
-     * @param requestParam 删除通讯信息请求体
+     * @param requestParam 删除通讯信息请求体，包含所有者ID和要删除的联系人ID
+     * @throws ClientException 当用户权限验证失败、记录不存在或删除操作异常时抛出
      */
     @Override
     public void deleteStudentContact(ContactDeleteReqDTO requestParam) {
-        // 1. 验证当前登录用户
         StuIdContext.verifyLoginUser(requestParam.getOwnerId());
-
-        // 2. 首先检查goto表中是否存在该ownerId和contactId的记录，验证用户是否拥有该通讯录
         LambdaQueryWrapper<ContactGotoDO> gotoQueryWrapper = Wrappers.lambdaQuery(ContactGotoDO.class)
                 .eq(ContactGotoDO::getOwnerId, requestParam.getOwnerId())
                 .eq(ContactGotoDO::getContactId, requestParam.getContactId())
                 .eq(ContactGotoDO::getDelFlag, 0);
         ContactGotoDO contactGoto = contactGotoMapper.selectOne(gotoQueryWrapper);
-
         if (Objects.isNull(contactGoto)) {
             throw new ClientException("您没有权限删除此通讯录信息或记录不存在");
         }
-
-        // 3. 逻辑删除Contact表中的记录（设置del_flag=1）
         LambdaUpdateWrapper<ContactDO> updateWrapper = Wrappers.lambdaUpdate(ContactDO.class)
                 .eq(ContactDO::getStudentId, requestParam.getContactId())
                 .eq(ContactDO::getDelFlag, 0)
                 .set(ContactDO::getDelFlag, 1);
         int updated = contactMapper.update(null, updateWrapper);
-
         if (updated == 0) {
             throw new ClientException("删除个人通讯信息出现异常，请重试");
         }
-
-        // 4. 同时逻辑删除goto表中的关联记录（根据业务需求决定）
         LambdaUpdateWrapper<ContactGotoDO> gotoUpdateWrapper = Wrappers.lambdaUpdate(ContactGotoDO.class)
                 .eq(ContactGotoDO::getOwnerId, requestParam.getOwnerId())
                 .eq(ContactGotoDO::getContactId, requestParam.getContactId())
                 .eq(ContactGotoDO::getDelFlag, 0)
                 .set(ContactGotoDO::getDelFlag, 1);
         contactGotoMapper.update(null, gotoUpdateWrapper);
-
-        // 删除后发送缓存清除事件
         try {
             StreamEvent event = StreamEvent.builder()
                     .eventType("CACHE_CLEAR")
                     .studentId(requestParam.getContactId())
                     .timestamp(System.currentTimeMillis())
                     .build();
-
             streamEventProducer.sendEvent(event);
         } catch (Exception e) {
             log.error("Failed to send cache clear event", e);
-            // 降级同步清除
             contactCacheService.clearContactCache(requestParam.getContactId());
         }
     }
 
     /**
      * 修改个人通讯信息
+     * 该方法用于更新指定学生的通讯信息，如工作单位和城市等
+     * 操作前会验证用户身份，并检查记录是否存在
+     * 操作成功后会触发缓存重建事件
      *
-     * @param requestParam 修改通讯信息请求体
+     * @param requestParam 修改通讯信息请求参数，包含学生ID、新的工作单位和城市等信息
+     * @throws ClientException 当用户身份验证失败、记录不存在或更新操作异常时抛出
      */
     @Override
     public void updateStudentContact(ContactUpdateReqDTO requestParam) {
-        // 1. 验证当前登录用户
         StuIdContext.verifyLoginUser(requestParam.getStudentId());
-
-        // 2. 检查记录是否存在
-        LambdaQueryWrapper<ContactDO> queryWrapper = Wrappers.lambdaQuery(ContactDO.class)
-                .eq(ContactDO::getStudentId, requestParam.getStudentId())
-                .eq(ContactDO::getDelFlag, 0);
-        if (contactMapper.selectOne(queryWrapper) == null) {
+        if (!checkContactExist(requestParam.getStudentId())) {
             throw new ClientException("修改的记录不存在");
         }
-
-        // 3. 构建更新内容和条件
         LambdaUpdateWrapper<ContactDO> updateWrapper = Wrappers.lambdaUpdate(ContactDO.class)
                 .eq(ContactDO::getStudentId, requestParam.getStudentId())
                 .eq(ContactDO::getDelFlag, 0)
-                .set(ContactDO::getEmployer, requestParam.getEmployer())  // 设置要更新的字段
+                .set(ContactDO::getEmployer, requestParam.getEmployer())
                 .set(ContactDO::getCity, requestParam.getCity());
-        // 4. 执行更新
         int updated = contactMapper.update(null, updateWrapper);
         if (updated != 1) {
             throw new ClientException("修改错误");
@@ -155,25 +149,22 @@ public class StuContactServiceImpl extends ServiceImpl<ContactMapper, ContactDO>
 
     /**
      * 按学号查询通讯录信息
+     * 该方法用于查询指定学生的详细通讯信息，包括基本信息和联系方式
+     * 查询结果会优先从缓存获取，若缓存不存在则从数据库获取并更新缓存
+     * 操作前会验证用户权限，确保用户有权限查看该通讯信息
      *
-     * @param requestParam 查询通讯信息请求体
-     * @return 单个学生的通讯信息
+     * @param requestParam 查询通讯信息请求体，包含所有者ID和要查询的联系人ID
+     * @return 返回包含学生通讯信息的响应DTO，包括学生基本信息、学院、专业、班级等
+     * @throws ClientException 当用户权限验证失败、记录不存在或查询操作异常时抛出
      */
     @Override
     public ContactQueryRespDTO queryContactById(ContactQueryByIdReqDTO requestParam) {
-        // 1. 验证当前登录用户
         StuIdContext.verifyLoginUser(requestParam.getOwnerId());
-
-        // 构建Redis缓存key
-        String redisKey = String.format("contact:%s:%s",
-                requestParam.getOwnerId(),
-                requestParam.getContactId());
-
+        String redisKey = RedisKeyGenerator.genContactKey(requestParam.getOwnerId(), requestParam.getContactId());
         // 尝试从Redis获取缓存
         try {
             String cachedData = stringRedisTemplate.opsForValue().get(redisKey);
             if (cachedData != null) {
-                // 反序列化缓存数据
                 return objectMapper.readValue(cachedData, ContactQueryRespDTO.class);
             }
         } catch (JsonProcessingException e) {
@@ -191,7 +182,6 @@ public class StuContactServiceImpl extends ServiceImpl<ContactMapper, ContactDO>
             throw new ClientException("您没有权限查看此通讯录信息或记录不存在");
         }
         String studentId=requestParam.getContactId();
-        // 3. 从contact表中查询完整的通讯录信息
         LambdaQueryWrapper<ContactDO> contactQueryWrapper = Wrappers.lambdaQuery(ContactDO.class)
                 .eq(ContactDO::getStudentId, studentId)
                 .eq(ContactDO::getDelFlag, 0);
@@ -239,8 +229,6 @@ public class StuContactServiceImpl extends ServiceImpl<ContactMapper, ContactDO>
         }
         String className=classInfo.getClassName();
 
-        // 4. 转换为响应DTO
-
         ContactQueryRespDTO response = ContactQueryRespDTO.builder()
                 .studentId(studentId)
                 .name(name)
@@ -272,8 +260,11 @@ public class StuContactServiceImpl extends ServiceImpl<ContactMapper, ContactDO>
 
     /**
      * 分页查询个人全量通讯信息
+     * 该方法用于分页获取指定用户的所有通讯信息
+     * 查询结果会根据用户ID关联的ContactGoto表进行过滤
      *
-     * @return 分页返回
+     * @param requestParam 分页查询请求参数，包含所有者ID、当前页码和每页大小等信息
+     * @return 返回分页包装的通讯信息响应DTO列表，包含分页信息和通讯记录
      */
     @Override
     public IPage<ContactQueryRespDTO> queryContactList(ContactQueryAllOwnReqDTO requestParam) {
@@ -290,17 +281,31 @@ public class StuContactServiceImpl extends ServiceImpl<ContactMapper, ContactDO>
         List<String> contactIds=gotoList.stream()
                 .map(ContactGotoDO::getContactId)
                 .toList();
-        LambdaQueryWrapper<ContactDO> contactQueryWrapper = Wrappers.lambdaQuery(ContactDO.class)
-                .in(ContactDO::getStudentId, contactIds)
-                .eq(ContactDO::getDelFlag, 0);
-        Page<ContactDO> page = new Page<>(current,size);
-        IPage<ContactDO> contactPage = contactMapper.selectPage(page, contactQueryWrapper);
-        return contactPage.convert(contactDO -> {
-            ContactQueryRespDTO respDTO = new ContactQueryRespDTO();
-            // 这里进行属性拷贝，可以使用BeanUtils或者手动set
-            BeanUtils.copyProperties(contactDO, respDTO);
-            return respDTO;
-        });
+
+        List<String> pageContactIds = paginateIds(contactIds, current, size);
+
+        // 3. 先查缓存
+        Map<String, ContactQueryRespDTO> cachedResults = getBatchFromCache(ownerId, pageContactIds);
+
+        // 4. 找出未命中的ID
+        List<String> missedIds = pageContactIds.stream()
+                .filter(id -> !cachedResults.containsKey(id))
+                .toList();
+
+        // 5. 回源查询数据库
+        if (!missedIds.isEmpty()) {
+            Map<String, ContactQueryRespDTO> dbResults = getFromDatabase(missedIds);
+            dbResults.forEach((id, dto) -> {
+                // 6. 异步写回缓存
+                CompletableFuture.runAsync(() ->
+                        contactCacheService.setContactCache(ownerId, id, dto)
+                );
+                cachedResults.put(id, dto);
+            });
+        }
+
+        // 7. 组装最终分页结果
+        return buildPageResult(cachedResults, contactIds.size(), current, size);
     }
 
     /**
@@ -428,4 +433,93 @@ public class StuContactServiceImpl extends ServiceImpl<ContactMapper, ContactDO>
             contactCacheService.rebuildContactCache(studentId);
         }
     }
+
+    /**
+     * 检查指定学生的通讯信息是否存在
+     * @param studentId 学生ID
+     * @return true-存在，false-不存在
+     */
+    private boolean checkContactExist(String studentId) {
+        return contactMapper.selectCount(
+                new LambdaQueryWrapper<ContactDO>()
+                        .eq(ContactDO::getStudentId, studentId)
+                        .eq(ContactDO::getDelFlag, 0)
+        ) > 0;
+    }
+
+    /**
+     * 对ID列表进行内存分页
+     * @param allIds 全部ID集合
+     * @param current 当前页码（从1开始）
+     * @param size 每页大小
+     * @return 当前页的ID子集
+     */
+    private List<String> paginateIds(List<String> allIds, int current, int size) {
+        // 参数校验
+        if (CollectionUtils.isEmpty(allIds)) {
+            return Collections.emptyList();
+        }
+        if (current < 1 || size < 1) {
+            throw new IllegalArgumentException("分页参数必须大于0");
+        }
+
+        // 计算分页偏移量
+        int startIndex = (current - 1) * size;
+        if (startIndex >= allIds.size()) {
+            return Collections.emptyList();
+        }
+
+        // 计算结束位置（防止越界）
+        int endIndex = Math.min(startIndex + size, allIds.size());
+
+        // 返回分页子集
+        return allIds.subList(startIndex, endIndex);
+    }
+
+    /**
+     * 批量从缓存获取数据
+     */
+    private Map<String, ContactQueryRespDTO> getBatchFromCache(String ownerId, List<String> contactIds) {
+        return contactIds.stream()
+                .map(id -> {
+                    ContactQueryRespDTO dto = contactCacheService.getContactCache(ownerId, id);
+                    return Pair.of(id, dto);
+                })
+                .filter(pair -> pair.getRight() != null)
+                .collect(Collectors.toMap(Pair::getLeft, Pair::getRight));
+    }
+
+    /**
+     * 从数据库批量查询
+     */
+    private Map<String, ContactQueryRespDTO> getFromDatabase(List<String> contactIds) {
+        List<ContactDO> dbList = contactMapper.selectList(
+                Wrappers.lambdaQuery(ContactDO.class)
+                        .in(ContactDO::getStudentId, contactIds)
+                        .eq(ContactDO::getDelFlag, 0));
+
+        return dbList.stream()
+                .map(contact -> {
+                    ContactQueryRespDTO dto = new ContactQueryRespDTO();
+                    BeanUtils.copyProperties(contact, dto);
+                    return Pair.of(contact.getStudentId(), dto);
+                })
+                .collect(Collectors.toMap(Pair::getLeft, Pair::getRight));
+    }
+
+    /**
+     * 构建分页结果
+     */
+    private IPage<ContactQueryRespDTO> buildPageResult(
+            Map<String, ContactQueryRespDTO> dataMap,
+            int total,
+            int current,
+            int size) {
+
+        List<ContactQueryRespDTO> records = new ArrayList<>(dataMap.values());
+        Page<ContactQueryRespDTO> page = new Page<>(current, size, total);
+        page.setRecords(records);
+        return page;
+    }
+
 }

@@ -5,12 +5,12 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
-import org.AList.common.constant.RedisCacheConstant;
 import org.AList.common.convention.exception.ClientException;
+import org.AList.common.generator.RedisKeyGenerator;
 import org.AList.domain.dao.entity.LoginLogDO;
 import org.AList.domain.dao.entity.RegisterDO;
-import org.AList.domain.dao.entity.StudentFrameworkDO;
 import org.AList.domain.dao.entity.StudentDefaultInfoDO;
+import org.AList.domain.dao.entity.StudentFrameworkDO;
 import org.AList.domain.dao.mapper.LoginLogMapper;
 import org.AList.domain.dao.mapper.RegisterMapper;
 import org.AList.domain.dao.mapper.StudentDefaultInfoMapper;
@@ -126,7 +126,7 @@ public class StuServiceImpl extends ServiceImpl<StudentFrameWorkMapper, StudentF
             throw new ClientException(USER_NULL);
         }
         // 排除了误判的情况，创建分布式锁，防止并发情况。尽管在我们的场景当中，并发情况是很难出现的，但这种边界情况仍然需要考虑。
-        RLock rLock=redissonClient.getLock(RedisCacheConstant.LOCK_STUDENT_REGISTER_KEY+requestParam.getStudentId());
+        RLock rLock=redissonClient.getLock(RedisKeyGenerator.genStudentRegisterLockKey(requestParam.getStudentId()));
         // 无论临界区代码执行成功还是抛出异常，锁最终都会被释放
         try{
             if(rLock.tryLock()){

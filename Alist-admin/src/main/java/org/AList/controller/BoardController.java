@@ -71,6 +71,22 @@ public class BoardController {
     }
 
     /**
+     * 分页查询所有草稿
+     */
+    @GetMapping("/queryAllDraft")
+    public Result<IPage<BoardQueryRespDTO>> queryAllDraft(@RequestBody BoardQueryReqDTO requestParam){
+        return Results.success(boardService.queryAllDraft(requestParam));
+    }
+
+    /**
+     * 分页查询所有草稿
+     */
+    @GetMapping("/queryAllPullOff")
+    public Result<IPage<BoardQueryRespDTO>> queryAllPullOff(@RequestBody BoardQueryReqDTO requestParam){
+        return Results.success(boardService.queryAllPullOff(requestParam));
+    }
+
+    /**
      * 根据公告标识号发布草稿
      */
     @PostMapping("/release")

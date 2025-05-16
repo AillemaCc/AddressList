@@ -10,9 +10,10 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.AList.common.convention.exception.ClientException;
 import org.AList.common.convention.exception.ServiceException;
+import org.AList.common.generator.RedisKeyGenerator;
 import org.AList.domain.dao.entity.RegisterDO;
-import org.AList.domain.dao.entity.StudentFrameworkDO;
 import org.AList.domain.dao.entity.StudentDefaultInfoDO;
+import org.AList.domain.dao.entity.StudentFrameworkDO;
 import org.AList.domain.dao.mapper.RegisterMapper;
 import org.AList.domain.dao.mapper.StudentDefaultInfoMapper;
 import org.AList.domain.dao.mapper.StudentFrameWorkMapper;
@@ -29,9 +30,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Objects;
-
-import static org.AList.common.constant.RedisKeyConstant.LOCK_UPDATE_BAN_KEY;
-import static org.AList.common.constant.RedisKeyConstant.LOCK_UPDATE_UNBAN_KEY;
 
 /**
  * 管理员审核相关接口实现层
@@ -215,7 +213,7 @@ public class AdministerAuditServiceImpl extends ServiceImpl<RegisterMapper, Regi
         RegisterDO updateRegisterDO=RegisterDO.builder()
                 .status(3)
                 .build();
-        BanOrUnbanUpdate(requestParam, queryWrapper, registerDOLambdaQueryWrapper, updateStudentFrameworkDO, updateRegisterDO, LOCK_UPDATE_BAN_KEY);
+        BanOrUnbanUpdate(queryWrapper, registerDOLambdaQueryWrapper, updateStudentFrameworkDO, updateRegisterDO, RedisKeyGenerator.genAdminBanLockKey(requestParam.getStudentId()));
     }
 
     /**
@@ -247,20 +245,18 @@ public class AdministerAuditServiceImpl extends ServiceImpl<RegisterMapper, Regi
         RegisterDO updateRegisterDO=RegisterDO.builder()
                 .status(1)
                 .build();
-        BanOrUnbanUpdate(requestParam, queryWrapper, registerDOLambdaQueryWrapper, updateStudentFrameworkDO, updateRegisterDO, LOCK_UPDATE_UNBAN_KEY);
+        BanOrUnbanUpdate(queryWrapper, registerDOLambdaQueryWrapper, updateStudentFrameworkDO, updateRegisterDO, RedisKeyGenerator.genAdminUnlockKey(requestParam.getStudentId()));
     }
 
     /**
      * 更新禁用和解禁的用户状态
-     * @param requestParam 学号请求体
-     * @param queryWrapper 审核通过的学生信息查询参数
+     * @param queryWrapper                 审核通过的学生信息查询参数
      * @param registerDOLambdaQueryWrapper 注册类学生信息查询参数
-     * @param updateStudentFrameworkDO 更新学生信息实体
-     * @param updateRegisterDO 更新注册信息实体
-     * @param lockUpdateUnbanKey 读写锁key
+     * @param updateStudentFrameworkDO     更新学生信息实体
+     * @param updateRegisterDO             更新注册信息实体
      */
-    private void BanOrUnbanUpdate(BanStudentReqDTO requestParam, LambdaQueryWrapper<StudentFrameworkDO> queryWrapper, LambdaQueryWrapper<RegisterDO> registerDOLambdaQueryWrapper, StudentFrameworkDO updateStudentFrameworkDO, RegisterDO updateRegisterDO, String lockUpdateUnbanKey) {
-        RReadWriteLock readWriteLock=redissonClient.getReadWriteLock(String.format(lockUpdateUnbanKey,requestParam.getStudentId()));
+    private void BanOrUnbanUpdate(LambdaQueryWrapper<StudentFrameworkDO> queryWrapper, LambdaQueryWrapper<RegisterDO> registerDOLambdaQueryWrapper, StudentFrameworkDO updateStudentFrameworkDO, RegisterDO updateRegisterDO, String lockKey) {
+        RReadWriteLock readWriteLock=redissonClient.getReadWriteLock(lockKey);
         RLock rLock=readWriteLock.writeLock();
         if(!rLock.tryLock()){
             throw new ServiceException("该用户状态信息正在被其他管理员修改，请稍后再试...");

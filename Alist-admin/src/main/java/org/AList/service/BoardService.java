@@ -53,5 +53,13 @@ public interface BoardService {
      */
     void pullOffBoard(BoardPullOffReqDTO requestParam);
 
+    /**
+     * 分页查询所有已下架公告
+     */
+    IPage<BoardQueryRespDTO> queryAllPullOff(BoardQueryReqDTO requestParam);
 
+    /**
+     * 分页查询所有草稿
+     */
+    IPage<BoardQueryRespDTO> queryAllDraft(BoardQueryReqDTO requestParam);
 }
