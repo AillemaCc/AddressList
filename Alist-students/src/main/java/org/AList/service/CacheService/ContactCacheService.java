@@ -159,7 +159,7 @@ public class ContactCacheService {
      * @param studentId 学生唯一标识
      * @param response 联系人响应数据
      */
-    private void setContactCache(String ownerId, String studentId, ContactQueryRespDTO response) {
+    public void setContactCache(String ownerId, String studentId, ContactQueryRespDTO response) {
         String redisKey = RedisKeyGenerator.genContactKey(ownerId, studentId);
         try {
             String jsonResponse = objectMapper.writeValueAsString(response);
@@ -186,7 +186,7 @@ public class ContactCacheService {
                 return objectMapper.readValue(cachedData, ContactQueryRespDTO.class);
             }
         } catch (JsonProcessingException e) {
-            log.warn("Failed to deserialize cached contact data, owner: {}, student: {}",
+            log.warn("无法反序列化缓存的联系人数据, owner: {}, student: {}",
                     ownerId, studentId, e);
         }
         return null;
