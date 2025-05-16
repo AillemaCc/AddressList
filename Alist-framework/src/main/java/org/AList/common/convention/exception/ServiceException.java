@@ -12,7 +12,7 @@ import java.util.Optional;
 public class ServiceException extends AbstractException {
 
     public ServiceException(String message) {
-        this(message, null, BaseErrorCode.SERVICE_ERROR);
+        this(message, null, BaseErrorCode.SERVER_ERR);
     }
 
     public ServiceException(IErrorCode errorCode) {
