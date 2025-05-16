@@ -8,6 +8,7 @@ import org.AList.annotation.MyLog;
 import org.AList.common.biz.user.StuIdContext;
 import org.AList.common.convention.exception.AbstractException;
 import org.AList.common.convention.exception.ClientException;
+import org.AList.common.convention.exception.UserException;
 import org.AList.common.limiter.LogRateLimiter;
 import org.AList.common.limiter.UserLogRateLimiter;
 import org.AList.domain.dao.entity.OperLogDO;
@@ -24,6 +25,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.lang.reflect.Method;
 import java.util.Date;
+import org.AList.common.convention.errorcode.BaseErrorCode;
+
 
 /**
  * 切面处理类，记录操作日志到数据库
@@ -87,7 +90,7 @@ public class OperLogAspect{
 
         RequestAttributes requestAttributes= RequestContextHolder.getRequestAttributes();
         if (requestAttributes == null) {
-            throw new ClientException("请求为空");
+            throw new UserException(BaseErrorCode.EMPTY_PARAM);                                                                        //A0002：请求参数为空
         }
         HttpServletRequest request=(HttpServletRequest) requestAttributes.resolveReference(RequestAttributes.REFERENCE_REQUEST);
         try{
@@ -150,7 +153,7 @@ public class OperLogAspect{
         RequestAttributes requestAttributes = RequestContextHolder.getRequestAttributes();
         // 从获取RequestAttributes中获取HttpServletRequest的信息
         if (requestAttributes == null) {
-            throw new ClientException("请求为空");
+            throw new UserException(BaseErrorCode.EMPTY_PARAM);                                                                        //A0002：请求参数为空
         }
         HttpServletRequest request=(HttpServletRequest) requestAttributes.resolveReference(RequestAttributes.REFERENCE_REQUEST);
 
