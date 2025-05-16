@@ -4,7 +4,7 @@ package org.AList.common.convention.errorcode;
  * 基础错误码定义
  */
 public enum BaseErrorCode implements IErrorCode {
-
+    // 测试git
     // ========== 用户端错误 ==========
     User_ERR("A0001", "用户端错误"),
     EMPTY_PARAM("A0002", "请求参数为空"),
