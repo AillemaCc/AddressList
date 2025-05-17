@@ -9,6 +9,7 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.AList.common.generator.RedisKeyGenerator;
 import org.AList.domain.dao.entity.ContactGotoDO;
 import org.AList.domain.dao.entity.MajorAndAcademyDO;
 import org.AList.domain.dao.entity.StudentFrameworkDO;
@@ -51,11 +52,9 @@ public class BaseInfoCacheService {
      * @param classNum 班级编号，用于定位需要清理缓存的学生群体
      */
     public void clearStudentContactCacheByClass(Integer classNum) {
-        // 1. 查询该班级下的所有学生
         LambdaQueryWrapper<StudentFrameworkDO> studentQueryWrapper = Wrappers.lambdaQuery(StudentFrameworkDO.class)
                 .eq(StudentFrameworkDO::getClassNum, classNum)
                 .eq(StudentFrameworkDO::getDelFlag, 0);
-
         extractedCleanCache(studentQueryWrapper);
     }
 
@@ -127,9 +126,7 @@ public class BaseInfoCacheService {
 
             // 删除所有相关的缓存键
             contactGotos.forEach(gotoRecord -> {
-                String redisKey = String.format("contact:%s:%s",
-                        gotoRecord.getOwnerId(),
-                        gotoRecord.getContactId());
+                String redisKey = RedisKeyGenerator.genContactKey(gotoRecord.getOwnerId(),gotoRecord.getContactId());
                 stringRedisTemplate.delete(redisKey);
             });
 
@@ -137,21 +134,12 @@ public class BaseInfoCacheService {
         });
     }
 
-
-
-    /**
-     * 获取完整通讯信息缓存键
-     */
-    private String getFullContactCacheKey(String studentId) {
-        return "student:fullContactInfo:" + studentId;
-    }
-
     /**
      * 清除指定学生的完整通讯信息缓存
      * @param studentId 学生ID
      */
     public void evictFullContactCache(String studentId) {
-        String cacheKey = getFullContactCacheKey(studentId);
+        String cacheKey = RedisKeyGenerator.genStudentFullContactInfo(studentId);
         try {
             stringRedisTemplate.delete(cacheKey);
         } catch (Exception e) {
@@ -163,7 +151,7 @@ public class BaseInfoCacheService {
      * 从缓存中获取完整的通讯信息
      */
     public BaseClassInfoListStuRespDTO getFullContactInfoFromCache(String studentId) {
-        String cacheKey = getFullContactCacheKey(studentId);
+        String cacheKey = RedisKeyGenerator.genStudentFullContactInfo(studentId);
         try {
             String cachedInfo = stringRedisTemplate.opsForValue().get(cacheKey);
             return cachedInfo != null ? JSON.parseObject(cachedInfo, BaseClassInfoListStuRespDTO.class) : null;
@@ -177,7 +165,7 @@ public class BaseInfoCacheService {
      * 将完整通讯信息存入缓存
      */
     public void putCacheStuFullContactInfo(String studentId, BaseClassInfoListStuRespDTO response) {
-        String cacheKey = getFullContactCacheKey(studentId);
+        String cacheKey = RedisKeyGenerator.genStudentFullContactInfo(studentId);
         try {
             stringRedisTemplate.opsForValue().set(
                     cacheKey,
@@ -190,17 +178,6 @@ public class BaseInfoCacheService {
         }
     }
 
-
-    /**
-     * 构造分页缓存Key（格式：classPage:students:{classNum}:{page}:{size}）
-     */
-    private String getPageCacheKey(Integer classNum, Integer current, Integer size) {
-        return String.format("classPage:students:%s:%d:%d",
-                classNum,
-                current != null ? current : 1,
-                size != null ? size : 10);
-    }
-
     /**
      * 从缓存中获取分页数据
      *
@@ -210,7 +187,7 @@ public class BaseInfoCacheService {
      * @return 缓存中的分页数据（如果存在）
      */
     public IPage<BaseClassInfoListStuRespDTO> getPageCacheByClass(Integer classNum, Integer current, Integer size) {
-        String cacheKey = getPageCacheKey(classNum, current, size);
+        String cacheKey = RedisKeyGenerator.genClassPageStudentsFullContactInfo(classNum, current, size);
         try {
             String cachedData = stringRedisTemplate.opsForValue().get(cacheKey);
             if (cachedData != null) {
@@ -231,7 +208,7 @@ public class BaseInfoCacheService {
      * @param pageData 分页数据
      */
     public void putPageCacheByClass(Integer classNum, Integer current, Integer size, IPage<BaseClassInfoListStuRespDTO> pageData) {
-        String cacheKey = getPageCacheKey(classNum, current, size);
+        String cacheKey = RedisKeyGenerator.genClassPageStudentsFullContactInfo(classNum, current, size);
         try {
             stringRedisTemplate.opsForValue().set(
                     cacheKey,

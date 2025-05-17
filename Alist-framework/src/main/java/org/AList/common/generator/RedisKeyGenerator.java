@@ -9,6 +9,8 @@ public class RedisKeyGenerator {
     
     /**
      * 生成联系人单条缓存 Key
+     * <p>
+     * contact:%s:%s
      */
     public static String genContactKey(String ownerId, String contactId) {
         return String.format(RedisKeyTemplates.CONTACT_SINGLE, ownerId, contactId);
@@ -20,7 +22,21 @@ public class RedisKeyGenerator {
     public static String genContactPatternForStudent(String studentId) {
         return String.format(RedisKeyTemplates.CONTACT_ALL_FOR_STUDENT, studentId);
     }
-    
+
+    /**
+     * 生成单个学生信息缓存 Key
+     */
+    public static String genStudentFullContactInfo(String studentId) {
+        return String.format(RedisKeyTemplates.STUDENT_FULL_CONTACT_INFO, studentId);
+    }
+
+    /**
+     * 生成班级--学生信息分页查询缓存 Key
+     */
+    public static String genClassPageStudentsFullContactInfo(Integer classNum, Integer current, Integer size) {
+        return String.format(RedisKeyTemplates.CLASSPAGE_STUDENTS_FULL_CONTACT_INFO, classNum, current != null ? current : 1, size != null ? size : 10);
+    }
+
     /**
      * 生成管理员封禁用户锁 Key
      */
