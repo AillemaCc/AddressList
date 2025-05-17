@@ -213,6 +213,7 @@ public class ApplicationServiceImpl extends ServiceImpl<ApplicationMapper, Appli
      * @param requestParam 请求参数，包含发送者和接收者ID
      * @throws RuntimeException 如果未找到申请记录
      */
+    @Transactional(rollbackFor = Exception.class)
     @Override
     public void refuseSingleApplication(ApplicationYONReqDTO requestParam) {
         LambdaQueryWrapper<ApplicationDO> queryWrapper = Wrappers.lambdaQuery(ApplicationDO.class)
@@ -225,7 +226,7 @@ public class ApplicationServiceImpl extends ServiceImpl<ApplicationMapper, Appli
             applicationDO.setStatus(2);
             baseMapper.update(applicationDO,null);
         } else {
-            throw new RuntimeException("未找到待处理的申请记录");
+            throw new ClientException("未找到待处理的申请记录");
         }
     }
 
