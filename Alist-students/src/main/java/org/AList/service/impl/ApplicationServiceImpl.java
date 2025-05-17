@@ -100,8 +100,10 @@ public class ApplicationServiceImpl extends ServiceImpl<ApplicationMapper, Appli
      */
     @Override
     public IPage<ApplicationQueryPageRespDTO> listAllValidApplication(ApplicationReceiveQueryPageReqDTO requestParam) {
+        int current=requestParam.getCurrent()==null?0:requestParam.getCurrent();
+        int size=requestParam.getSize()==null?10:requestParam.getSize();
         LambdaQueryWrapper<ApplicationDO> queryWrapper = buildBaseQueryWrapper(requestParam.getReceiver(),0);
-        IPage<ApplicationDO> resultPage=baseMapper.selectPage(requestParam,queryWrapper);
+        IPage<ApplicationDO> resultPage=page(new Page<>(current,size),queryWrapper);
         return resultPage.convert(each-> BeanUtil.toBean(each, ApplicationQueryPageRespDTO.class));
     }
 
@@ -113,8 +115,10 @@ public class ApplicationServiceImpl extends ServiceImpl<ApplicationMapper, Appli
      */
     @Override
     public IPage<ApplicationQueryPageRespDTO> listAllAcceptedApplication(ApplicationReceiveQueryPageReqDTO requestParam) {
+        int current=requestParam.getCurrent()==null?0:requestParam.getCurrent();
+        int size=requestParam.getSize()==null?10:requestParam.getSize();
         LambdaQueryWrapper<ApplicationDO> queryWrapper = buildBaseQueryWrapper(requestParam.getReceiver(),1);
-        IPage<ApplicationDO> resultPage=baseMapper.selectPage(requestParam,queryWrapper);
+        IPage<ApplicationDO> resultPage=page(new Page<>(current,size),queryWrapper);
         return resultPage.convert(each-> BeanUtil.toBean(each, ApplicationQueryPageRespDTO.class));
     }
 
@@ -126,8 +130,10 @@ public class ApplicationServiceImpl extends ServiceImpl<ApplicationMapper, Appli
      */
     @Override
     public IPage<ApplicationQueryPageRespDTO> listAllRefusedApplication(ApplicationReceiveQueryPageReqDTO requestParam) {
+        int current=requestParam.getCurrent()==null?0:requestParam.getCurrent();
+        int size=requestParam.getSize()==null?10:requestParam.getSize();
         LambdaQueryWrapper<ApplicationDO> queryWrapper = buildBaseQueryWrapper(requestParam.getReceiver(),2);
-        IPage<ApplicationDO> resultPage=baseMapper.selectPage(requestParam,queryWrapper);
+        IPage<ApplicationDO> resultPage=page(new Page<>(current,size),queryWrapper);
         return resultPage.convert(each-> BeanUtil.toBean(each, ApplicationQueryPageRespDTO.class));
     }
 
