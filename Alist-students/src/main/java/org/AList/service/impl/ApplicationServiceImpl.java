@@ -10,6 +10,7 @@ import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.AList.common.biz.user.StuIdContext;
 import org.AList.common.convention.exception.ClientException;
+import org.AList.common.convention.exception.UserException;
 import org.AList.common.enums.StudentChainMarkEnum;
 import org.AList.designpattern.chain.AbstractChainContext;
 import org.AList.domain.dao.entity.ApplicationDO;
@@ -26,7 +27,7 @@ import org.AList.domain.dto.resp.ApplicationQueryPageRespDTO;
 import org.AList.service.ApplicationService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
+import static org.AList.common.convention.errorcode.BaseErrorCode.*;
 /**
  * 站内信方法实现类
  */
@@ -68,7 +69,7 @@ public class ApplicationServiceImpl extends ServiceImpl<ApplicationMapper, Appli
                 .build();
         int insert = applicationMapper.insert(applicationDO);
         if(insert != 1) {
-            throw new ClientException("发送请求失败，请重新操作");
+            throw new UserException(APPLY_ERR);                                                                         //A0300：用户发送申请错误
         }
     }
 
@@ -180,10 +181,10 @@ public class ApplicationServiceImpl extends ServiceImpl<ApplicationMapper, Appli
                     .build();
             int insert = contactGotoMapper.insert(contactGotoDO);
             if(insert != 1) {
-                throw new ClientException("同意请求失败，请重试");
+                throw new UserException(APPROVE_ERR);                                                                     //A0410：用户同意申请错误
             }
         } else {
-            throw new ClientException("未找到待处理的申请记录");
+            throw new UserException(NO_PENDING_APPLY);                                                                    //A0401：不存在待处理申请
         }
     }
 
@@ -206,7 +207,7 @@ public class ApplicationServiceImpl extends ServiceImpl<ApplicationMapper, Appli
             applicationDO.setStatus(2);
             baseMapper.update(applicationDO,null);
         } else {
-            throw new ClientException("未找到待处理的申请记录");
+            throw new UserException(NO_PENDING_APPLY);                                                                   //A0401：不存在待处理申请
         }
     }
 
@@ -227,7 +228,7 @@ public class ApplicationServiceImpl extends ServiceImpl<ApplicationMapper, Appli
                 .set(ApplicationDO::getDelFlag, 1);
         int updated = applicationMapper.update(null, updateWrapper);
         if (updated == 0) {
-            throw new RuntimeException("未找到待处理的申请记录");
+            throw new UserException(NO_PENDING_APPLY);                                                                  //A0401：不存在待处理申请
         }
     }
 

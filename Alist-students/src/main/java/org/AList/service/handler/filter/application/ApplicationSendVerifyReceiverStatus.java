@@ -4,11 +4,12 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import lombok.RequiredArgsConstructor;
 import org.AList.common.convention.exception.ClientException;
+import org.AList.common.convention.exception.UserException;
 import org.AList.domain.dao.entity.StudentFrameworkDO;
 import org.AList.domain.dao.mapper.StudentFrameWorkMapper;
 import org.AList.domain.dto.req.ApplicationSendMsgReqDTO;
 import org.springframework.stereotype.Component;
-
+import static org.AList.common.convention.errorcode.BaseErrorCode.*;
 @Component
 @RequiredArgsConstructor
 public class ApplicationSendVerifyReceiverStatus implements ApplicationSendChainFilter<ApplicationSendMsgReqDTO>{
@@ -22,7 +23,7 @@ public class ApplicationSendVerifyReceiverStatus implements ApplicationSendChain
         StudentFrameworkDO receiverDO = studentFrameWorkMapper.selectOne(validQueryWrapper);
 
         if(receiverDO == null) {
-            throw new ClientException("收信人状态异常，无法添加到通讯录");
+            throw new UserException(RECIPIENT_ABNORMAL);                                                                //A0310：收信者状态异常
         }
     }
 

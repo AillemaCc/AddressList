@@ -25,7 +25,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.lang.reflect.Method;
 import java.util.Date;
-import org.AList.common.convention.errorcode.BaseErrorCode;
+import static org.AList.common.convention.errorcode.BaseErrorCode.*;
 
 
 /**
@@ -90,7 +90,7 @@ public class OperLogAspect{
 
         RequestAttributes requestAttributes= RequestContextHolder.getRequestAttributes();
         if (requestAttributes == null) {
-            throw new UserException(BaseErrorCode.EMPTY_PARAM);                                                                        //A0002：请求参数为空
+            throw new UserException(EMPTY_PARAM);                                                                        //A0002：请求参数为空
         }
         HttpServletRequest request=(HttpServletRequest) requestAttributes.resolveReference(RequestAttributes.REFERENCE_REQUEST);
         try{
@@ -153,7 +153,7 @@ public class OperLogAspect{
         RequestAttributes requestAttributes = RequestContextHolder.getRequestAttributes();
         // 从获取RequestAttributes中获取HttpServletRequest的信息
         if (requestAttributes == null) {
-            throw new UserException(BaseErrorCode.EMPTY_PARAM);                                                                        //A0002：请求参数为空
+            throw new UserException(EMPTY_PARAM);                                                                        //A0002：请求参数为空
         }
         HttpServletRequest request=(HttpServletRequest) requestAttributes.resolveReference(RequestAttributes.REFERENCE_REQUEST);
 
