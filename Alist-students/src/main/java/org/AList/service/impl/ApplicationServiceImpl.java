@@ -100,10 +100,7 @@ public class ApplicationServiceImpl extends ServiceImpl<ApplicationMapper, Appli
      */
     @Override
     public IPage<ApplicationQueryPageRespDTO> listAllValidApplication(ApplicationReceiveQueryPageReqDTO requestParam) {
-        LambdaQueryWrapper<ApplicationDO> queryWrapper = Wrappers.lambdaQuery(ApplicationDO.class)
-                .eq(ApplicationDO::getReceiver, requestParam.getReceiver())
-                .eq(ApplicationDO::getStatus, 0)
-                .eq(ApplicationDO::getDelFlag, 0);
+        LambdaQueryWrapper<ApplicationDO> queryWrapper = buildBaseQueryWrapper(requestParam.getReceiver(),0);
         IPage<ApplicationDO> resultPage=baseMapper.selectPage(requestParam,queryWrapper);
         return resultPage.convert(each-> BeanUtil.toBean(each, ApplicationQueryPageRespDTO.class));
     }
@@ -116,10 +113,7 @@ public class ApplicationServiceImpl extends ServiceImpl<ApplicationMapper, Appli
      */
     @Override
     public IPage<ApplicationQueryPageRespDTO> listAllAcceptedApplication(ApplicationReceiveQueryPageReqDTO requestParam) {
-        LambdaQueryWrapper<ApplicationDO> queryWrapper = Wrappers.lambdaQuery(ApplicationDO.class)
-                .eq(ApplicationDO::getReceiver, requestParam.getReceiver())
-                .eq(ApplicationDO::getStatus, 1)
-                .eq(ApplicationDO::getDelFlag, 0);
+        LambdaQueryWrapper<ApplicationDO> queryWrapper = buildBaseQueryWrapper(requestParam.getReceiver(),1);
         IPage<ApplicationDO> resultPage=baseMapper.selectPage(requestParam,queryWrapper);
         return resultPage.convert(each-> BeanUtil.toBean(each, ApplicationQueryPageRespDTO.class));
     }
@@ -132,10 +126,7 @@ public class ApplicationServiceImpl extends ServiceImpl<ApplicationMapper, Appli
      */
     @Override
     public IPage<ApplicationQueryPageRespDTO> listAllRefusedApplication(ApplicationReceiveQueryPageReqDTO requestParam) {
-        LambdaQueryWrapper<ApplicationDO> queryWrapper = Wrappers.lambdaQuery(ApplicationDO.class)
-                .eq(ApplicationDO::getReceiver, requestParam.getReceiver())
-                .eq(ApplicationDO::getStatus, 2)
-                .eq(ApplicationDO::getDelFlag, 0);
+        LambdaQueryWrapper<ApplicationDO> queryWrapper = buildBaseQueryWrapper(requestParam.getReceiver(),2);
         IPage<ApplicationDO> resultPage=baseMapper.selectPage(requestParam,queryWrapper);
         return resultPage.convert(each-> BeanUtil.toBean(each, ApplicationQueryPageRespDTO.class));
     }
@@ -252,5 +243,15 @@ public class ApplicationServiceImpl extends ServiceImpl<ApplicationMapper, Appli
             throw new RuntimeException("未找到待处理的申请记录");
         }
     }
+
+
+    // 提取公共查询条件
+    private LambdaQueryWrapper<ApplicationDO> buildBaseQueryWrapper(String receiver, Integer status) {
+        return Wrappers.lambdaQuery(ApplicationDO.class)
+                .eq(ApplicationDO::getReceiver, receiver)
+                .eq(status != null, ApplicationDO::getStatus, status)
+                .eq(ApplicationDO::getDelFlag, 0);
+    }
+
 
 }
