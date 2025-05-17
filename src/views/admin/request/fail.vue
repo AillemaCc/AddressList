@@ -256,12 +256,7 @@ function rejectClick(studentId) {
         <el-table-column prop="status" label="状态" width="90" />
         <el-table-column prop="remark" label="备注" width="90" />
         <el-table-column prop="registerToken" label="注册Token" width="220" />
-        <el-table-column
-          prop="registerToken"
-          label="registerToken"
-          width="220"
-        />
-        <el-table-column fixed="right" label="Operations" width="120">
+        <el-table-column fixed="right" label="操作" width="120">
           <template #default="scope">
             <el-button
               link
@@ -293,8 +288,12 @@ function rejectClick(studentId) {
 <style scoped lang="scss">
 .container {
   .title {
+    padding-bottom: 10px;
+    margin-bottom: 10px;
+    font-size: 20px;
     color: $mainColor;
     background-color: #fff;
+    border-bottom: 1px solid #a1a1a1;
     cursor: default;
   }
   :deep(.el-table thead th) {

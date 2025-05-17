@@ -59,7 +59,7 @@ const defaultProps = {
 </script>
 
 <template>
-  <div class="container">
+  <div class="all-container">
     <div class="header-container">
       <div class="title-container">
         <img src="../../../assets/imgs/txl.png" alt="" />
@@ -69,6 +69,7 @@ const defaultProps = {
         <div class="welcome-box">你好，谢融悠</div>
         <div class="dropdown">
           <router-link to="/stu/home" class="option">个人资料</router-link>
+          <router-link to="/stu/friends" class="option">我的好友</router-link>
           <router-link to="/stu/query" class="option">查询信息</router-link>
           <div class="option">退出登录</div>
         </div>
@@ -76,13 +77,47 @@ const defaultProps = {
     </div>
     <div class="main-container">
       <div class="left-nav">
-        <el-tree :data="navData" :props="defaultProps">
-          <template v-slot="{ data }">
-            <router-link :to="data.router" class="nav-item"
-              >{{ data.name }}
-            </router-link>
-          </template>
-        </el-tree>
+        <el-menu
+          :default-active="$route.path"
+          class="el-menu-vertical-demo"
+          router
+        >
+          <el-menu-item index="/stu/home">
+            <span>个人信息</span>
+          </el-menu-item>
+          <el-sub-menu index="2">
+            <template #title>
+              <span>我的通讯录</span>
+            </template>
+            <el-menu-item index="/stu/friends">
+              <span>通讯录好友</span>
+            </el-menu-item>
+            <el-sub-menu index="2-2">
+              <template #title>
+                <span>通讯录请求</span>
+              </template>
+              <el-menu-item index="/stu/enter">
+                <span>已发送</span>
+              </el-menu-item>
+              <el-menu-item index="/stu/fail">
+                <span>未通过</span>
+              </el-menu-item>
+              <el-menu-item index="/stu/success">
+                <span>已通过</span>
+              </el-menu-item>
+              <el-menu-item index="/stu/reject">
+                <span>已拒绝</span>
+              </el-menu-item>
+              <el-menu-item index="/stu/deleted">
+                <span>已删除</span>
+              </el-menu-item>
+            </el-sub-menu>
+          </el-sub-menu>
+
+          <el-menu-item index="/stu/query">
+            <span>查询信息</span>
+          </el-menu-item>
+        </el-menu>
       </div>
       <div class="right-main">
         <router-view></router-view>
@@ -91,7 +126,7 @@ const defaultProps = {
   </div>
 </template>
 <style scoped lang="scss">
-.container {
+.all-container {
   height: 100vh;
   display: flex;
   flex-direction: column;
@@ -102,6 +137,7 @@ const defaultProps = {
     align-items: center;
     width: 100%;
     height: 96px;
+    min-height: 96px;
     .title-container {
       display: flex;
       justify-content: center;
@@ -141,7 +177,7 @@ const defaultProps = {
         justify-content: center;
         align-items: center;
         width: 100px;
-        height: 120px;
+        height: 160px;
         background-color: #fff;
         border: 1px solid rgba(0, 0, 0, 0.1);
         border-radius: 4px;
@@ -152,7 +188,7 @@ const defaultProps = {
           opacity 0.2s,
           transform 0.3s;
         transform-origin: top;
-        z-index: 1;
+        z-index: 999;
         &::before {
           content: '';
           position: absolute;
@@ -192,7 +228,7 @@ const defaultProps = {
 .main-container {
   display: flex;
   .left-nav {
-    min-width: 200px;
+    min-width: 240px;
     width: 240px;
     background: -webkit-linear-gradient(#fff 0%, #fff 70%, #fdf4ef 100%);
     &::v-deep(.el-tree-node__content) {

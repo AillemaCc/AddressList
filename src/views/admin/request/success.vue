@@ -21,13 +21,13 @@ const fail_request = ref([
     <div class="data-exist" v-if="fail_request.length > 0">
       <el-table :data="fail_request" style="width: 100%">
         <el-table-column prop="id" label="id" width="60" />
-        <el-table-column prop="studentId" label="studentId" width="180" />
-        <el-table-column prop="name" label="name" width="100" />
-        <el-table-column prop="phone" label="phone" width="180" />
-        <el-table-column prop="email" label="email" width="220" />
-        <el-table-column prop="password" label="password" width="220" />
-        <el-table-column prop="status" label="status" width="90" />
-        <el-table-column prop="remark" label="remark" width="90" />
+        <el-table-column prop="studentId" label="学号" width="180" />
+        <el-table-column prop="name" label="姓名" width="100" />
+        <el-table-column prop="phone" label="电话号码" width="180" />
+        <el-table-column prop="email" label="邮箱" width="220" />
+        <el-table-column prop="password" label="密码" width="220" />
+        <el-table-column prop="status" label="状态" width="90" />
+        <el-table-column prop="remark" label="备注" width="90" />
         <el-table-column
           prop="registerToken"
           label="registerToken"
@@ -47,8 +47,12 @@ const fail_request = ref([
 <style scoped lang="scss">
 .container {
   .title {
+    padding-bottom: 10px;
+    margin-bottom: 10px;
+    font-size: 20px;
     color: $mainColor;
     background-color: #fff;
+    border-bottom: 1px solid #a1a1a1;
     cursor: default;
   }
   :deep(.el-table thead th) {

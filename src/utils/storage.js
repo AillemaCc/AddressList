@@ -16,16 +16,16 @@ export function removeStudentInfo() {
 
 const adminInfo = ADMIN_INFO
 
-export function getAdminInfo() {
+export function getAdministrationInfo() {
   return localStorage.getItem(adminInfo)
     ? JSON.parse(localStorage.getItem(adminInfo))
     : { username: '', adminToken: '' }
 }
 
-export function setAdminInfo(newValue) {
+export function setAdministrationInfo(newValue) {
   localStorage.setItem(adminInfo, JSON.stringify(newValue))
 }
 
-export function removeAdminInfo() {
+export function removeAdministrationInfo() {
   localStorage.removeItem(adminInfo)
 }

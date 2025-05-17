@@ -1,7 +1,7 @@
 <script setup></script>
 
 <template>
-  <div class="container">
+  <div class="all-container">
     <div class="header-container">
       <div class="logo-container">
         <img src="../../../assets/imgs/txl.png" alt="" />
@@ -54,7 +54,7 @@
 </template>
 
 <style scoped lang="scss">
-.container {
+.all-container {
   display: flex;
   flex-direction: column;
   height: 100vh;
@@ -95,8 +95,8 @@
     display: flex;
     flex: 1;
     .menu-container {
-      min-width: 180px;
-      width: 220px;
+      min-width: 240px;
+      width: 240px;
       background: linear-gradient(#fff 0, #fff 50%, #e3effb 100%);
       border-right: 1px solid #dcdfe6;
       @media screen and (max-width: 720px) {
