@@ -1,7 +1,7 @@
 package org.AList.common.biz.user;
 import com.alibaba.ttl.TransmittableThreadLocal;
 import org.AList.common.convention.exception.ClientException;
-
+import static org.AList.common.convention.errorcode.BaseErrorCode.*;
 import java.util.Optional;
 
 /**
@@ -55,7 +55,7 @@ public class StuIdContext {
     public static void verifyLoginUser(String studentId) {
         StuIdInfoDTO currentStu = getStudentIdDTO();
         if(currentStu == null||!currentStu.getStudentId().equals(studentId)){
-            throw new ClientException("无权修改非当前登录用户信息");
+            throw new ClientException(PERM_EDIT_USER_DENY);                                                         //B0321：系统缺乏权限修改现用户信息
         }
 
     }

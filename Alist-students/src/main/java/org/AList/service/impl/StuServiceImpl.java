@@ -6,6 +6,8 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.AList.common.convention.exception.ClientException;
+import org.AList.common.convention.exception.ServiceException;
+import org.AList.common.convention.exception.UserException;
 import org.AList.common.generator.RedisKeyGenerator;
 import org.AList.domain.dao.entity.LoginLogDO;
 import org.AList.domain.dao.entity.RegisterDO;
@@ -35,7 +37,7 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import static org.AList.common.enums.UserErrorCodeEnum.*;
-
+import static org.AList.common.convention.errorcode.BaseErrorCode.*;
 /**
  * 学生服务接口实现类
  * <p>
@@ -76,10 +78,10 @@ public class StuServiceImpl extends ServiceImpl<StudentFrameWorkMapper, StudentF
                 .eq(StudentFrameworkDO::getStatus, 1);
         StudentFrameworkDO studentFrameworkDO = studentFrameWorkMapper.selectOne(queryWrapper);
         if(studentFrameworkDO ==null){
-            throw new ClientException("学生不存在");
+            throw new UserException(USER_NOT_FOUND);                                                                     //A0201：用户不存在
         }
         if(Boolean.TRUE.equals(stringRedisTemplate.hasKey("login:student:"+requestParam.getStudentId()))){
-            throw new ClientException("学生已登录");
+            throw new UserException(USER_LOGGED_IN);                                                                     //A0202：用户已登录
         }
         String uuid= UUID.randomUUID().toString();
         // 生成的uuid作为用户登录信息传入redis
@@ -122,7 +124,7 @@ public class StuServiceImpl extends ServiceImpl<StudentFrameWorkMapper, StudentF
             stringRedisTemplate.delete("login:student:"+studentId);
             return;
         }
-        throw new ClientException("用户token不存在或者用户未登录");
+        throw new UserException(USER_NOT_LOGGED);                                                                        //A0203：用户未登录或用户token不存在
     }
 
     /**
@@ -141,7 +143,7 @@ public class StuServiceImpl extends ServiceImpl<StudentFrameWorkMapper, StudentF
     public String register(StuRegisterReqDTO requestParam) {
         // 缓存全量学号的布隆过滤器提供快速错误机制 防止缓存穿透
         if(!studentIdBloomFilterService.contain(requestParam.getStudentId())){
-            throw new ClientException(USER_NULL);
+            throw new UserException(USER_NOT_FOUND);                                                                     //A0201：用户不存在
         }
         // 布隆过滤器存在误判率，被误判为存在的请求，需要再去数据库查询一下。这时候需要查询的仍然是学籍库，也就是全量默认数据的查询
         LambdaQueryWrapper<StudentDefaultInfoDO> queryWrapper = Wrappers.lambdaQuery(StudentDefaultInfoDO.class)
@@ -149,7 +151,7 @@ public class StuServiceImpl extends ServiceImpl<StudentFrameWorkMapper, StudentF
                 .eq(StudentDefaultInfoDO::getName,requestParam.getName())
                 .eq(StudentDefaultInfoDO::getDelFlag, 0);
         if(Objects.isNull(studentDefaultInfoMapper.selectOne(queryWrapper))){
-            throw new ClientException(USER_NULL);
+            throw new UserException(USER_NOT_FOUND);                                                                    //A0201：用户不存在
         }
         // 排除了误判的情况，创建分布式锁，防止并发情况。尽管在我们的场景当中，并发情况是很难出现的，但这种边界情况仍然需要考虑。
         RLock rLock=redissonClient.getLock(RedisKeyGenerator.genStudentRegisterLockKey(requestParam.getStudentId()));
@@ -173,19 +175,19 @@ public class StuServiceImpl extends ServiceImpl<StudentFrameWorkMapper, StudentF
                     // 注册实体新增到创建的注册表单当中
                     int insert= registerMapper.insert(registerDO);
                     if (insert < 1) {
-                        throw new ClientException(USER_SAVE_ERROR);
+                        throw new UserException(REGISTER_FAIL);                                                         //A0100：用户注册失败
                     }
                     // 插入成功之后，向注册的用户返回一个key，他可以用这个key查询自己的注册单审核的状态
                     // 插入成功之后 管理员端审核
                     return uuid;
                 }catch (DuplicateKeyException e){
                     // 防止重复注册
-                    throw new ClientException(USER_EXIST);
+                    throw new UserException(ADDR_BOOK_EXIST);                                                           //A0103：通讯录已存在
                 }
 
             }else{
                 // 获取不到学号的分布式锁，自然是重复注册了
-                throw new ClientException(USER_EXIST);
+                throw new UserException(ADDR_BOOK_EXIST);                                                           //A0103：通讯录已存在
             }
 
         }
@@ -216,7 +218,7 @@ public class StuServiceImpl extends ServiceImpl<StudentFrameWorkMapper, StudentF
                 .eq(RegisterDO::getDelFlag, 0);
         RegisterDO registerDO = registerMapper.selectOne(queryWrapper);
         if(Objects.isNull(registerDO)){
-            throw new ClientException("注册记录不存在，请检查您输入的学号和token是否正确");
+            throw new ServiceException(REG_REQ_NOT_FOUND);                                                               //C0361：处理的注册请求不存在
         }
         return StuRegisterRemarkRespDTO.builder()
                 .studentId(studentId)

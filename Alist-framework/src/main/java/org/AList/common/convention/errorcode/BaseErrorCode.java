@@ -18,6 +18,7 @@ public enum BaseErrorCode implements IErrorCode {
     LOGIN_FAIL("A0200", "用户登录失败"),
     USER_NOT_FOUND("A0201", "用户不存在"),
     USER_LOGGED_IN("A0202", "用户已登录"),
+    USER_NOT_LOGGED("A0203","用户未登录或用户token不存在"),
     ADMIN_LOGIN_FAIL("A0210", "管理员登录失败"),
     ADMIN_NOT_FOUND("A0211", "管理员账户不存在"),
     ADMIN_LOGGED_IN("A0212", "管理员已登录"),
