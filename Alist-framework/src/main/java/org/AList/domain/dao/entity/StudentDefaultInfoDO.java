@@ -1,5 +1,6 @@
 package org.AList.domain.dao.entity;
 
+import com.alibaba.excel.annotation.ExcelProperty;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
@@ -17,48 +18,30 @@ import org.AList.common.database.BaseDO;
 @TableName("t_student_definfo")
 public class StudentDefaultInfoDO extends BaseDO {
     @TableId(type = IdType.AUTO)
-    /**
-     * 主键ID
-     */
+    @ExcelProperty(value = "ID", index = 0)
     private Long id;
 
-    /**
-     * 学号，唯一标识
-     */
+    @ExcelProperty(value = "学号", index = 1)
     private String studentId;
 
-    /**
-     * 姓名
-     */
+    @ExcelProperty(value = "姓名", index = 2)
     private String name;
 
-    /**
-     * 专业
-     */
+    @ExcelProperty(value = "专业代码", index = 3)
     private String majorNum;
 
-    /**
-     * 班级
-     */
+    @ExcelProperty(value = "班级", index = 4)
     private String classNum;
 
-    /**
-     * 入学年份
-     */
+    @ExcelProperty(value = "入学年份", index = 5)
     private String enrollmentYear;
 
-    /**
-     * 毕业年份
-     */
+    @ExcelProperty(value = "毕业年份", index = 6)
     private String graduationYear;
 
-    /**
-     * 手机号
-     */
+    @ExcelProperty(value = "手机号", index = 7)
     private String phone;
 
-    /**
-     * 邮箱
-     */
+    @ExcelProperty(value = "邮箱", index = 8)
     private String email;
 }

@@ -8,6 +8,7 @@ import org.AList.common.convention.exception.ClientException;
 import org.AList.common.listener.StudentDefInfoListener;
 import org.AList.domain.dao.entity.StudentDefaultInfoDO;
 import org.AList.domain.dao.mapper.StudentDefaultInfoMapper;
+import org.AList.domain.dto.req.ExeclStudentExportConditionReqDTO;
 import org.AList.service.AdminExeclOpsService;
 import org.apache.ibatis.session.ExecutorType;
 import org.apache.ibatis.session.SqlSession;
@@ -15,8 +16,12 @@ import org.apache.ibatis.session.SqlSessionFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * 管理员execl操作服务实现层
@@ -26,6 +31,7 @@ import java.util.List;
 @Slf4j
 public class AdminExeclOpsServiceImpl implements AdminExeclOpsService {
     private final SqlSessionFactory sqlSessionFactory;
+    private final StudentDefaultInfoMapper studentDefaultInfoMapper;
     /**
      * 保存学生学籍数据到数据库
      */
@@ -81,4 +87,52 @@ public class AdminExeclOpsServiceImpl implements AdminExeclOpsService {
                 .sheet()
                 .doRead();
     }
+
+    @Override
+    public void exportStudentDefInfo(HttpServletResponse response) {
+        export(response, null);
+    }
+
+    @Override
+    public void exportStudentDefInfoByCondition(HttpServletResponse response, ExeclStudentExportConditionReqDTO condition) {
+        export(response, condition);
+    }
+
+    private void export(HttpServletResponse response, ExeclStudentExportConditionReqDTO condition) {
+        try {
+            // 1. 设置响应头
+            setupResponseHeader(response);
+
+            // 2. 查询数据
+            List<StudentDefaultInfoDO> dataList = queryData(condition);
+
+            // 3. 导出Excel
+            EasyExcel.write(response.getOutputStream(), StudentDefaultInfoDO.class)
+                    .sheet("学生学籍信息")
+                    .doWrite(dataList);
+
+            log.info("学籍信息导出成功，共{}条", dataList.size());
+        } catch (Exception e) {
+            log.error("学籍信息导出失败", e);
+            throw new RuntimeException("导出失败: " + e.getMessage());
+        }
+    }
+
+
+
+    private List<StudentDefaultInfoDO> queryData(ExeclStudentExportConditionReqDTO condition) {
+        return Optional.ofNullable(condition)
+                .map(studentDefaultInfoMapper::selectByCondition)
+                .orElseGet(() -> studentDefaultInfoMapper.selectList(null));
+    }
+
+    private void setupResponseHeader(HttpServletResponse response) {
+        String fileName = URLEncoder.encode("学生学籍信息_" + System.currentTimeMillis(), StandardCharsets.UTF_8);
+        response.setContentType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+        response.setCharacterEncoding("utf-8");
+        response.setHeader("Content-disposition", "attachment;filename*=utf-8''" + fileName + ".xlsx");
+    }
+
+
+
 }
