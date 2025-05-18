@@ -13,6 +13,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.AList.common.biz.user.StuIdContext;
 import org.AList.common.convention.exception.ClientException;
+import org.AList.common.convention.exception.ServiceException;
+import org.AList.common.convention.exception.UserException;
 import org.AList.common.generator.RedisKeyGenerator;
 import org.AList.domain.dao.entity.*;
 import org.AList.domain.dao.mapper.*;
@@ -31,7 +33,7 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
-
+import static org.AList.common.convention.errorcode.BaseErrorCode.*;
 /**
  * 通讯信息服务实现层
  */
@@ -62,7 +64,7 @@ public class StuContactServiceImpl extends ServiceImpl<ContactMapper, ContactDO>
     public void addStudentContact(ContactAddReqDTO requestParam) {
         StuIdContext.verifyLoginUser(requestParam.getStudentId());
         if (checkContactExist(requestParam.getStudentId())) {
-            throw new ClientException("该学生的通讯信息已存在");
+            throw new UserException(ADDR_BOOK_EXIST);                                                                   //A0103：通讯录已存在
         }
         ContactDO contact =ContactDO.builder()
                 .studentId(requestParam.getStudentId())
@@ -91,7 +93,8 @@ public class StuContactServiceImpl extends ServiceImpl<ContactMapper, ContactDO>
                 .eq(ContactGotoDO::getDelFlag, 0);
         ContactGotoDO contactGoto = contactGotoMapper.selectOne(gotoQueryWrapper);
         if (Objects.isNull(contactGoto)) {
-            throw new ClientException("您没有权限删除此通讯录信息或记录不存在");
+            // todo 这里的错误涉及两种可能，暂时使用B0331的错误码
+            throw new ClientException(PERM_DEL_ADDR_DENY);                                                              //B0331：系统缺乏权限删除通讯录 or C0351：处理的通讯录记录不存在
         }
         LambdaUpdateWrapper<ContactDO> updateWrapper = Wrappers.lambdaUpdate(ContactDO.class)
                 .eq(ContactDO::getStudentId, requestParam.getContactId())
@@ -99,7 +102,7 @@ public class StuContactServiceImpl extends ServiceImpl<ContactMapper, ContactDO>
                 .set(ContactDO::getDelFlag, 1);
         int updated = contactMapper.update(null, updateWrapper);
         if (updated == 0) {
-            throw new ClientException("删除个人通讯信息出现异常，请重试");
+            throw new ServiceException(DEL_ADDR_ERR);                                                                    //C0311：删除个人通讯信息错误
         }
         LambdaUpdateWrapper<ContactGotoDO> gotoUpdateWrapper = Wrappers.lambdaUpdate(ContactGotoDO.class)
                 .eq(ContactGotoDO::getOwnerId, requestParam.getOwnerId())
@@ -133,7 +136,7 @@ public class StuContactServiceImpl extends ServiceImpl<ContactMapper, ContactDO>
     public void updateStudentContact(ContactUpdateReqDTO requestParam) {
         StuIdContext.verifyLoginUser(requestParam.getStudentId());
         if (!checkContactExist(requestParam.getStudentId())) {
-            throw new ClientException("修改的记录不存在");
+            throw new ServiceException(ADDR_NOT_FOUND);                                                                 //C0351：处理的通讯录记录不存在
         }
         LambdaUpdateWrapper<ContactDO> updateWrapper = Wrappers.lambdaUpdate(ContactDO.class)
                 .eq(ContactDO::getStudentId, requestParam.getStudentId())
@@ -142,7 +145,7 @@ public class StuContactServiceImpl extends ServiceImpl<ContactMapper, ContactDO>
                 .set(ContactDO::getCity, requestParam.getCity());
         int updated = contactMapper.update(null, updateWrapper);
         if (updated != 1) {
-            throw new ClientException("修改错误");
+            throw new ServiceException(DB_UPDATE_ERR);                                                                   //C0320：数据库修改错误
         }
         sendCacheRebuildEvent(requestParam.getStudentId());
     }
@@ -179,7 +182,8 @@ public class StuContactServiceImpl extends ServiceImpl<ContactMapper, ContactDO>
         ContactGotoDO contactGoto = contactGotoMapper.selectOne(gotoQueryWrapper);
 
         if (Objects.isNull(contactGoto)) {
-            throw new ClientException("您没有权限查看此通讯录信息或记录不存在");
+            // todo 这里的错误涉及两种可能，暂时使用B0311的错误码
+            throw new ClientException(PERM_VIEW_ADDR_DENY);                                                             //B0311：系统缺乏权限查看该通讯录 or C0351：处理的通讯录记录不存在
         }
         String studentId=requestParam.getContactId();
         LambdaQueryWrapper<ContactDO> contactQueryWrapper = Wrappers.lambdaQuery(ContactDO.class)
@@ -188,7 +192,7 @@ public class StuContactServiceImpl extends ServiceImpl<ContactMapper, ContactDO>
         ContactDO contact = contactMapper.selectOne(contactQueryWrapper);
 
         if (Objects.isNull(contact)) {
-            throw new ClientException("通讯录信息不存在或已被删除");
+            throw new ServiceException(ADDR_NOT_FOUND);                                                                 //C0351：处理的通讯录记录不存在
         }
         String employer=contact.getEmployer();
         String city=contact.getCity();
@@ -198,7 +202,7 @@ public class StuContactServiceImpl extends ServiceImpl<ContactMapper, ContactDO>
                 .eq(StudentFrameworkDO::getDelFlag, 0);
         StudentFrameworkDO student= studentFrameWorkMapper.selectOne(studentInfoWrapper);
         if (Objects.isNull(student)) {
-            throw new ClientException("通讯录信息不存在或已被删除");
+            throw new ServiceException(ADDR_NOT_FOUND);                                                                 //C0351：处理的通讯录记录不存在
         }
         String name=student.getName();
         String enrollmentYear=student.getEnrollmentYear();
@@ -213,7 +217,7 @@ public class StuContactServiceImpl extends ServiceImpl<ContactMapper, ContactDO>
                 .eq(MajorAndAcademyDO::getDelFlag, 0);
         MajorAndAcademyDO majorAndAcademy=majorAndAcademyMapper.selectOne(majorAndAcademyWrapper);
         if (Objects.isNull(majorAndAcademy)) {
-            throw new ClientException("通讯录信息不存在或已被删除");
+            throw new ServiceException(ADDR_NOT_FOUND);                                                                //C0351：处理的通讯录记录不存在
         }
         String majorName=majorAndAcademy.getMajor();
         String academyName=majorAndAcademy.getAcademy();
@@ -225,7 +229,7 @@ public class StuContactServiceImpl extends ServiceImpl<ContactMapper, ContactDO>
                 .eq(ClassInfoDO::getDelFlag, 0);
         ClassInfoDO classInfo = classInfoMapper.selectOne(classInfoWrapper);
         if (Objects.isNull(classInfo)) {
-            throw new ClientException("通讯录信息不存在或已被删除");
+            throw new ServiceException(ADDR_NOT_FOUND);                                                                 //C0351：处理的通讯录记录不存在
         }
         String className=classInfo.getClassName();
 
@@ -321,19 +325,21 @@ public class StuContactServiceImpl extends ServiceImpl<ContactMapper, ContactDO>
                 requestParam.getOwnerId(),
                 1);
         if(Objects.isNull(deletedContactGotoDO)){
-            throw new ClientException("您没有权限恢复此通讯录信息或记录不存在");
+            // todo 这里的错误涉及两种，暂时使用B0341的错误码
+            throw new ClientException(PERM_RESTORE_ADDR_DENY);                                                          //B0341：系统缺乏权限恢复该通讯录 or C0351：处理的通讯录信息不存在
         }
         ContactDO deletedContact=contactMapper.selectSingleDeletedContact(
                 requestParam.getContactId(),
                 1
         );
         if(Objects.isNull(deletedContact)){
-            throw new ClientException("您没有权限恢复此通讯录信息或记录不存在");
+            // todo 这里的错误涉及两种，暂时使用B0341的错误码
+            throw new ClientException(PERM_RESTORE_ADDR_DENY);                                                         //B0341：系统缺乏权限恢复该通讯录 or C0351：处理的通讯录信息不存在
         }
         int restoreGoto= contactGotoMapper.restoreContactGoto(requestParam.getContactId(), requestParam.getOwnerId());
         int restoreContact= contactMapper.restoreContact(requestParam.getContactId());
         if(restoreGoto!=1||restoreContact!=1){
-            throw new ClientException("恢复失败，记录可能不存在或未被删除");
+            throw new ServiceException(DB_RESTORE_ERR);                                                                 //C0330：数据库恢复错误
         }
     }
 
