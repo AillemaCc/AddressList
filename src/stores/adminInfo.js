@@ -8,7 +8,8 @@ export const useAdminInfoStore = defineStore('adminInfo', () => {
   const adminInfo = getAdministrationInfo()
 
   function setAdminInfo(newValue) {
-    adminInfo.value = setAdministrationInfo(newValue)
+    adminInfo.value = newValue
+    setAdministrationInfo(newValue)
   }
 
   return { adminInfo, setAdminInfo }

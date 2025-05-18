@@ -5,7 +5,8 @@ export const useStuInfoStore = defineStore('stuInfo', () => {
   const stuInfo = getStudentInfo()
 
   function setStuInfo(newValue) {
-    stuInfo.value = setStudentInfo(newValue)
+    stuInfo.value = newValue
+    setStudentInfo(newValue)
   }
 
   return { stuInfo, setStuInfo }

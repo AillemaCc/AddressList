@@ -11,6 +11,7 @@ import stu_deleted from '@/views/stu/deleted.vue'
 import stu_query from '@/views/stu/query/index.vue'
 import stu_login from '@/views/stu/login/index.vue'
 import stu_register from '@/views/stu/register/index.vue'
+import stu_wait from '@/views/stu/wait/index.vue'
 
 import admin_layout from '@/views/admin/layout/index.vue'
 import admin_home from '@/views/admin/home/index.vue'
@@ -23,6 +24,9 @@ import admin_bulletin_draft from '@/views/admin/bulletin/draft.vue'
 import admin_bulletin_released from '@/views/admin/bulletin/released.vue'
 import admin_bulletin_pulledOf from '@/views/admin/bulletin/pulledOf.vue'
 import admin_bulletin_deleted from '@/views/admin/bulletin/deleted.vue'
+
+import { useStuInfoStore } from '@/stores/stuInfo'
+import { stuGetRemarkApi } from '@/apis/stu/stuLogin'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -61,6 +65,10 @@ const router = createRouter({
         {
           path: 'register',
           component: stu_register,
+        },
+        {
+          path: 'wait',
+          component: stu_wait,
         },
       ],
     },
@@ -116,11 +124,33 @@ const cantAccessPath = [
   '/stu/query',
 ]
 
-router.beforeEach((to, from) => {
+router.beforeEach((to, from, next) => {
+  const stuInfoStore = useStuInfoStore()
   if (cantAccessPath.includes(to.fullPath)) {
+    const token = stuInfoStore.stuInfo.studentToken
     //判断是否存在token
-    //存在
-    //不存在
+    if (token) {
+      //存在,用户查询注册审核结果
+      const studentId = stuInfoStore.stuInfo.studentId
+      stuGetRemarkApi({
+        studentId: studentId.value,
+        registerToken: token.value,
+      }).then((res) => {
+        console.log(res)
+        if (res.data.status === 1) {
+          next()
+        } else if (res.data.status === 2 || res.data.status === 3) {
+          next(`/stu/wait?status=${res.data.status}`)
+        } else {
+          next() //正式连接后修改
+        }
+      })
+    } else {
+      //不存在
+      next('/stu/login')
+    }
+  } else {
+    next()
   }
   console.log(to)
 })

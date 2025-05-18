@@ -1,4 +1,4 @@
-const studentInfo = STUDENT_INFO
+const studentInfo = 'STUDENT_INFO'
 
 export function getStudentInfo() {
   return localStorage.getItem(studentInfo)
@@ -14,7 +14,7 @@ export function removeStudentInfo() {
   localStorage.removeItem(studentInfo)
 }
 
-const adminInfo = ADMIN_INFO
+const adminInfo = 'ADMIN_INFO'
 
 export function getAdministrationInfo() {
   return localStorage.getItem(adminInfo)

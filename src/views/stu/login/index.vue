@@ -18,6 +18,35 @@ function handleStudentIdFocus() {
 function handlePasswordFocus() {
   hasPasswordFocused.value = true
 }
+
+import { stuLoginApi } from '@/apis/stu/stuLogin'
+import { useStuInfoStore } from '@/stores/stuInfo'
+import { ElMessage } from 'element-plus'
+import { useRouter } from 'vue-router'
+const router = useRouter()
+const stuInfoStore = useStuInfoStore()
+async function login() {
+  const res = await stuLoginApi({
+    studentId: studentId.value,
+    password: password.value,
+  })
+  if (res.success) {
+    stuInfoStore.setStuInfo({
+      studentId: studentId.value,
+      studentToken: res.data.token,
+    })
+    ElMessage({
+      message: res.message,
+      type: 'success',
+      duration: 2000,
+    })
+    setTimeout(() => {
+      router.push('/stu/home')
+    }, 2000)
+  } else {
+    ElMessage.error(res.message)
+  }
+}
 </script>
 
 <template>
@@ -82,7 +111,7 @@ function handlePasswordFocus() {
               </div>
             </div>
             <div class="loginButtonContainer">
-              <button class="loginButton">登录</button>
+              <button class="loginButton" @click="login">登录</button>
             </div>
             <div class="toRigister">
               还没有账号？<router-link to="/stu/register">立即注册</router-link>
@@ -123,7 +152,10 @@ function handlePasswordFocus() {
       border-radius: 10px;
       overflow: hidden;
       box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
-      transform: translateY(-60px);
+      transform: translateY(-40px);
+      @media screen and (max-height: 950px) {
+        transform: translateY(0px);
+      }
       .background-container {
         display: flex;
         flex-direction: column;

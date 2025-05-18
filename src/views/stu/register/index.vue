@@ -24,6 +24,38 @@ const hasFocus = ref({
 function handleFocus(key) {
   hasFocus.value[key] = true
 }
+
+import { stuRegisterApi } from '@/apis/stu/stuLogin'
+import { useStuInfoStore } from '@/stores/stuInfo'
+import { ElMessage } from 'element-plus'
+import { useRouter } from 'vue-router'
+const router = useRouter()
+const stuInfoStore = useStuInfoStore()
+async function register() {
+  const res = await stuRegisterApi({
+    studentId: studentId.value,
+    name: name.value,
+    phone: phoneNumber.value,
+    email: email.value,
+    password: password.value,
+  })
+  if (res.success) {
+    stuInfoStore.setStuInfo({
+      studentId: studentId.value,
+      studentToken: res.data,
+    })
+    ElMessage({
+      message: res.message,
+      type: 'success',
+      duration: 2000,
+    })
+    setTimeout(() => {
+      router.push('/stu/wait?status=0')
+    }, 2000)
+  } else {
+    ElMessage.error(res.message)
+  }
+}
 </script>
 <template>
   <div class="container">
@@ -99,7 +131,7 @@ function handleFocus(key) {
               </div>
             </div>
             <div class="registerButtonContainer">
-              <button class="registerButton">注册</button>
+              <button class="registerButton" @click="register">注册</button>
             </div>
             <div class="toLogin">
               已有账号？<router-link to="/stu/login">去登录></router-link>
@@ -112,6 +144,7 @@ function handleFocus(key) {
 </template>
 <style scoped lang="scss">
 .container {
+  height: 100vh;
   display: flex;
   flex-direction: column;
   background: url(../../../assets/imgs/n_b2.jpg);
@@ -139,7 +172,10 @@ function handleFocus(key) {
       border-radius: 10px;
       overflow: hidden;
       box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
-      transform: translateY(-60px);
+      transform: translateY(-40px);
+      @media screen and (max-height: 950px) {
+        transform: translateY(0px);
+      }
       .background-container {
         display: flex;
         flex-direction: column;
