@@ -4,7 +4,6 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import lombok.RequiredArgsConstructor;
 import org.AList.common.biz.user.StuIdContext;
-import org.AList.common.convention.exception.ClientException;
 import org.AList.common.convention.exception.UserException;
 import org.AList.domain.dao.entity.ApplicationDO;
 import org.AList.domain.dao.mapper.ApplicationMapper;
