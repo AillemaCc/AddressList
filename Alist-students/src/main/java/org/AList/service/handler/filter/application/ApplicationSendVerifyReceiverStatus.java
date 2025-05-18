@@ -3,7 +3,6 @@ package org.AList.service.handler.filter.application;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import lombok.RequiredArgsConstructor;
-import org.AList.common.convention.exception.ClientException;
 import org.AList.common.convention.exception.UserException;
 import org.AList.domain.dao.entity.StudentFrameworkDO;
 import org.AList.domain.dao.mapper.StudentFrameWorkMapper;

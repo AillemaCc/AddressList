@@ -2,7 +2,6 @@ package org.AList.service.handler.filter.application;
 
 import lombok.RequiredArgsConstructor;
 import org.AList.common.biz.user.StuIdContext;
-import org.AList.common.convention.exception.ClientException;
 import org.AList.common.convention.exception.UserException;
 import org.AList.domain.dto.req.ApplicationSendMsgReqDTO;
 import org.springframework.stereotype.Component;
