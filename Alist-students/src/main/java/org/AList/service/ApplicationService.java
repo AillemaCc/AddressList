@@ -1,11 +1,9 @@
 package org.AList.service;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
-import org.AList.domain.dto.req.ApplicationReceiveQueryPageReqDTO;
-import org.AList.domain.dto.req.ApplicationSendMsgReqDTO;
-import org.AList.domain.dto.req.ApplicationSendQueryPageReqDTO;
-import org.AList.domain.dto.req.ApplicationYONReqDTO;
+import org.AList.domain.dto.req.*;
 import org.AList.domain.dto.resp.ApplicationQueryPageRespDTO;
+import org.AList.domain.dto.resp.QuerySomeoneRespDTO;
 
 /**
  * 站内信服务接口
@@ -57,8 +55,8 @@ public interface ApplicationService {
      */
     void deleteSingleApplication(ApplicationYONReqDTO requestParam);
 
-
-
-
-
+    /**
+     * 模糊查询脱敏信息
+     */
+    IPage<QuerySomeoneRespDTO> querySomeone(QuerySomeoneReqDTO condition);
 }

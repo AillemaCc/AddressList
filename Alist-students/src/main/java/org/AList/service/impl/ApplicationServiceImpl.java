@@ -4,6 +4,7 @@ import cn.hutool.core.bean.BeanUtil;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -13,20 +14,16 @@ import org.AList.common.convention.exception.ClientException;
 import org.AList.common.convention.exception.UserException;
 import org.AList.common.enums.StudentChainMarkEnum;
 import org.AList.designpattern.chain.AbstractChainContext;
-import org.AList.domain.dao.entity.ApplicationDO;
-import org.AList.domain.dao.entity.ContactGotoDO;
-import org.AList.domain.dao.entity.StudentFrameworkDO;
-import org.AList.domain.dao.mapper.ApplicationMapper;
-import org.AList.domain.dao.mapper.ContactGotoMapper;
-import org.AList.domain.dao.mapper.StudentFrameWorkMapper;
-import org.AList.domain.dto.req.ApplicationReceiveQueryPageReqDTO;
-import org.AList.domain.dto.req.ApplicationSendMsgReqDTO;
-import org.AList.domain.dto.req.ApplicationSendQueryPageReqDTO;
-import org.AList.domain.dto.req.ApplicationYONReqDTO;
+import org.AList.domain.dao.entity.*;
+import org.AList.domain.dao.mapper.*;
+import org.AList.domain.dto.req.*;
 import org.AList.domain.dto.resp.ApplicationQueryPageRespDTO;
+import org.AList.domain.dto.resp.QuerySomeoneRespDTO;
 import org.AList.service.ApplicationService;
+import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
 import static org.AList.common.convention.errorcode.BaseErrorCode.*;
 /**
  * 站内信方法实现类
@@ -37,6 +34,8 @@ public class ApplicationServiceImpl extends ServiceImpl<ApplicationMapper, Appli
     private final StudentFrameWorkMapper studentFrameWorkMapper;
     private final ApplicationMapper applicationMapper;
     private final ContactGotoMapper contactGotoMapper;
+    private final MajorAndAcademyMapper majorAndAcademyMapper;
+    private final ClassInfoMapper classInfoMapper;
     private final AbstractChainContext<ApplicationSendMsgReqDTO> abstractChainContext;
 
 
@@ -230,6 +229,53 @@ public class ApplicationServiceImpl extends ServiceImpl<ApplicationMapper, Appli
         if (updated == 0) {
             throw new UserException(NO_PENDING_APPLY);                                                                  //A0401：不存在待处理申请
         }
+    }
+
+    /**
+     * 模糊查询学生信息
+     */
+    @Override
+    public IPage<QuerySomeoneRespDTO> querySomeone(QuerySomeoneReqDTO requestParam) {
+        int current=requestParam.getCurrent()==null?0:requestParam.getCurrent();
+        int size=requestParam.getSize()==null?10:requestParam.getSize();
+        Page<StudentFrameworkDO> page = new Page<>(current, size);
+        LambdaQueryWrapper<StudentFrameworkDO> queryWrapper = Wrappers.lambdaQuery(StudentFrameworkDO.class)
+                .like(StringUtils.isNotBlank(requestParam.getName()),
+                        StudentFrameworkDO::getName, requestParam.getName())
+                .eq(StudentFrameworkDO::getDelFlag, 0);
+        IPage<StudentFrameworkDO> studentPage = studentFrameWorkMapper.selectPage(page, queryWrapper);
+        return studentPage.convert(student -> {
+                    QuerySomeoneRespDTO dto = new QuerySomeoneRespDTO();
+                    BeanUtils.copyProperties(student, dto);
+            if (StringUtils.isNotBlank(student.getMajorNum())) {
+                MajorAndAcademyDO majorAndAcademy = majorAndAcademyMapper.selectOne(
+                        Wrappers.<MajorAndAcademyDO>lambdaQuery()
+                                .eq(MajorAndAcademyDO::getMajorNum, student.getMajorNum())
+                );
+                if (majorAndAcademy != null) {
+                    dto.setMajorName(majorAndAcademy.getMajor());
+                    dto.setAcademyName(majorAndAcademy.getAcademy());
+                }
+            }
+            if(StringUtils.isNotBlank(student.getClassNum())){
+                ClassInfoDO classInfo= classInfoMapper.selectOne(
+                        Wrappers.<ClassInfoDO>lambdaQuery()
+                        .eq(ClassInfoDO::getClassNum, student.getClassNum())
+                );
+                if(classInfo!=null) {
+                    dto.setClassName(classInfo.getClassName());
+                }
+            }
+            if(StringUtils.isNotBlank(student.getEnrollmentYear())&&(StringUtils.isNotBlank(student.getEnrollmentYear()))){
+                dto.setEnrollmentYear(student.getEnrollmentYear());
+                dto.setGraduationYear(student.getGraduationYear());
+            }
+            if(StringUtils.isNotBlank(student.getStudentId())){
+                dto.setStudentId(student.getStudentId());
+            }
+            return dto;
+
+        });
     }
 
 
