@@ -57,6 +57,5 @@ public class StuIdContext {
         if(currentStu == null||!currentStu.getStudentId().equals(studentId)){
             throw new ClientException(PERM_EDIT_USER_DENY);                                                         //B0321：系统缺乏权限修改现用户信息
         }
-
     }
 }

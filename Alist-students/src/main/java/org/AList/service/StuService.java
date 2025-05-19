@@ -47,5 +47,5 @@ public interface StuService {
      * @param requestParam 用户查询注册结果请求体
      * @return 用户查询注册结果响应体
      */
-    StuRegisterRemarkRespDTO getReamrk(StuRegisterRemarkReqDTO requestParam);
+    StuRegisterRemarkRespDTO getRemark(StuRegisterRemarkReqDTO requestParam);
 }

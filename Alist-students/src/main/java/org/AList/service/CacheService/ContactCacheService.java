@@ -191,4 +191,26 @@ public class ContactCacheService {
         }
         return null;
     }
+
+    /**
+     * 设置空值缓存
+     */
+    public void setContactNullValueCache(String ownerId, String contactId){
+        String redisKey = RedisKeyGenerator.genContactNullKey(ownerId, contactId);
+        try {
+            redisTemplate.opsForValue().set(redisKey,"null", 1, TimeUnit.HOURS);
+            log.debug("Successfully set null cache for owner: {}, student: {}", ownerId, contactId);
+        } catch (RuntimeException e) {
+            log.error("Failed to serialize contact data for caching, owner: {}, student: {}",
+                    ownerId, contactId, e);
+        }
+    }
+
+    /**
+     * 检查是否存在指定ownerId和contactId的空值缓存
+     */
+    public boolean isContactNullValueCached(String ownerId, String contactId) {
+        String redisKey = RedisKeyGenerator.genContactNullKey(ownerId, contactId);
+        return Boolean.TRUE.equals(redisTemplate.hasKey(redisKey));
+    }
 }

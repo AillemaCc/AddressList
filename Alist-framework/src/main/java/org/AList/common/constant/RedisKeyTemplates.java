@@ -7,6 +7,7 @@ public final class RedisKeyTemplates {
     
     // 联系人相关
     public static final String CONTACT_SINGLE = "contact:%s:%s";
+    public static final String CONTACT_NULL_SINGLE = "contact:%s:%s";
     public static final String CONTACT_ALL_FOR_STUDENT = "contact:*:%s";
 
     public static final String STUDENT_FULL_CONTACT_INFO = "student:fullContactInfo:%s";
