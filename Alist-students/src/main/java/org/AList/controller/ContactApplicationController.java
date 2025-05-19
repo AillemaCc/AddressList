@@ -2,13 +2,12 @@ package org.AList.controller;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import lombok.RequiredArgsConstructor;
+import org.AList.annotation.MyLog;
 import org.AList.common.convention.result.Result;
 import org.AList.common.convention.result.Results;
-import org.AList.domain.dto.req.ApplicationReceiveQueryPageReqDTO;
-import org.AList.domain.dto.req.ApplicationSendMsgReqDTO;
-import org.AList.domain.dto.req.ApplicationSendQueryPageReqDTO;
-import org.AList.domain.dto.req.ApplicationYONReqDTO;
+import org.AList.domain.dto.req.*;
 import org.AList.domain.dto.resp.ApplicationQueryPageRespDTO;
+import org.AList.domain.dto.resp.QuerySomeoneRespDTO;
 import org.AList.service.ApplicationService;
 import org.springframework.web.bind.annotation.*;
 
@@ -20,6 +19,14 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class ContactApplicationController {
     private final ApplicationService applicationService;
+    /**
+     * 根据姓名查询已注册同学信息
+     */
+    @MyLog
+    @GetMapping("/querySomeone")
+    public Result<IPage<QuerySomeoneRespDTO>> querySomeone(@RequestBody QuerySomeoneReqDTO requestParam) {
+        return Results.success(applicationService.querySomeone(requestParam));
+    }
 
     /**
      * 向某个人发送站内信申请
