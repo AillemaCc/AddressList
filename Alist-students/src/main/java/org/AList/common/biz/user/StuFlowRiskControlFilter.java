@@ -1,5 +1,6 @@
 package org.AList.common.biz.user;
 
+import cn.hutool.core.lang.Assert;
 import com.alibaba.fastjson.JSON;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
@@ -13,7 +14,11 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.data.redis.core.script.DefaultRedisScript;
 import org.springframework.scripting.support.ResourceScriptSource;
 
-import javax.servlet.*;
+import javax.annotation.PostConstruct;
+import javax.servlet.Filter;
+import javax.servlet.FilterChain;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletResponse;
 import java.io.PrintWriter;
 import java.util.Optional;
@@ -30,7 +35,14 @@ public class StuFlowRiskControlFilter implements Filter {
     private final StringRedisTemplate stringRedisTemplate;
     private final UserFlowRiskControlConfiguration userFlowRiskControlConfiguration;
 
-    private static final String USER_FLOW_RISK_CONTROL_LUA_SCRIPT_PATH = "src/main/resources/lua/user_flow_risk_control.lua";
+    private static final String USER_FLOW_RISK_CONTROL_LUA_SCRIPT_PATH = "lua/user_flow_risk_control.lua";
+
+
+    @PostConstruct
+    public void init() {
+        Assert.isTrue(new ClassPathResource(USER_FLOW_RISK_CONTROL_LUA_SCRIPT_PATH).exists(),
+                "Lua脚本文件不存在: " + USER_FLOW_RISK_CONTROL_LUA_SCRIPT_PATH);
+    }
 
     @SneakyThrows
     @Override
