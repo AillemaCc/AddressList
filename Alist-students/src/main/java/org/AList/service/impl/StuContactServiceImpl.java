@@ -192,6 +192,7 @@ public class StuContactServiceImpl extends ServiceImpl<ContactMapper, ContactDO>
         ContactDO contact = contactMapper.selectOne(contactQueryWrapper);
 
         if (Objects.isNull(contact)) {
+            // todo 错误码再细化一下，具体到什么记录不存在，比如这里：contact记录不存在
             throw new ServiceException(ADDR_NOT_FOUND);                                                                 //C0351：处理的通讯录记录不存在
         }
         String employer=contact.getEmployer();
@@ -202,6 +203,7 @@ public class StuContactServiceImpl extends ServiceImpl<ContactMapper, ContactDO>
                 .eq(StudentFrameworkDO::getDelFlag, 0);
         StudentFrameworkDO student= studentFrameWorkMapper.selectOne(studentInfoWrapper);
         if (Objects.isNull(student)) {
+            // todo 错误码再细化一下，具体到什么记录不存在，比如这里：studentInfo记录不存在
             throw new ServiceException(ADDR_NOT_FOUND);                                                                 //C0351：处理的通讯录记录不存在
         }
         String name=student.getName();
@@ -217,6 +219,7 @@ public class StuContactServiceImpl extends ServiceImpl<ContactMapper, ContactDO>
                 .eq(MajorAndAcademyDO::getDelFlag, 0);
         MajorAndAcademyDO majorAndAcademy=majorAndAcademyMapper.selectOne(majorAndAcademyWrapper);
         if (Objects.isNull(majorAndAcademy)) {
+            // todo 错误码再细化一下，具体到什么记录不存在，比如这里：majorAndAcademy记录不存在
             throw new ServiceException(ADDR_NOT_FOUND);                                                                //C0351：处理的通讯录记录不存在
         }
         String majorName=majorAndAcademy.getMajor();
@@ -229,6 +232,7 @@ public class StuContactServiceImpl extends ServiceImpl<ContactMapper, ContactDO>
                 .eq(ClassInfoDO::getDelFlag, 0);
         ClassInfoDO classInfo = classInfoMapper.selectOne(classInfoWrapper);
         if (Objects.isNull(classInfo)) {
+            // todo 错误码再细化一下，具体到什么记录不存在，比如这里：classInfo记录不存在
             throw new ServiceException(ADDR_NOT_FOUND);                                                                 //C0351：处理的通讯录记录不存在
         }
         String className=classInfo.getClassName();
