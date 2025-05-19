@@ -471,7 +471,8 @@ public class StuContactServiceImpl extends ServiceImpl<ContactMapper, ContactDO>
             return Collections.emptyList();
         }
         if (current < 1 || size < 1) {
-            throw new IllegalArgumentException("分页参数必须大于0");
+            // todo 这个错误码写了吗
+            throw new ClientException("分页参数必须大于0");
         }
 
         // 计算分页偏移量
