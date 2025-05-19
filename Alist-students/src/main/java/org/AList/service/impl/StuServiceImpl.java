@@ -36,7 +36,6 @@ import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
-import static org.AList.common.enums.UserErrorCodeEnum.*;
 import static org.AList.common.convention.errorcode.BaseErrorCode.*;
 /**
  * 学生服务接口实现类
@@ -209,7 +208,7 @@ public class StuServiceImpl extends ServiceImpl<StudentFrameWorkMapper, StudentF
      * @see StuRegisterRemarkRespDTO
      */
     @Override
-    public StuRegisterRemarkRespDTO getReamrk(StuRegisterRemarkReqDTO requestParam) {
+    public StuRegisterRemarkRespDTO getRemark(StuRegisterRemarkReqDTO requestParam) {
         String studentId=requestParam.getStudentId();
         String registerToken =requestParam.getRegisterToken();
         LambdaQueryWrapper<RegisterDO> queryWrapper = Wrappers.lambdaQuery(RegisterDO.class)

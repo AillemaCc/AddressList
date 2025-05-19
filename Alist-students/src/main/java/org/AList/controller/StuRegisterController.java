@@ -35,6 +35,6 @@ public class StuRegisterController {
      */
     @GetMapping("/getRemark")
     public Result<StuRegisterRemarkRespDTO> getRemark(@RequestBody StuRegisterRemarkReqDTO requestParam){
-        return Results.success(stuService.getReamrk(requestParam));
+        return Results.success(stuService.getRemark(requestParam));
     }
 }

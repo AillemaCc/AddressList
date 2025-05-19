@@ -27,7 +27,7 @@ public class AdminContext {
      * 获取username上下文
      * @return username 上下文当中的username
      */
-    public static String getStudentId() {
+    public static String getAdminister() {
         AdminInfoDTO stuIdInfoDTO =USER_THREAD_LOCAL.get();
         return Optional.ofNullable(stuIdInfoDTO).map(AdminInfoDTO::getUsername).orElse(null);
     }
