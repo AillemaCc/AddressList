@@ -15,6 +15,15 @@ public class RedisKeyGenerator {
     public static String genContactKey(String ownerId, String contactId) {
         return String.format(RedisKeyTemplates.CONTACT_SINGLE, ownerId, contactId);
     }
+
+    /**
+     * 生成联系人单条缓存空 Key
+     * <p>
+     * contactNull:%s:%s
+     */
+    public static String genContactNullKey(String ownerId, String contactId) {
+        return String.format(RedisKeyTemplates.CONTACT_NULL_SINGLE, ownerId, contactId);
+    }
     
     /**
      * 生成学生所有联系人缓存匹配模式

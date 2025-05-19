@@ -32,7 +32,9 @@ import org.springframework.stereotype.Service;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 import java.util.stream.Collectors;
+
 import static org.AList.common.convention.errorcode.BaseErrorCode.*;
 /**
  * 通讯信息服务实现层
@@ -262,7 +264,6 @@ public class StuContactServiceImpl extends ServiceImpl<ContactMapper, ContactDO>
         } catch (JsonProcessingException e) {
             log.error("序列化联系人数据失败，无法缓存。studentId: {}", requestParam.getContactId(), e);
         }
-
         return response;
     }
 
@@ -302,7 +303,7 @@ public class StuContactServiceImpl extends ServiceImpl<ContactMapper, ContactDO>
 
         // 5. 回源查询数据库
         if (!missedIds.isEmpty()) {
-            Map<String, ContactQueryRespDTO> dbResults = getFromDatabase(missedIds);
+            Map<String, ContactQueryRespDTO> dbResults = getFromDatabase(ownerId,missedIds);
             dbResults.forEach((id, dto) -> {
                 // 6. 异步写回缓存
                 CompletableFuture.runAsync(() ->
@@ -493,8 +494,14 @@ public class StuContactServiceImpl extends ServiceImpl<ContactMapper, ContactDO>
         return contactIds.stream()
                 .map(id -> {
                     ContactQueryRespDTO dto = contactCacheService.getContactCache(ownerId, id);
+                    boolean isNullCached = contactCacheService.isContactNullValueCached(ownerId, id);
+                    // 如果是空值缓存，则dto应视为null，避免后续处理该id
+                    if (isNullCached) {
+                        dto = null;
+                    }
                     return Pair.of(id, dto);
                 })
+                // 过滤掉所有缓存和空值缓存都不存在的情况
                 .filter(pair -> pair.getRight() != null)
                 .collect(Collectors.toMap(Pair::getLeft, Pair::getRight));
     }
@@ -502,19 +509,32 @@ public class StuContactServiceImpl extends ServiceImpl<ContactMapper, ContactDO>
     /**
      * 从数据库批量查询
      */
-    private Map<String, ContactQueryRespDTO> getFromDatabase(List<String> contactIds) {
+    private Map<String, ContactQueryRespDTO> getFromDatabase(String ownerId, List<String> contactIds) {
         List<ContactDO> dbList = contactMapper.selectList(
                 Wrappers.lambdaQuery(ContactDO.class)
                         .in(ContactDO::getStudentId, contactIds)
                         .eq(ContactDO::getDelFlag, 0));
+        // 将查询结果转换为map形式，便于查找
+        Map<String, ContactDO> dbMap = dbList.stream()
+                .collect(Collectors.toMap(ContactDO::getStudentId, Function.identity()));
 
-        return dbList.stream()
-                .map(contact -> {
-                    ContactQueryRespDTO dto = new ContactQueryRespDTO();
-                    BeanUtils.copyProperties(contact, dto);
-                    return Pair.of(contact.getStudentId(), dto);
-                })
-                .collect(Collectors.toMap(Pair::getLeft, Pair::getRight));
+        Map<String, ContactQueryRespDTO> result = new HashMap<>();
+        for (String contactId : contactIds) {
+            ContactDO contact = dbMap.get(contactId);
+            if (contact != null) {
+                ContactQueryRespDTO dto = new ContactQueryRespDTO();
+                BeanUtils.copyProperties(contact, dto);
+                result.put(contactId, dto);
+                // 异步更新缓存
+                CompletableFuture.runAsync(() ->
+                        contactCacheService.setContactCache(ownerId, contactId, dto));
+            } else {
+                // 处理空值缓存
+                contactCacheService.setContactNullValueCache(ownerId, contactId);
+            }
+        }
+
+        return result;
     }
 
     /**
