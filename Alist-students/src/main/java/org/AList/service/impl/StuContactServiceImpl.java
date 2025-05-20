@@ -430,17 +430,16 @@ public class StuContactServiceImpl extends ServiceImpl<ContactMapper, ContactDO>
      * 发送缓存重建事件（异步）
      */
     private void sendCacheRebuildEvent(String studentId) {
+        // 获取所有ownerIds
+        List<String> ownerIds = contactGotoMapper.selectOwnerIdsByContactId(studentId);
         try {
-            // 获取所有ownerIds
-            List<String> ownerIds = contactGotoMapper.selectOwnerIdsByContactId(studentId);
-
             // 发送事件到Redis Stream
             streamEventProducer.sendRebuildEvent(studentId, ownerIds);
             log.info("Sent cache rebuild event for student: {}", studentId);
         } catch (Exception e) {
             log.error("Failed to send cache rebuild event", e);
             // 降级策略：同步执行缓存重建
-            contactCacheService.rebuildContactCache(studentId);
+            contactCacheService.rebuildContactCache(studentId,ownerIds);
         }
     }
 
