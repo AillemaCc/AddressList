@@ -1,9 +1,13 @@
 package org.AList.domain.dto.resp;
 
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.AList.annotation.Sensitive;
+import org.AList.common.enums.SensitiveType;
+import org.AList.common.serializer.SensitiveSerializer;
 
 /**
  * 按学号查询通讯信息响应体
@@ -28,6 +32,7 @@ public class ContactQueryRespDTO {
      * 所在学院
      */
     private String academy;
+
     /**
      * 所读专业--以专业号查询
      */
@@ -61,10 +66,14 @@ public class ContactQueryRespDTO {
     /**
      * 手机号
      */
+    @Sensitive(type= SensitiveType.PHONE)
+    @JsonSerialize(using = SensitiveSerializer.class)
     private String phone;
 
     /**
      * 邮箱
      */
+    @Sensitive(type= SensitiveType.EMAIL)
+    @JsonSerialize(using = SensitiveSerializer.class)
     private String email;
 }

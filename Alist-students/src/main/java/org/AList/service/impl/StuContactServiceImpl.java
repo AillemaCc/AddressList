@@ -25,7 +25,6 @@ import org.AList.service.StuContactService;
 import org.AList.stream.event.StreamEvent;
 import org.AList.stream.producer.StreamEventProducer;
 import org.apache.commons.lang3.tuple.Pair;
-import org.springframework.beans.BeanUtils;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
@@ -495,9 +494,9 @@ public class StuContactServiceImpl extends ServiceImpl<ContactMapper, ContactDO>
         return contactIds.stream()
                 .map(id -> {
                     ContactQueryRespDTO dto = contactCacheService.getContactCache(ownerId, id);
-                    boolean isNullCached = contactCacheService.isContactNullValueCached(ownerId, id);
+                    boolean isNotNullCached = contactCacheService.isContactNullValueCached(ownerId, id);
                     // 如果是空值缓存，则dto应视为null，避免后续处理该id
-                    if (isNullCached) {
+                    if (!isNotNullCached) {
                         dto = null;
                     }
                     return Pair.of(id, dto);
@@ -508,31 +507,108 @@ public class StuContactServiceImpl extends ServiceImpl<ContactMapper, ContactDO>
     }
 
     /**
-     * 从数据库批量查询
+     * 从数据库批量查询联系人信息（包含学生框架数据）
      */
     private Map<String, ContactQueryRespDTO> getFromDatabase(String ownerId, List<String> contactIds) {
+        // 1. 查询基础联系人信息
         List<ContactDO> dbList = contactMapper.selectList(
                 Wrappers.lambdaQuery(ContactDO.class)
                         .in(ContactDO::getStudentId, contactIds)
                         .eq(ContactDO::getDelFlag, 0));
-        // 将查询结果转换为map形式，便于查找
-        Map<String, ContactDO> dbMap = dbList.stream()
+
+        // 2. 查询学生框架信息
+        List<StudentFrameworkDO> students = studentFrameWorkMapper.selectList(
+                Wrappers.lambdaQuery(StudentFrameworkDO.class)
+                        .in(StudentFrameworkDO::getStudentId, contactIds)
+                        .eq(StudentFrameworkDO::getDelFlag, 0));
+
+        // 3. 批量查询专业和学院信息
+        Set<String> majorNums = students.stream()
+                .map(StudentFrameworkDO::getMajorNum)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+        Map<Integer, MajorAndAcademyDO> majorMap = majorNums.isEmpty() ? Collections.emptyMap() :
+                majorAndAcademyMapper.selectList(
+                                Wrappers.lambdaQuery(MajorAndAcademyDO.class)
+                                        .in(MajorAndAcademyDO::getMajorNum, majorNums)
+                                        .eq(MajorAndAcademyDO::getDelFlag, 0))
+                        .stream()
+                        .collect(Collectors.toMap(MajorAndAcademyDO::getMajorNum, Function.identity()));
+
+        // 4. 批量查询班级信息
+        Set<String> classNums = students.stream()
+                .map(StudentFrameworkDO::getClassNum)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+        Map<Integer, ClassInfoDO> classMap = classNums.isEmpty() ? Collections.emptyMap() :
+                classInfoMapper.selectList(
+                                Wrappers.lambdaQuery(ClassInfoDO.class)
+                                        .in(ClassInfoDO::getClassNum, classNums)
+                                        .eq(ClassInfoDO::getDelFlag, 0))
+                        .stream()
+                        .collect(Collectors.toMap(ClassInfoDO::getClassNum, Function.identity()));
+
+        // 5. 构建结果
+        Map<String, ContactQueryRespDTO> result = new HashMap<>();
+
+        // 按contactId组织联系人信息
+        Map<String, ContactDO> contactMap = dbList.stream()
                 .collect(Collectors.toMap(ContactDO::getStudentId, Function.identity()));
 
-        Map<String, ContactQueryRespDTO> result = new HashMap<>();
+        // 按studentId组织学生信息
+        Map<String, StudentFrameworkDO> studentMap = students.stream()
+                .collect(Collectors.toMap(StudentFrameworkDO::getStudentId, Function.identity()));
+
         for (String contactId : contactIds) {
-            ContactDO contact = dbMap.get(contactId);
-            if (contact != null) {
-                ContactQueryRespDTO dto = new ContactQueryRespDTO();
-                BeanUtils.copyProperties(contact, dto);
-                result.put(contactId, dto);
-                // 异步更新缓存
-                CompletableFuture.runAsync(() ->
-                        contactCacheService.setContactCache(ownerId, contactId, dto));
-            } else {
+            ContactDO contact = contactMap.get(contactId);
+            StudentFrameworkDO student = studentMap.get(contactId);
+
+            if (contact == null || student == null) {
                 // 处理空值缓存
                 contactCacheService.setContactNullValueCache(ownerId, contactId);
+                continue;
             }
+
+            // 获取专业和学院信息
+            String majorName = "";
+            String academyName = "";
+            if (student.getMajorNum() != null) {
+                MajorAndAcademyDO majorAndAcademy = majorMap.get(Integer.parseInt(student.getMajorNum()));
+                if (majorAndAcademy != null) {
+                    majorName = majorAndAcademy.getMajor();
+                    academyName = majorAndAcademy.getAcademy();
+                }
+            }
+
+            // 获取班级信息
+            String className = "";
+            if (student.getClassNum() != null) {
+                ClassInfoDO classInfo = classMap.get(Integer.parseInt(student.getClassNum()));
+                if (classInfo != null) {
+                    className = classInfo.getClassName();
+                }
+            }
+
+            // 构建DTO
+            ContactQueryRespDTO dto = ContactQueryRespDTO.builder()
+                    .studentId(contactId)
+                    .name(student.getName())
+                    .academy(academyName)
+                    .major(majorName)
+                    .className(className)
+                    .enrollmentYear(student.getEnrollmentYear())
+                    .graduationYear(student.getGraduationYear())
+                    .employer(contact.getEmployer())
+                    .city(contact.getCity())
+                    .phone(student.getPhone())
+                    .email(student.getEmail())
+                    .build();
+
+            result.put(contactId, dto);
+
+            // 异步更新缓存
+            CompletableFuture.runAsync(() ->
+                    contactCacheService.setContactCache(ownerId, contactId, dto));
         }
 
         return result;
