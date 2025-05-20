@@ -370,6 +370,3 @@ sequenceDiagram
 <p align="center">
   由 <a href="https://github.com/AillemaCc">AillemaCc</a> 倾情打造 ❤️
 </p>
-
-您可能想了解的Wiki页面：
-- [项目概述 (AillemaCc/AddressList)](/wiki/AillemaCc/AddressList#1)
