@@ -31,7 +31,10 @@ public class StreamEventConsumer implements StreamListener<String, ObjectRecord<
                 cacheService.rebuildContactCache(event.getStudentId(),ownerIds);
                 log.info("Processed cache rebuild for student: {}", event.getStudentId());
             }
-            // todo 没有实现缓存清除
+            if ("CACHE_CLEAR".equals(event.getEventType())) {
+                cacheService.clearContactCache(event.getStudentId());
+                log.info("Processed cache clean for student: {}", event.getStudentId());
+            }
         } catch (Exception e) {
             log.error("处理消息失败: {}", record.getValue(), e);
             // 宝塔环境下可添加告警通知
