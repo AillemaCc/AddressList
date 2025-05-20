@@ -1,16 +1,5 @@
 # AddressList 通讯录系统
 
-
-<p align="center">
-  <a href="#功能特性">功能特性</a> •
-  <a href="#系统架构">系统架构</a> •
-  <a href="#快速开始">快速开始</a> •
-  <a href="#api文档">API文档</a> •
-  <a href="#高级功能">高级功能</a> •
-  <a href="#参与贡献">参与贡献</a> •
-  <a href="#开源协议">开源协议</a>
-</p>
-
 <p align="center">
   <img alt="Java 版本" src="https://img.shields.io/badge/Java-17-blue">
   <img alt="Spring Boot" src="https://img.shields.io/badge/Spring%20Boot-2.5.0-brightgreen">
