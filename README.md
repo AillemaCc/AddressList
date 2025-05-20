@@ -89,27 +89,30 @@ graph TD
     FrameworkModule --> RedisStreams
 ```
 
-### 技术栈
+### 🛠️ AddressList 项目技术选型表 🧰 
 
-- **后端**
-  - Java 17
-  - Spring Boot 2.5.0
-  - MyBatis Plus 3.5.7
-  - RESTful API 设计
-
-- **数据存储**
-  - MySQL（关系型数据）
-  - Redis（缓存、会话管理、分布式锁）
-  - Redis Streams（事件处理）
-
-- **库与工具**
-  - Redisson（分布式对象）
-  - Hutool（工具库）
-  - EasyExcel（Excel处理）
-  - Transmittable Thread Local（上下文传播）
-  - Guava（核心工具）
-  - FastJSON（JSON处理）
-
+| 类别 | 技术/框架 | 版本 | 用途 | 官方网站 |
+|------|-----------|------|------|----------|
+| **基础环境** | Java | 17 | 编程语言 | [https://www.oracle.com/java/](https://www.oracle.com/java/) |
+| | Maven | 3.6+ | 项目构建和依赖管理 | [https://maven.apache.org/](https://maven.apache.org/) |
+| **核心框架** | Spring Boot | 2.5.0 | 应用框架 | [https://spring.io/projects/spring-boot](https://spring.io/projects/spring-boot) |
+| | MyBatis Plus | 3.5.7 | ORM框架 | [https://baomidou.com/](https://baomidou.com/) |
+| **数据存储** | MySQL | - | 关系型数据库 | [https://www.mysql.com/](https://www.mysql.com/) |
+| | Redis | 6.0+ | 缓存、会话管理 | [https://redis.io/](https://redis.io/) |
+| | Redisson | 3.21.3 (framework)<br>3.18.0 (students/admin) | 分布式锁和对象 | [https://redisson.org/](https://redisson.org/) |
+| **消息队列** | Redis Streams | - | 异步缓存更新事件 | [https://redis.io/docs/data-types/streams/](https://redis.io/docs/data-types/streams/) |
+| **JSON处理** | FastJSON | 1.2.33 | JSON序列化/反序列化 | [https://github.com/alibaba/fastjson](https://github.com/alibaba/fastjson) |
+| **认证授权** | JWT | 0.9.0 | 令牌认证 | [https://jwt.io/](https://jwt.io/) |
+| **工具库** | Hutool | 5.8.27 | 通用工具集 | [https://hutool.cn/](https://hutool.cn/) |
+| | Apache Commons Lang3 | 3.14.0 | 字符串处理等工具 | [https://commons.apache.org/proper/commons-lang/](https://commons.apache.org/proper/commons-lang/) |
+| | Google Guava | 33.2.1-jre | 集合、缓存等工具 | [https://github.com/google/guava](https://github.com/google/guava) |
+| | Transmittable Thread Local | 2.14.4 | 线程上下文传递 | [https://github.com/alibaba/transmittable-thread-local](https://github.com/alibaba/transmittable-thread-local) |
+| **Excel处理** | EasyExcel | 3.3.4 | Excel导入导出 | [https://github.com/alibaba/easyexcel](https://github.com/alibaba/easyexcel) |
+| **AOP** | Spring AOP | - | 切面编程 | [https://docs.spring.io/spring-framework/docs/current/reference/html/core.html#aop](https://docs.spring.io/spring-framework/docs/current/reference/html/core.html#aop) |
+| **测试框架** | JUnit | - | 单元测试 | [https://junit.org/](https://junit.org/) |
+| | Mockito | 4.8.0 | 测试模拟 | [https://site.mockito.org/](https://site.mockito.org/) |
+| **API设计** | RESTful API | - | API设计风格 | [https://restfulapi.net/](https://restfulapi.net/) |
+| **连接池** | Lettuce | - | Redis连接池 | [https://lettuce.io/](https://lettuce.io/) |
 ### 核心流程
 
 #### 认证流程
