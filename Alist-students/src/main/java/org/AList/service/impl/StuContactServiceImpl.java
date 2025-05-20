@@ -22,7 +22,6 @@ import org.AList.domain.dto.req.*;
 import org.AList.domain.dto.resp.ContactQueryRespDTO;
 import org.AList.service.CacheService.ContactCacheService;
 import org.AList.service.StuContactService;
-import org.AList.stream.event.StreamEvent;
 import org.AList.stream.producer.StreamEventProducer;
 import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -111,17 +110,7 @@ public class StuContactServiceImpl extends ServiceImpl<ContactMapper, ContactDO>
                 .eq(ContactGotoDO::getDelFlag, 0)
                 .set(ContactGotoDO::getDelFlag, 1);
         contactGotoMapper.update(null, gotoUpdateWrapper);
-        try {
-            StreamEvent event = StreamEvent.builder()
-                    .eventType("CACHE_CLEAR")
-                    .studentId(requestParam.getContactId())
-                    .timestamp(System.currentTimeMillis())
-                    .build();
-            streamEventProducer.sendEvent(event);
-        } catch (Exception e) {
-            log.error("Failed to send cache clear event", e);
-            contactCacheService.clearContactCache(requestParam.getContactId());
-        }
+        sendCacheClearEvent(requestParam.getContactId());
     }
 
     /**
@@ -430,17 +419,31 @@ public class StuContactServiceImpl extends ServiceImpl<ContactMapper, ContactDO>
      * 发送缓存重建事件（异步）
      */
     private void sendCacheRebuildEvent(String studentId) {
+        // 获取所有ownerIds
+        List<String> ownerIds = contactGotoMapper.selectOwnerIdsByContactId(studentId);
         try {
-            // 获取所有ownerIds
-            List<String> ownerIds = contactGotoMapper.selectOwnerIdsByContactId(studentId);
-
             // 发送事件到Redis Stream
             streamEventProducer.sendRebuildEvent(studentId, ownerIds);
             log.info("Sent cache rebuild event for student: {}", studentId);
         } catch (Exception e) {
             log.error("Failed to send cache rebuild event", e);
             // 降级策略：同步执行缓存重建
-            contactCacheService.rebuildContactCache(studentId);
+            contactCacheService.rebuildContactCache(studentId,ownerIds);
+        }
+    }
+
+    /**
+     * 发送缓存删除事件（异步）
+     */
+    private void sendCacheClearEvent(String studentId) {
+        try {
+            // 发送事件到Redis Stream
+            streamEventProducer.sendClearEvent(studentId);
+            log.info("Sent cache clear event for student: {}", studentId);
+        } catch (Exception e) {
+            log.error("Failed to send cache clear event", e);
+            // 降级策略：同步执行缓存清除
+            contactCacheService.clearContactCache(studentId);
         }
     }
 

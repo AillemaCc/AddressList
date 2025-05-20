@@ -28,9 +28,12 @@ public class StreamEventConsumer implements StreamListener<String, ObjectRecord<
                     event.getOwnerIdsJson(), 
                     objectMapper.getTypeFactory().constructCollectionType(List.class, String.class)
                 );
-                
-                cacheService.rebuildContactCache(event.getStudentId());
+                cacheService.rebuildContactCache(event.getStudentId(),ownerIds);
                 log.info("Processed cache rebuild for student: {}", event.getStudentId());
+            }
+            if ("CACHE_CLEAR".equals(event.getEventType())) {
+                cacheService.clearContactCache(event.getStudentId());
+                log.info("Processed cache clean for student: {}", event.getStudentId());
             }
         } catch (Exception e) {
             log.error("处理消息失败: {}", record.getValue(), e);

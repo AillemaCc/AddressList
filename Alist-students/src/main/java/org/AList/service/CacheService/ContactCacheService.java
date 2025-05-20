@@ -51,8 +51,7 @@ public class ContactCacheService {
      *
      * @param studentId 学生唯一标识
      */
-    public void rebuildContactCache(String studentId) {
-        List<String> ownerIds = contactGotoMapper.selectOwnerIdsByContactId(studentId);
+    public void rebuildContactCache(String studentId,List<String> ownerIds) {
         doRebuildCache(studentId, ownerIds);
     }
 
