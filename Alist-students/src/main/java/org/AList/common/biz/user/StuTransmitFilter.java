@@ -38,66 +38,76 @@ public class StuTransmitFilter implements Filter {
      */
     @Override
     public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain) throws IOException, ServletException {
-        // 请求参数化
         HttpServletRequest httpServletRequest = (HttpServletRequest) servletRequest;
         HttpServletResponse httpServletResponse = (HttpServletResponse) servletResponse;
         String requestURI = httpServletRequest.getRequestURI();
+
         if(!IGNORE_URL.contains(requestURI)){
             String studentId = httpServletRequest.getHeader("studentId");
-            String accessToken =httpServletRequest.getHeader("token");
-            // 因为所有的来自未登录或者未携带token的请求，都会被这个拦截器拦截下来。而且这个没办法定义全局拦截器，因为请求没有到达SpringMVC的Controller就被拦截下来了
-            // 所以在这个方法当中，我们直接返回错误
+            String accessToken = httpServletRequest.getHeader("token");
+
+            // 场景1：缺少必要请求头
             if (studentId == null || accessToken == null) {
-                // 返回 401 错误（未授权）
-                httpServletResponse.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                httpServletResponse.setContentType("application/json;charset=utf-8");
-                httpServletResponse.getWriter().write("{\"code\":401,\"message\":\"请提供 studentId 和 token 请求头\"}");
-                return; // 终止请求，不再继续执行
+                String missingField = studentId == null ? "studentId" : "token";
+                sendUnauthorizedResponse(httpServletResponse,
+                        "认证失败：请求头中缺少" + missingField + "字段");
+                return;
             }
-            Object stuInfoJsonStr=stringRedisTemplate.opsForHash().get(RedisKeyGenerator.genStudentLoginAccess(studentId),accessToken);
-            if(stuInfoJsonStr!=null){
+
+            // 场景2：验证accessToken有效性
+            Object stuInfoJsonStr = stringRedisTemplate.opsForHash()
+                    .get(RedisKeyGenerator.genStudentLoginAccess(studentId), accessToken);
+
+            if(stuInfoJsonStr != null){
+                // Token有效，设置用户上下文
                 StuIdInfoDTO stuIdInfoDTO = JSON.parseObject(stuInfoJsonStr.toString(), StuIdInfoDTO.class);
                 StuIdContext.setStudentId(stuIdInfoDTO);
-            }
-            // Access Token无效，尝试使用Refresh Token
-            else{
+            } else {
+                // 场景3：accessToken无效，尝试刷新
                 String refreshToken = httpServletRequest.getHeader("refreshToken");
-                if (refreshToken != null) {
-                    // 检查Refresh Token是否在黑名单中
-                    if (tokenService.isTokenBlacklisted(refreshToken)) {
-                        sendUnauthorizedResponse(httpServletResponse, "Token已失效");
+
+                // 场景3.1：未提供refreshToken
+                if (refreshToken == null) {
+                    sendUnauthorizedResponse(httpServletResponse,
+                            "会话已过期：accessToken无效且未提供refreshToken，请重新登录");
+                    return;
+                }
+
+                // 场景3.2：refreshToken在黑名单中
+                if (tokenService.isTokenBlacklisted(refreshToken)) {
+                    sendUnauthorizedResponse(httpServletResponse,
+                            "安全警告：该refreshToken已被禁用，可能由于账号在其他设备登录");
+                    return;
+                }
+
+                try {
+                    // 场景3.3：尝试刷新token
+                    String newAccessToken = tokenService.refreshStudentAccessToken(studentId, refreshToken);
+                    Object newStuInfoJsonStr = stringRedisTemplate.opsForHash()
+                            .get(RedisKeyGenerator.genStudentLoginAccess(studentId), newAccessToken);
+
+                    if(newStuInfoJsonStr != null){
+                        StuIdInfoDTO stuIdInfoDTO = JSON.parseObject(newStuInfoJsonStr.toString(), StuIdInfoDTO.class);
+                        StuIdContext.setStudentId(stuIdInfoDTO);
+                        httpServletResponse.setHeader("New-Access-Token", newAccessToken);
+                    } else {
+                        // 场景3.4：刷新后仍无法获取用户信息
+                        sendUnauthorizedResponse(httpServletResponse,
+                                "系统异常：Token刷新成功但用户信息获取失败，请重新登录");
                         return;
                     }
-                    try {
-                            String newAccessToken=tokenService.refreshStudentAccessToken(studentId,refreshToken);
-                            // 获取新Token对应的用户信息
-                            Object newStuInfoJsonStr=stringRedisTemplate.opsForHash().get(RedisKeyGenerator.genStudentLoginAccess(studentId),newAccessToken);
-                            if(newStuInfoJsonStr!=null){
-                                // 设置用户上下文
-                                StuIdInfoDTO stuIdInfoDTO = JSON.parseObject(newStuInfoJsonStr.toString(), StuIdInfoDTO.class);
-                                StuIdContext.setStudentId(stuIdInfoDTO);
-
-                                // 在响应头中返回新的Access Token
-                                httpServletResponse.setHeader("New-Access-Token", newAccessToken);
-                            }else {
-                                sendUnauthorizedResponse(httpServletResponse, "未登录");
-                                return;
-                            }
-                        } catch (Exception e) {
-                            sendUnauthorizedResponse(httpServletResponse, "未登录");
-                            return;
-                        }
-                }else {
-                    sendUnauthorizedResponse(httpServletResponse, "未登录");
+                } catch (Exception e) {
+                    // 场景3.5：refreshToken无效或过期
+                    sendUnauthorizedResponse(httpServletResponse,
+                            "会话已过期：refreshToken无效或已过期，请重新登录");
                     return;
                 }
             }
         }
+
         try {
-            // 这一步是真正执行过滤器链当中的请求，也就是那些需要鉴权的请求
-            // 登录的请求也直接被放行，可以不携带token和studentId
             filterChain.doFilter(servletRequest, servletResponse);
-        }finally {
+        } finally {
             StuIdContext.removeStudentId();
         }
     }
