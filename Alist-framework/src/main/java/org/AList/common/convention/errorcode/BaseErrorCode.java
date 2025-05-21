@@ -4,15 +4,33 @@ package org.AList.common.convention.errorcode;
  * 基础错误码定义
  */
 public enum BaseErrorCode implements IErrorCode {
-    // 测试git
     // ========== 用户端错误 ==========
     User_ERR("A0001", "用户端错误"),
     EMPTY_PARAM("A0002", "请求参数为空"),
+
     // 用户注册
     REGISTER_FAIL("A0100", "用户注册失败"),
-    STU_ID_NOT_FOUND("A0101", "学号不存在"),
     STU_INFO_MISMATCH("A0102", "学籍信息不匹配"),
     ADDR_BOOK_EXIST("A0103", "通讯录已存在"),
+
+    // 学号相关
+    REG_STU_ID_ERR("A0110", "用户注册学号错误"),
+    STU_ID_NOT_EXIST("A0111", "学号不存在"),
+    STU_ID_EMPTY("A0112", "学号为空"),
+
+    // 密码相关
+    REG_PWD_ERR("A0120", "用户注册密码错误"),
+    PWD_EMPTY("A0121", "密码为空"),
+    PWD_LEN_SHORT("A0122", "密码长度小于八位"),
+    PWD_MISS_LOWER("A0123", "密码缺少小写字母"),
+    PWD_MISS_UPPER("A0124", "密码缺少大写字母"),
+    PWD_MISS_DIGIT("A0125", "密码缺少数字"),
+
+    // 基础信息
+    REG_INFO_ERR("A0130", "用户注册基本信息错误"),
+    NAME_EMPTY("A0131", "姓名为空"),
+    EMAIL_EMPTY("A0132", "邮箱为空"),
+    PHONE_EMPTY("A0133", "手机号为空"),
 
     // 用户登录
     LOGIN_FAIL("A0200", "用户登录失败"),
@@ -70,9 +88,11 @@ public enum BaseErrorCode implements IErrorCode {
     // ========== 客户端错误 ==========
     CLIENT_ERR("B0001", "客户端错误"),
     SYS_TIMEOUT_ERR("B0100","系统执行超时"),
-    FLOW_LIMIT_ERR("",""),
+    FLOW_LIMIT_ERR("B0101","系统繁忙"),
+
     // 系统功能
     SYS_FUNC_ERR("B0200", "系统功能错误"),
+    PAGE_PARAM_NEGATIVE("B0201","分页参数小于0"),
     JWT_KEY_ERR("B0210", "JWT密钥错误"),
     JWT_ENCRYPT_FAIL("B0211", "JWT密钥加密失败"),
     JWT_DECRYPT_FAIL("B0212", "JWT密钥解密失败"),
@@ -94,24 +114,42 @@ public enum BaseErrorCode implements IErrorCode {
 
     // ========== 服务端错误 ==========
     SERVER_ERR("C0001", "服务端错误"),
+
+    //服务出错
     REMOTE_ERR("C0100","第三方服务出错"),
     SIGN_IN_EXPIRED_ERROR("C0101","登陆状态过期"),
 
+    //数据库
     DB_ERR("C0300", "数据库操作错误"),
 
+    //数据库删除
     DB_DELETE_ERR("C0310", "数据库删除错误"),
     DEL_ADDR_ERR("C0311", "删除个人通讯信息错误"),
+
+    //数据库修改
     DB_UPDATE_ERR("C0320", "数据库修改错误"),
-    DB_RESTORE_ERR("C0330","数据库回复错误"),
+    DB_RESTORE_ERR("C0330","数据库恢复错误"),
+
+    //数据库插入
     DB_INSERT_ERR("C0340", "数据库插入错误"),
     INSERT_ADDR_FAIL("C0341", "插入通讯录失败"),
+
+    //处理通讯录
     PROCESS_ADDR_ERR("C0350", "处理通讯录失败"),
     ADDR_NOT_FOUND("C0351", "处理的通讯录记录不存在"),
+    ADDR_CONTACT_MISSING("C0352", "处理的通讯录联系人不存在"),
+    ADDR_STUDENT_MISSING("C0353", "处理的通讯录学生信息不存在"),
+    ADDR_MAJOR_MISSING("C0354", "处理的通讯录专业学院不存在"),
+    ADDR_CLASS_MISSING("C0355", "处理的通讯录班级信息不存在"),
+
+    //处理注册请求
     PROCESS_REG_ERR("C0360", "处理注册请求失败"),
     REG_REQ_NOT_FOUND("C0361", "处理的注册请求不存在"),
     REG_REQ_APPROVED("C0362", "处理的注册请求已通过"),
     REG_REQ_REJECTED("C0363", "处理的注册请求已拒绝"),
     REG_REQ_DELETED("C0364", "处理的注册请求已删除"),
+
+    //处理公告
     PROCESS_ANNOUNCE_ERR("C0370", "处理公告失败"),
     ANNOUNCE_SAVE_FAIL("C0371", "处理的公告保存失败"),
     ANNOUNCE_UPDATE_FAIL("C0372", "处理的公告更新失败"),

@@ -1,23 +1,25 @@
 package org.AList.service.handler.filter.register;
 
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
-import org.AList.common.convention.exception.ClientException;
+import org.AList.common.convention.exception.UserException;
 import org.AList.domain.dto.req.StuRegisterReqDTO;
+
+import static org.AList.common.convention.errorcode.BaseErrorCode.*;
 
 public final class StudentRegisterVerifyParamNotNull implements StudentRegisterChainFilter<StuRegisterReqDTO>{
     @Override
     // todo 抽象错误码
     public void handler(StuRegisterReqDTO requestParam) {
         if (StringUtils.isBlank(requestParam.getStudentId())) {
-            throw new ClientException("学号不能为空");
+            throw new UserException(STU_ID_EMPTY);                                                                      //A0112：学号为空
         } else if (StringUtils.isBlank(requestParam.getName())) {
-            throw new ClientException("姓名不能为空");
+            throw new UserException(NAME_EMPTY);                                                                        //A0131：姓名为空
         } else if (StringUtils.isBlank(requestParam.getPhone())) {
-            throw new ClientException("手机号不能为空");
+            throw new UserException(PHONE_EMPTY);                                                                       //A0133：手机号为空
         } else if (StringUtils.isBlank(requestParam.getEmail())) {
-            throw new ClientException("邮箱不能为空");
+            throw new UserException(EMAIL_EMPTY);                                                                       //A0132：邮箱为空
         } else if (StringUtils.isBlank(requestParam.getPassword())) {
-            throw new ClientException("密码不能为空");
+            throw new UserException(PWD_EMPTY);                                                                         //A0121：密码为空
         }
     }
 
