@@ -12,6 +12,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * 学生请求传输过滤器
@@ -55,13 +56,21 @@ public class StuTransmitFilter implements Filter {
             }
 
             // 场景2：验证accessToken有效性
+            String accessRedisKey=RedisKeyGenerator.genStudentLoginAccess(studentId);
             Object stuInfoJsonStr = stringRedisTemplate.opsForHash()
-                    .get(RedisKeyGenerator.genStudentLoginAccess(studentId), accessToken);
+                    .get(accessRedisKey, accessToken);
 
             if(stuInfoJsonStr != null){
                 // Token有效，设置用户上下文
                 StuIdInfoDTO stuIdInfoDTO = JSON.parseObject(stuInfoJsonStr.toString(), StuIdInfoDTO.class);
                 StuIdContext.setStudentId(stuIdInfoDTO);
+                // 检查token过期时间
+                Long ttl = stringRedisTemplate.getExpire(accessRedisKey, TimeUnit.MINUTES);
+
+                // 如果过期时间小于5分钟，设置一个响应头通知前端
+                if (ttl != null && ttl < 5) {
+                    httpServletResponse.setHeader("X-Refresh-Required", "true");
+                }
             } else {
                 // 场景3：accessToken无效，尝试刷新
                 String refreshToken = httpServletRequest.getHeader("refreshToken");
