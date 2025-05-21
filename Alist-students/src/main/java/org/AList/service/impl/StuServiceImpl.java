@@ -197,10 +197,10 @@ public class StuServiceImpl extends ServiceImpl<StudentFrameWorkMapper, StudentF
     @Override
     public StuRegisterRemarkRespDTO getRemark(StuRegisterRemarkReqDTO requestParam) {
         String studentId=requestParam.getStudentId();
-        String registerToken =requestParam.getRegisterToken();
+        String password =requestParam.getPassword();
         LambdaQueryWrapper<RegisterDO> queryWrapper = Wrappers.lambdaQuery(RegisterDO.class)
                 .eq(RegisterDO::getStudentId, studentId)
-                .eq(RegisterDO::getRegisterToken, registerToken)
+                .eq(RegisterDO::getPassword, password)
                 .eq(RegisterDO::getDelFlag, 0);
         RegisterDO registerDO = registerMapper.selectOne(queryWrapper);
         if(Objects.isNull(registerDO)){
@@ -209,7 +209,6 @@ public class StuServiceImpl extends ServiceImpl<StudentFrameWorkMapper, StudentF
         return StuRegisterRemarkRespDTO.builder()
                 .studentId(studentId)
                 .name(registerDO.getName())
-                .registerToken(registerToken)
                 .remark(registerDO.getRemark())
                 .status(registerDO.getStatus())
                 .build();

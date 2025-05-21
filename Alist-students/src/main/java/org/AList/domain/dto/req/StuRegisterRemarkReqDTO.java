@@ -19,7 +19,7 @@ public class StuRegisterRemarkReqDTO {
     private String studentId;
 
     /**
-     * 注册时生成的唯一token
+     * 注册时使用的密码
      */
-    private String registerToken;
+    private String password;
 }
