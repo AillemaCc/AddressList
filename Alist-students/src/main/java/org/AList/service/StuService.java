@@ -31,10 +31,12 @@ public interface StuService {
 
     /**
      * 用户登出
-     * @param studentId 学号
-     * @param token 用户登录产生的token
+     *
+     * @param studentId    学号
+     * @param token        用户登录产生的token
+     * @param refreshToken
      */
-    void logout(String studentId, String token);
+    void logout(String studentId, String token, String refreshToken);
 
     /**
      * 用户注册接口
