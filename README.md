@@ -6,7 +6,9 @@
   <img alt="MyBatis Plus" src="https://img.shields.io/badge/MyBatis%20Plus-3.5.7-orange">
   <img alt="Redis" src="https://img.shields.io/badge/Redis-6.0+-red">
   <img alt="开源协议" src="https://img.shields.io/badge/License-MIT-yellow">
+  <a href="https://deepwiki.com/AillemaCc/AddressList"><img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki"></a>
 </p>
+
 
 ## 📋 项目概述
 
