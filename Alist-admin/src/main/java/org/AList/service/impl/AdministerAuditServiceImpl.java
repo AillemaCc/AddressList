@@ -8,6 +8,7 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
+import org.AList.annotation.Idempotent;
 import org.AList.common.convention.exception.ClientException;
 import org.AList.common.convention.exception.ServiceException;
 import org.AList.common.generator.RedisKeyGenerator;
@@ -23,6 +24,7 @@ import org.AList.domain.dto.req.BanStudentReqDTO;
 import org.AList.domain.dto.req.RefuseRegistrationReqDTO;
 import org.AList.domain.dto.resp.AuditUserPageRespDTO;
 import org.AList.service.AdministerAuditService;
+import org.AList.service.idempotent.IdempotencyService;
 import org.redisson.api.RLock;
 import org.redisson.api.RReadWriteLock;
 import org.redisson.api.RedissonClient;
@@ -41,6 +43,7 @@ public class AdministerAuditServiceImpl extends ServiceImpl<RegisterMapper, Regi
     private final StudentDefaultInfoMapper studentDefaultInfoMapper;
     private final RedissonClient redissonClient;
     private final RegisterMapper registerMapper;
+    private final IdempotencyService idempotencyService;
 
     /**
      * @return 待审核用户列表
@@ -189,6 +192,7 @@ public class AdministerAuditServiceImpl extends ServiceImpl<RegisterMapper, Regi
      *
      * @param requestParam 学号请求体
      */
+    @Idempotent(prefix = "admin:ban", key = "#requestParam.studentId")
     @Transactional
     @Override
     public void banStudentById(BanStudentReqDTO requestParam) {
@@ -214,6 +218,7 @@ public class AdministerAuditServiceImpl extends ServiceImpl<RegisterMapper, Regi
                 .status(3)
                 .build();
         BanOrUnbanUpdate(queryWrapper, registerDOLambdaQueryWrapper, updateStudentFrameworkDO, updateRegisterDO, RedisKeyGenerator.genAdminBanLockKey(requestParam.getStudentId()));
+        idempotencyService.removeIdempotencyKey("admin:ban:"+requestParam.getStudentId());
     }
 
     /**

@@ -4,6 +4,7 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
+import org.AList.annotation.Idempotent;
 import org.AList.common.convention.exception.ClientException;
 import org.AList.common.convention.exception.ServiceException;
 import org.AList.common.convention.exception.UserException;
@@ -151,6 +152,7 @@ public class StuServiceImpl extends ServiceImpl<StudentFrameWorkMapper, StudentF
      * @throws ClientException 如果学号不存在、重复注册或保存失败
      * @see StuRegisterReqDTO
      */
+    @Idempotent(prefix = "student:register", key = "#requestParam.studentId")
     @Override
     public String register(StuRegisterReqDTO requestParam) {
         abstractChainContext.handler(StudentChainMarkEnum.STUDENT_REGISTER.name(), requestParam);
