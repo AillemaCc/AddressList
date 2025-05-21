@@ -51,6 +51,7 @@ public class StuContactServiceImpl extends ServiceImpl<ContactMapper, ContactDO>
     private final StreamEventProducer streamEventProducer;
     private final ContactCacheService contactCacheService;
 
+
     /**
      * 新增个人通讯信息
      * 该方法用于为指定学生添加通讯信息，包括工作单位和所在城市等

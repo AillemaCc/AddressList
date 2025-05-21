@@ -8,14 +8,14 @@ import lombok.RequiredArgsConstructor;
 import org.AList.common.convention.exception.ClientException;
 import org.AList.common.convention.exception.ServiceException;
 import org.AList.common.convention.exception.UserException;
+import org.AList.common.enums.StudentChainMarkEnum;
 import org.AList.common.generator.RedisKeyGenerator;
+import org.AList.designpattern.chain.AbstractChainContext;
 import org.AList.domain.dao.entity.LoginLogDO;
 import org.AList.domain.dao.entity.RegisterDO;
-import org.AList.domain.dao.entity.StudentDefaultInfoDO;
 import org.AList.domain.dao.entity.StudentFrameworkDO;
 import org.AList.domain.dao.mapper.LoginLogMapper;
 import org.AList.domain.dao.mapper.RegisterMapper;
-import org.AList.domain.dao.mapper.StudentDefaultInfoMapper;
 import org.AList.domain.dao.mapper.StudentFrameWorkMapper;
 import org.AList.domain.dto.req.StuLoginReqDTO;
 import org.AList.domain.dto.req.StuRegisterRemarkReqDTO;
@@ -23,7 +23,6 @@ import org.AList.domain.dto.req.StuRegisterReqDTO;
 import org.AList.domain.dto.resp.StuLoginRespDTO;
 import org.AList.domain.dto.resp.StuRegisterRemarkRespDTO;
 import org.AList.service.StuService;
-import org.AList.service.bloom.StudentIdBloomFilterService;
 import org.AList.utils.LinkUtil;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
@@ -50,10 +49,9 @@ public class StuServiceImpl extends ServiceImpl<StudentFrameWorkMapper, StudentF
     private final StudentFrameWorkMapper studentFrameWorkMapper;
     private final RegisterMapper registerMapper;
     private final LoginLogMapper loginLogMapper;
-    private final StudentDefaultInfoMapper studentDefaultInfoMapper;
     private final StringRedisTemplate stringRedisTemplate;
-    private final StudentIdBloomFilterService studentIdBloomFilterService;
     private final RedissonClient redissonClient;
+    private final AbstractChainContext<StuRegisterReqDTO> abstractChainContext;
 
     /**
      * 学生登录接口实现
@@ -140,18 +138,7 @@ public class StuServiceImpl extends ServiceImpl<StudentFrameWorkMapper, StudentF
      */
     @Override
     public String register(StuRegisterReqDTO requestParam) {
-        // 缓存全量学号的布隆过滤器提供快速错误机制 防止缓存穿透
-        if(!studentIdBloomFilterService.contain(requestParam.getStudentId())){
-            throw new UserException(USER_NOT_FOUND);                                                                     //A0201：用户不存在
-        }
-        // 布隆过滤器存在误判率，被误判为存在的请求，需要再去数据库查询一下。这时候需要查询的仍然是学籍库，也就是全量默认数据的查询
-        LambdaQueryWrapper<StudentDefaultInfoDO> queryWrapper = Wrappers.lambdaQuery(StudentDefaultInfoDO.class)
-                .eq(StudentDefaultInfoDO::getStudentId, requestParam.getStudentId())
-                .eq(StudentDefaultInfoDO::getName,requestParam.getName())
-                .eq(StudentDefaultInfoDO::getDelFlag, 0);
-        if(Objects.isNull(studentDefaultInfoMapper.selectOne(queryWrapper))){
-            throw new UserException(USER_NOT_FOUND);                                                                    //A0201：用户不存在
-        }
+        abstractChainContext.handler(StudentChainMarkEnum.STUDENT_REGISTER.name(), requestParam);
         // 排除了误判的情况，创建分布式锁，防止并发情况。尽管在我们的场景当中，并发情况是很难出现的，但这种边界情况仍然需要考虑。
         RLock rLock=redissonClient.getLock(RedisKeyGenerator.genStudentRegisterLockKey(requestParam.getStudentId()));
         // 无论临界区代码执行成功还是抛出异常，锁最终都会被释放
@@ -210,10 +197,10 @@ public class StuServiceImpl extends ServiceImpl<StudentFrameWorkMapper, StudentF
     @Override
     public StuRegisterRemarkRespDTO getRemark(StuRegisterRemarkReqDTO requestParam) {
         String studentId=requestParam.getStudentId();
-        String registerToken =requestParam.getRegisterToken();
+        String password =requestParam.getPassword();
         LambdaQueryWrapper<RegisterDO> queryWrapper = Wrappers.lambdaQuery(RegisterDO.class)
                 .eq(RegisterDO::getStudentId, studentId)
-                .eq(RegisterDO::getRegisterToken, registerToken)
+                .eq(RegisterDO::getPassword, password)
                 .eq(RegisterDO::getDelFlag, 0);
         RegisterDO registerDO = registerMapper.selectOne(queryWrapper);
         if(Objects.isNull(registerDO)){
@@ -222,7 +209,6 @@ public class StuServiceImpl extends ServiceImpl<StudentFrameWorkMapper, StudentF
         return StuRegisterRemarkRespDTO.builder()
                 .studentId(studentId)
                 .name(registerDO.getName())
-                .registerToken(registerToken)
                 .remark(registerDO.getRemark())
                 .status(registerDO.getStatus())
                 .build();

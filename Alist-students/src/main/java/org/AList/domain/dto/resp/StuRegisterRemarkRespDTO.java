@@ -23,10 +23,6 @@ public class StuRegisterRemarkRespDTO {
      */
     private String name;
 
-    /**
-     * 注册时生成的唯一token
-     */
-    private String registerToken;
 
     /**
      * 回执
