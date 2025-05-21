@@ -42,7 +42,6 @@ public class ContactCacheService {
     private final StudentFrameWorkMapper studentFrameWorkMapper;
     private final MajorAndAcademyMapper majorAndAcademyMapper;
     private final ClassInfoMapper classInfoMapper;
-    private final ContactGotoMapper contactGotoMapper;
 
     /**
      * 重建指定学生的通讯录缓存。

@@ -94,8 +94,7 @@ public class StuContactServiceImpl extends ServiceImpl<ContactMapper, ContactDO>
                 .eq(ContactGotoDO::getDelFlag, 0);
         ContactGotoDO contactGoto = contactGotoMapper.selectOne(gotoQueryWrapper);
         if (Objects.isNull(contactGoto)) {
-            // todo 这里的错误涉及两种可能，暂时使用B0331的错误码
-            throw new ClientException(PERM_DEL_ADDR_DENY);                                                              //B0331：系统缺乏权限删除通讯录 or C0351：处理的通讯录记录不存在
+            throw new ServiceException(ADDR_NOT_FOUND);                                                                   // C0351：处理的通讯录记录不存在
         }
         LambdaUpdateWrapper<ContactDO> updateWrapper = Wrappers.lambdaUpdate(ContactDO.class)
                 .eq(ContactDO::getStudentId, requestParam.getContactId())
@@ -173,8 +172,7 @@ public class StuContactServiceImpl extends ServiceImpl<ContactMapper, ContactDO>
         ContactGotoDO contactGoto = contactGotoMapper.selectOne(gotoQueryWrapper);
 
         if (Objects.isNull(contactGoto)) {
-            // todo 这里的错误涉及两种可能，暂时使用B0311的错误码
-            throw new ClientException(PERM_VIEW_ADDR_DENY);                                                             //B0311：系统缺乏权限查看该通讯录 or C0351：处理的通讯录记录不存在
+            throw new ServiceException(ADDR_NOT_FOUND);                                                                   //C0351：处理的通讯录记录不存在
         }
         String studentId=requestParam.getContactId();
         LambdaQueryWrapper<ContactDO> contactQueryWrapper = Wrappers.lambdaQuery(ContactDO.class)
@@ -183,8 +181,7 @@ public class StuContactServiceImpl extends ServiceImpl<ContactMapper, ContactDO>
         ContactDO contact = contactMapper.selectOne(contactQueryWrapper);
 
         if (Objects.isNull(contact)) {
-            // todo 错误码再细化一下，具体到什么记录不存在，比如这里：contact记录不存在
-            throw new ServiceException(ADDR_NOT_FOUND);                                                                 //C0351：处理的通讯录记录不存在
+            throw new ServiceException(ADDR_CONTACT_MISSING);                                                           //C0352：处理的通讯录联系人不存在
         }
         String employer=contact.getEmployer();
         String city=contact.getCity();
@@ -194,8 +191,7 @@ public class StuContactServiceImpl extends ServiceImpl<ContactMapper, ContactDO>
                 .eq(StudentFrameworkDO::getDelFlag, 0);
         StudentFrameworkDO student= studentFrameWorkMapper.selectOne(studentInfoWrapper);
         if (Objects.isNull(student)) {
-            // todo 错误码再细化一下，具体到什么记录不存在，比如这里：studentInfo记录不存在
-            throw new ServiceException(ADDR_NOT_FOUND);                                                                 //C0351：处理的通讯录记录不存在
+            throw new ServiceException(ADDR_STUDENT_MISSING);                                                           //C0353：处理的通讯录学生信息不存在
         }
         String name=student.getName();
         String enrollmentYear=student.getEnrollmentYear();
@@ -210,8 +206,7 @@ public class StuContactServiceImpl extends ServiceImpl<ContactMapper, ContactDO>
                 .eq(MajorAndAcademyDO::getDelFlag, 0);
         MajorAndAcademyDO majorAndAcademy=majorAndAcademyMapper.selectOne(majorAndAcademyWrapper);
         if (Objects.isNull(majorAndAcademy)) {
-            // todo 错误码再细化一下，具体到什么记录不存在，比如这里：majorAndAcademy记录不存在
-            throw new ServiceException(ADDR_NOT_FOUND);                                                                //C0351：处理的通讯录记录不存在
+            throw new ServiceException(ADDR_MAJOR_MISSING);                                                             //C0354：处理的通讯录专业学院不存在
         }
         String majorName=majorAndAcademy.getMajor();
         String academyName=majorAndAcademy.getAcademy();
@@ -223,8 +218,7 @@ public class StuContactServiceImpl extends ServiceImpl<ContactMapper, ContactDO>
                 .eq(ClassInfoDO::getDelFlag, 0);
         ClassInfoDO classInfo = classInfoMapper.selectOne(classInfoWrapper);
         if (Objects.isNull(classInfo)) {
-            // todo 错误码再细化一下，具体到什么记录不存在，比如这里：classInfo记录不存在
-            throw new ServiceException(ADDR_NOT_FOUND);                                                                 //C0351：处理的通讯录记录不存在
+            throw new ServiceException(ADDR_CLASS_MISSING);                                                             //C0355：处理的通讯录班级信息不存在
         }
         String className=classInfo.getClassName();
 
@@ -319,16 +313,14 @@ public class StuContactServiceImpl extends ServiceImpl<ContactMapper, ContactDO>
                 requestParam.getOwnerId(),
                 1);
         if(Objects.isNull(deletedContactGotoDO)){
-            // todo 这里的错误涉及两种，暂时使用B0341的错误码
-            throw new ClientException(PERM_RESTORE_ADDR_DENY);                                                          //B0341：系统缺乏权限恢复该通讯录 or C0351：处理的通讯录信息不存在
+            throw new ServiceException(ADDR_NOT_FOUND);                                                                 // C0351：处理的通讯录信息不存在
         }
         ContactDO deletedContact=contactMapper.selectSingleDeletedContact(
                 requestParam.getContactId(),
                 1
         );
         if(Objects.isNull(deletedContact)){
-            // todo 这里的错误涉及两种，暂时使用B0341的错误码
-            throw new ClientException(PERM_RESTORE_ADDR_DENY);                                                         //B0341：系统缺乏权限恢复该通讯录 or C0351：处理的通讯录信息不存在
+            throw new ServiceException(ADDR_NOT_FOUND);                                                                 // C0351：处理的通讯录信息不存在
         }
         int restoreGoto= contactGotoMapper.restoreContactGoto(requestParam.getContactId(), requestParam.getOwnerId());
         int restoreContact= contactMapper.restoreContact(requestParam.getContactId());
@@ -474,8 +466,7 @@ public class StuContactServiceImpl extends ServiceImpl<ContactMapper, ContactDO>
             return Collections.emptyList();
         }
         if (current < 1 || size < 1) {
-            // todo 这个错误码写了吗
-            throw new ClientException("分页参数必须大于0");
+            throw new ClientException(PAGE_PARAM_NEGATIVE);                                                             //B0201：分页参数小于0
         }
 
         // 计算分页偏移量
