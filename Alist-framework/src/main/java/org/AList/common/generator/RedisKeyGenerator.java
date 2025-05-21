@@ -33,6 +33,27 @@ public class RedisKeyGenerator {
     }
 
     /**
+     * 生成登录AccessToken Key
+     */
+    public static String genStudentLoginAccess(String studentId) {
+        return String.format(RedisKeyTemplates.STUDENT_LOGIN_ACCESS, studentId);
+    }
+
+    /**
+     * 生成登录RefreshToken Key
+     */
+    public static String genStudentLoginRefresh(String studentId) {
+        return String.format(RedisKeyTemplates.STUDENT_LOGIN_REFRESH, studentId);
+    }
+
+    /**
+     * 生成登录之后的完整用户信息 Key
+     */
+    public static String genStudentLoginInfo(String studentId) {
+        return String.format(RedisKeyTemplates.STUDENT_LOGIN_INFO, studentId);
+    }
+
+    /**
      * 生成单个学生信息缓存 Key
      */
     public static String genStudentFullContactInfo(String studentId) {
