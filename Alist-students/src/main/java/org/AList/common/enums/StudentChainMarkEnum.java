@@ -2,5 +2,7 @@ package org.AList.common.enums;
 
 public enum StudentChainMarkEnum {
 
-    APPLICATION_SEND_FILTER
+    APPLICATION_SEND_FILTER,
+
+    STUDENT_REGISTER
 }
