@@ -12,7 +12,12 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class StuLoginRespDTO {
     /**
-     * 分配的token
+     * 访问Token
      */
-    private String token;
+    private String accessToken;
+
+    /**
+     * 刷新Token
+     */
+    private String refreshToken;
 }
