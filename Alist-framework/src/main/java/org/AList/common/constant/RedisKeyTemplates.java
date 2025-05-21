@@ -10,6 +10,10 @@ public final class RedisKeyTemplates {
     public static final String CONTACT_NULL_SINGLE = "contact:%s:%s";
     public static final String CONTACT_ALL_FOR_STUDENT = "contact:*:%s";
 
+    public static final String STUDENT_LOGIN_ACCESS = "login:student:%s";
+    public static final String STUDENT_LOGIN_REFRESH = "refresh:student:%s";
+    public static final String STUDENT_LOGIN_INFO = "login:student:info:%s";
+
     public static final String STUDENT_FULL_CONTACT_INFO = "student:fullContactInfo:%s";
     public static final String CLASSPAGE_STUDENTS_FULL_CONTACT_INFO = "classPage:students:%s:%d:%d";
     // 管理员操作锁

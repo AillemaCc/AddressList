@@ -1,6 +1,5 @@
 package org.AList.service.impl;
 
-import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -23,6 +22,8 @@ import org.AList.domain.dto.req.StuRegisterReqDTO;
 import org.AList.domain.dto.resp.StuLoginRespDTO;
 import org.AList.domain.dto.resp.StuRegisterRemarkRespDTO;
 import org.AList.service.StuService;
+import org.AList.service.StuToken.TokenPair;
+import org.AList.service.StuToken.TokenService;
 import org.AList.utils.LinkUtil;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
@@ -33,7 +34,6 @@ import org.springframework.stereotype.Service;
 import javax.servlet.http.HttpServletRequest;
 import java.util.Objects;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 
 import static org.AList.common.convention.errorcode.BaseErrorCode.*;
 /**
@@ -52,6 +52,7 @@ public class StuServiceImpl extends ServiceImpl<StudentFrameWorkMapper, StudentF
     private final StringRedisTemplate stringRedisTemplate;
     private final RedissonClient redissonClient;
     private final AbstractChainContext<StuRegisterReqDTO> abstractChainContext;
+    private final TokenService tokenService;
 
     /**
      * 学生登录接口实现
@@ -77,17 +78,14 @@ public class StuServiceImpl extends ServiceImpl<StudentFrameWorkMapper, StudentF
         if(studentFrameworkDO ==null){
             throw new UserException(USER_NOT_FOUND);                                                                     //A0201：用户不存在
         }
-        if(Boolean.TRUE.equals(stringRedisTemplate.hasKey("login:student:"+requestParam.getStudentId()))){
+        String accessKey=RedisKeyGenerator.genStudentLoginAccess(requestParam.getStudentId());
+        if(Boolean.TRUE.equals(stringRedisTemplate.hasKey(accessKey))){
             throw new UserException(USER_LOGGED_IN);                                                                     //A0202：用户已登录
         }
-        String uuid= UUID.randomUUID().toString();
-        // 生成的uuid作为用户登录信息传入redis
-        // 更清晰的键设计（使用冒号分隔）
-        String redisKey = "login:student:" + requestParam.getStudentId();
-        stringRedisTemplate.opsForHash().put(redisKey, uuid, JSON.toJSONString(studentFrameworkDO));
-        stringRedisTemplate.expire(redisKey, 30, TimeUnit.MINUTES);
+        // 生成双Token
+        TokenPair tokenPair = tokenService.generateStudentTokens(studentFrameworkDO);
         recordLoginLog(request, requestParam.getStudentId());
-        return new StuLoginRespDTO(uuid);
+        return new StuLoginRespDTO(tokenPair.getAccessToken(), tokenPair.getRefreshToken());
     }
 
     /**
@@ -102,7 +100,7 @@ public class StuServiceImpl extends ServiceImpl<StudentFrameWorkMapper, StudentF
      */
     @Override
     public Boolean checkLogin(String studentId, String token) {
-        return stringRedisTemplate.opsForHash().get("login:student:"+studentId,token)!=null;
+        return stringRedisTemplate.opsForHash().get(RedisKeyGenerator.genStudentLoginAccess(studentId),token)!=null;
     }
 
     /**
@@ -110,18 +108,35 @@ public class StuServiceImpl extends ServiceImpl<StudentFrameWorkMapper, StudentF
      * <p>
      * 处理学生登出请求，清除Redis中的登录状态。
      * </p>
-     *
-     * @param studentId 学生学号
-     * @param token 登录时生成的token
-     * @throws ClientException 如果token无效或学生未登录
      */
     @Override
-    public void logout(String studentId, String token) {
-        if(checkLogin(studentId,token)){
-            stringRedisTemplate.delete("login:student:"+studentId);
+    public void logout(String studentId, String accessToken, String refreshToken) {
+        // 验证Access Token
+        boolean accessTokenValid = checkLogin(studentId, accessToken);
+
+        // 验证Refresh Token
+        String refreshKey = RedisKeyGenerator.genStudentLoginRefresh(studentId);
+        String storedRefreshToken = stringRedisTemplate.opsForValue().get(refreshKey);
+        boolean refreshTokenValid = (storedRefreshToken != null && storedRefreshToken.equals(refreshToken));
+
+        // 只要有一个Token有效，就执行登出操作
+        if (accessTokenValid || refreshTokenValid) {
+            // 删除Access Token
+            String accessKey = RedisKeyGenerator.genStudentLoginAccess(studentId);
+            stringRedisTemplate.delete(accessKey);
+
+            // 删除Refresh Token
+            stringRedisTemplate.delete(refreshKey);
+
+            // 将Refresh Token加入黑名单
+            if (refreshToken != null && !refreshToken.isEmpty()) {
+                tokenService.blacklistToken(refreshToken);
+            }
+
             return;
         }
-        throw new UserException(USER_NOT_LOGGED);                                                                        //A0203：用户未登录或用户token不存在
+
+        throw new UserException(USER_NOT_LOGGED);                                                                          //A0203：用户未登录或用户token不存在
     }
 
     /**

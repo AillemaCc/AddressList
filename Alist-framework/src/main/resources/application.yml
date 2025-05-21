@@ -3,3 +3,8 @@ address-list:
     enable: true
     time-window: 1
     max-access-count: 20
+jwt:
+  # 为JWT基础信息加密和解密的密钥，长度需要大于等于43
+  # 在实际生产中通常不直接写在配置文件里面。而是通过应用的启动参数传递，并且需要定期修改
+  secret: "VGhpcyBpcyBhIHNlY3JldCBrZXkhVGhpcyBpcyBhIHNlY3JldCBrZXkhVGhpcyBpcyBhIHNlY3JldCBrZXkhVGhpcyBpcyBhIHNlY3JldCBrZXkh"
+  # JWT令牌的有效时间，单位秒，默认2周
