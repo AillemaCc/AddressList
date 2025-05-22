@@ -21,10 +21,10 @@ public class BaseClassInfoListStuReqDTO {
     /**
      * 当前页码（从1开始，非必填，默认1）
      */
-    private Integer current = 1;
+    private Integer current;
 
     /**
      * 每页数量（非必填，默认10）
      */
-    private Integer size = 10;
+    private Integer size;
 }

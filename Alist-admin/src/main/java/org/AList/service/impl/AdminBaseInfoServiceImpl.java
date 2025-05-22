@@ -22,6 +22,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Date;
 import java.util.Objects;
 /**
  * 班级基本信息服务实现类。
@@ -37,6 +38,8 @@ public class AdminBaseInfoServiceImpl implements AdminBaseInfoService {
     private final MajorAndAcademyMapper majorAndAcademyMapper;
     private final BaseInfoCacheService baseInfoCacheService;
     private final StudentDefaultInfoMapper studentDefaultInfoMapper;
+    private final RegisterMapper registerMapper;
+    private final LoginLogMapper loginLogMapper;
     /**
      * 新增班级基本信息。
      *
@@ -453,6 +456,15 @@ public class AdminBaseInfoServiceImpl implements AdminBaseInfoService {
      * @return 包含学生和联系信息的响应DTO
      */
     private BaseClassInfoListStuRespDTO buildFullResponse(StudentFrameworkDO student, ContactDO contact) {
+        // 获取注册时间
+        RegisterDO registerInfo = registerMapper.selectOne(Wrappers.lambdaQuery(RegisterDO.class)
+                .eq(RegisterDO::getStudentId, student.getStudentId())
+                .eq(RegisterDO::getDelFlag, 0));
+        Date registrationTime = registerInfo != null ? registerInfo.getCreateTime() : null;
+
+        // 获取最新登录时间
+        LoginLogDO lastLogin = loginLogMapper.selectLastLoginByStudentId(student.getStudentId());
+        Date lastLoginTime = lastLogin != null ? lastLogin.getUpdateTime() : null;
         return BaseClassInfoListStuRespDTO.builder()
                 .studentId(student.getStudentId())
                 .name(student.getName())
@@ -462,6 +474,8 @@ public class AdminBaseInfoServiceImpl implements AdminBaseInfoService {
                 .email(student.getEmail())
                 .employer(contact != null ? contact.getEmployer() : null)
                 .city(contact != null ? contact.getCity() : null)
+                .registrationTime(registrationTime)
+                .lastLoginTime(lastLoginTime)
                 .build();
     }
 }

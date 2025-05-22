@@ -54,6 +54,27 @@ public class RedisKeyGenerator {
     }
 
     /**
+     * 生成管理员AccessToken Key
+     */
+    public static String genAdministerLoginAccess(String username) {
+        return String.format(RedisKeyTemplates.ADMIN_LOGIN_ACCESS, username);
+    }
+
+    /**
+     * 生成管理员AccessToken Key
+     */
+    public static String genAdministerRefresh(String username) {
+        return String.format(RedisKeyTemplates.ADMIN_LOGIN_REFRESH, username);
+    }
+
+    /**
+     * 生成登录之后的完整用户信息 Key
+     */
+    public static String genAdministerLoginInfo(String username) {
+        return String.format(RedisKeyTemplates.ADMIN_LOGIN_INFO, username);
+    }
+
+    /**
      * 生成单个学生信息缓存 Key
      */
     public static String genStudentFullContactInfo(String studentId) {
