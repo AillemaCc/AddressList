@@ -70,8 +70,8 @@ public enum BaseErrorCode implements IErrorCode {
     CLASS_EXIST("A0611", "新增班级信息已存在"),
     UPDATE_CLASS_FAIL("A0620", "修改班级信息失败"),
     CLASS_NOT_FOUND("A0621", "要修改的班级不存在"),
-    ADD_MAJOR_FAIL("A0622", "新增专业与学院信息失败"),
-    UPDATE_MAJOR_FAIL("A0623", "更新专业与学院信息失败"),
+    ADD_MAJOR_COLLEGE_FAIL("A0622", "新增专业与学院信息失败"),
+    UPDATE_MAJOR_COLLEGE_FAIL("A0623", "更新专业与学院信息失败"),
     QUERY_CLASS_FAIL("A0630", "查询班级信息失败"),
     ORIG_MAJOR_MISSING("A0631", "不存在原始专业"),
     MAJOR_NOT_FOUND("A0632", "查询的专业不存在"),
@@ -81,9 +81,14 @@ public enum BaseErrorCode implements IErrorCode {
     ANNOUNCE_ERR("A0700", "管理员处理公告失败"),
     INVALID_ANNOUNCE_ID("A0701", "无效的公告标识号"),
     ANNOUNCE_ID_EXIST("A0702", "公告标识号已存在"),
-    EMPTY_CONTENT("A0703", "公告内容为空"),
-    EMPTY_TITLE("A0704", "公告标题为空"),
-    EMPTY_STATUS("A0705", "公告状态为空"),
+    ANNOUNCE_EMPTY_CONTENT("A0703", "公告内容为空"),
+    ANNOUNCE_EMPTY_TITLE("A0704", "公告标题为空"),
+    ANNOUNCE_EMPTY_STATUS("A0705", "公告状态为空"),
+
+    //excel管理
+    EXCEL_PROCESS_ERR("A0800","管理员处理excel错误"),
+    IMPORT_DATA_EMPTY("A0801","传入空数据列表，不保存"),
+    UPLOAD_FILE_EMPTY("A0802","上传的文件为空"),
 
     // ========== 客户端错误 ==========
     CLIENT_ERR("B0001", "客户端错误"),
@@ -98,7 +103,10 @@ public enum BaseErrorCode implements IErrorCode {
     JWT_DECRYPT_FAIL("B0212", "JWT密钥解密失败"),
     JWT_KEY_EMPTY("B0213", "JWT密钥不能为空"),
     ADMIN_REVIEW_FAIL("B0220", "管理员审核失败"),
-    DISABLE_USER_FAIL("B0221", "管理员禁用用户失败"),
+    ADMIN_BAN_USER_FAIL("B0221", "管理员禁用用户失败"),
+    REVIEW_DATA_ABNORMAL("B0222","管理员审核失败，数据异常"),
+    REVIEW_DATA_MISSING("B0223","管理员审核失败，数据缺失"),
+    REVIEW_DATA_UPDATE_FAIL("B0224","管理员审核失败，数据未更新"),
 
     // 系统权限
     PERM_ERR("B0300", "系统权限错误"),
