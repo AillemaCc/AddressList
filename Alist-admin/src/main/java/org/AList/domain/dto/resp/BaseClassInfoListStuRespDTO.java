@@ -5,6 +5,8 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.Date;
+
 /**
  * 查询某个班级号下的所有学生响应体
  */
@@ -53,5 +55,15 @@ public class BaseClassInfoListStuRespDTO {
      * 邮箱
      */
     private String email;
+
+    /**
+     * 注册时间
+     */
+    private Date registrationTime;
+
+    /**
+     * 最新登录时间
+     */
+    private Date lastLoginTime;
 
 }
