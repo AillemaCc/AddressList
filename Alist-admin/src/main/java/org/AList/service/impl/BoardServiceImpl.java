@@ -18,6 +18,7 @@ import org.AList.domain.dto.req.*;
 import org.AList.domain.dto.resp.BoardQueryRespDTO;
 import org.AList.service.BoardService;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -34,6 +35,7 @@ public class BoardServiceImpl extends ServiceImpl<BoardMapper, BoardDO> implemen
     private final BoardMapper boardMapper;
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void addBoard(BoardAddReqDTO requestParam) {
         // 1. 参数校验
         validateAOURequestParam(requestParam);
@@ -59,6 +61,7 @@ public class BoardServiceImpl extends ServiceImpl<BoardMapper, BoardDO> implemen
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void updateBoard(BoardUpdateReqDTO requestParam) {
         Integer boardId=requestParam.getBoardId();
         // 1. 参数校验
@@ -98,6 +101,7 @@ public class BoardServiceImpl extends ServiceImpl<BoardMapper, BoardDO> implemen
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void deleteBoard(BoardDeleteReqDTO requestParam) {
         Integer boardId=requestParam.getBoardId();
         // 1. 参数校验
