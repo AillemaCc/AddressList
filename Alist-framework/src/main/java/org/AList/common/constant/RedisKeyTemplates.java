@@ -18,6 +18,7 @@ public final class RedisKeyTemplates {
     public static final String ADMIN_LOGIN_INFO = "login:administer:info:%s";
 
     public static final String STUDENT_FULL_CONTACT_INFO = "student:fullContactInfo:%s";
+    public static final String STUDENT_SEARCH_CACHE = "student:search:%s:%s:%s";
     public static final String CLASSPAGE_STUDENTS_FULL_CONTACT_INFO = "classPage:students:%s:%d:%d";
 
     public static final String LOCK_ADMIN_UPDATE_BAN = "lock:admin:update:ban:%s";

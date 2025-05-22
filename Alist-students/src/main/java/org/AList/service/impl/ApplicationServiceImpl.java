@@ -20,9 +20,16 @@ import org.AList.domain.dto.req.*;
 import org.AList.domain.dto.resp.ApplicationQueryPageRespDTO;
 import org.AList.domain.dto.resp.QuerySomeoneRespDTO;
 import org.AList.service.ApplicationService;
+import org.AList.service.CacheService.StudentSearchCacheService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Collections;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import static org.AList.common.convention.errorcode.BaseErrorCode.*;
 /**
@@ -37,6 +44,7 @@ public class ApplicationServiceImpl extends ServiceImpl<ApplicationMapper, Appli
     private final MajorAndAcademyMapper majorAndAcademyMapper;
     private final ClassInfoMapper classInfoMapper;
     private final AbstractChainContext<ApplicationSendMsgReqDTO> abstractChainContext;
+    private final StudentSearchCacheService studentSearchCacheService;
 
 
     /**
@@ -236,46 +244,105 @@ public class ApplicationServiceImpl extends ServiceImpl<ApplicationMapper, Appli
      */
     @Override
     public IPage<QuerySomeoneRespDTO> querySomeone(QuerySomeoneReqDTO requestParam) {
-        int current=requestParam.getCurrent()==null?0:requestParam.getCurrent();
-        int size=requestParam.getSize()==null?10:requestParam.getSize();
+        int current = requestParam.getCurrent() == null ? 0 : requestParam.getCurrent();
+        int size = requestParam.getSize() == null ? 10 : requestParam.getSize();
+        String cacheKey= studentSearchCacheService.generateCacheKey(requestParam);
+        IPage<QuerySomeoneRespDTO> cachedResult = studentSearchCacheService.getCachedSearchResult(cacheKey);
+        if (cachedResult != null) {
+            return cachedResult;
+        }
+
+
+        // 1. 先查询学生基础信息（分页）
         Page<StudentFrameworkDO> page = new Page<>(current, size);
         LambdaQueryWrapper<StudentFrameworkDO> queryWrapper = Wrappers.lambdaQuery(StudentFrameworkDO.class)
                 .like(StringUtils.isNotBlank(requestParam.getName()),
                         StudentFrameworkDO::getName, requestParam.getName())
                 .eq(StudentFrameworkDO::getDelFlag, 0);
         IPage<StudentFrameworkDO> studentPage = studentFrameWorkMapper.selectPage(page, queryWrapper);
-        return studentPage.convert(student -> {
-                    QuerySomeoneRespDTO dto = new QuerySomeoneRespDTO();
-                    BeanUtils.copyProperties(student, dto);
+
+        // 如果没有查询到学生，直接返回空结果
+        if (studentPage.getRecords().isEmpty()) {
+            return new Page<>(current, size, 0);
+        }
+
+        // 2. 批量获取所有需要的 majorNum 和 classNum
+        Set<String> majorNums = studentPage.getRecords().stream()
+                .map(StudentFrameworkDO::getMajorNum)
+                .filter(StringUtils::isNotBlank)
+                .collect(Collectors.toSet());
+
+        Set<String> classNums = studentPage.getRecords().stream()
+                .map(StudentFrameworkDO::getClassNum)
+                .filter(StringUtils::isNotBlank)
+                .collect(Collectors.toSet());
+
+        // 3. 批量查询专业和学院信息
+        Map<Integer, MajorAndAcademyDO> majorMap = Collections.emptyMap();
+        if (!majorNums.isEmpty()) {
+            majorMap = majorAndAcademyMapper.selectList(
+                    Wrappers.lambdaQuery(MajorAndAcademyDO.class)
+                            .in(MajorAndAcademyDO::getMajorNum, majorNums)
+                            .eq(MajorAndAcademyDO::getDelFlag, 0)
+            ).stream().collect(Collectors.toMap(
+                    MajorAndAcademyDO::getMajorNum,
+                    Function.identity(),
+                    (existing, replacement) -> existing // 处理重复key
+            ));
+        }
+
+        // 4. 批量查询班级信息
+        Map<Integer, ClassInfoDO> classMap = Collections.emptyMap();
+        if (!classNums.isEmpty()) {
+            classMap = classInfoMapper.selectList(
+                    Wrappers.lambdaQuery(ClassInfoDO.class)
+                            .in(ClassInfoDO::getClassNum, classNums)
+                            .eq(ClassInfoDO::getDelFlag, 0)
+            ).stream().collect(Collectors.toMap(
+                    ClassInfoDO::getClassNum,
+                    Function.identity(),
+                    (existing, replacement) -> existing // 处理重复key
+            ));
+        }
+
+        final Map<Integer, MajorAndAcademyDO> finalMajorMap = majorMap;
+        final Map<Integer, ClassInfoDO> finalClassMap = classMap;
+
+        IPage<QuerySomeoneRespDTO> result = studentPage.convert(student -> {
+            QuerySomeoneRespDTO dto = new QuerySomeoneRespDTO();
+            BeanUtils.copyProperties(student, dto);
+
             if (StringUtils.isNotBlank(student.getMajorNum())) {
-                MajorAndAcademyDO majorAndAcademy = majorAndAcademyMapper.selectOne(
-                        Wrappers.<MajorAndAcademyDO>lambdaQuery()
-                                .eq(MajorAndAcademyDO::getMajorNum, student.getMajorNum())
-                );
+                MajorAndAcademyDO majorAndAcademy = finalMajorMap.get(Integer.parseInt(student.getMajorNum()));
                 if (majorAndAcademy != null) {
                     dto.setMajorName(majorAndAcademy.getMajor());
                     dto.setAcademyName(majorAndAcademy.getAcademy());
                 }
             }
-            if(StringUtils.isNotBlank(student.getClassNum())){
-                ClassInfoDO classInfo= classInfoMapper.selectOne(
-                        Wrappers.<ClassInfoDO>lambdaQuery()
-                        .eq(ClassInfoDO::getClassNum, student.getClassNum())
-                );
-                if(classInfo!=null) {
+
+            if (StringUtils.isNotBlank(student.getClassNum())) {
+                ClassInfoDO classInfo = finalClassMap.get(Integer.parseInt(student.getClassNum()));
+                if (classInfo != null) {
                     dto.setClassName(classInfo.getClassName());
                 }
             }
-            if(StringUtils.isNotBlank(student.getEnrollmentYear())&&(StringUtils.isNotBlank(student.getEnrollmentYear()))){
+
+            if (StringUtils.isNotBlank(student.getEnrollmentYear())) {
                 dto.setEnrollmentYear(student.getEnrollmentYear());
                 dto.setGraduationYear(student.getGraduationYear());
             }
-            if(StringUtils.isNotBlank(student.getStudentId())){
+
+            if (StringUtils.isNotBlank(student.getStudentId())) {
                 dto.setStudentId(student.getStudentId());
             }
-            return dto;
 
+            return dto;
         });
+
+        // 缓存查询结果
+        studentSearchCacheService.cacheSearchResult(cacheKey, result);
+
+        return result;
     }
 
 
