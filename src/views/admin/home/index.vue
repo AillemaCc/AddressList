@@ -33,52 +33,7 @@
           >查看详情</el-button
         >
       </el-card>
-
-      <el-card class="stat-card">
-        <div class="stat-content">
-          <div>
-            <h3>用户查询量</h3>
-            <p class="number">{{ queryCount }}</p>
-          </div>
-        </div>
-        <el-button type="text" @click="$router.push('/admin/query')"
-          >查看详情</el-button
-        >
-      </el-card>
-
-      <el-card class="stat-card">
-        <div class="stat-content">
-          <div>
-            <h3>系统状态</h3>
-            <p class="number" :class="systemStatus.class">
-              {{ systemStatus.text }}
-            </p>
-          </div>
-        </div>
-        <el-button type="text">查看详情</el-button>
-      </el-card>
     </div>
-
-    <!-- 快捷操作区域 -->
-    <el-card class="quick-actions">
-      <template #header>
-        <div class="card-header">
-          <span>快捷操作</span>
-        </div>
-      </template>
-      <div class="action-buttons">
-        <el-button
-          type="primary"
-          @click="$router.push('/admin/bulletin_draft')"
-        >
-          新建公告
-        </el-button>
-        <el-button @click="$router.push('/admin/query')"> 信息查询 </el-button>
-        <el-button @click="$router.push('/admin/request_fail')">
-          审核请求
-        </el-button>
-      </div>
-    </el-card>
 
     <!-- 最近活动 -->
     <div class="recent-activity">

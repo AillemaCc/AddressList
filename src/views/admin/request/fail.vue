@@ -1,248 +1,92 @@
 <script setup>
+import {
+  adminDisplayFailRequestApi,
+  adminRejectRequestApi,
+  adminSuccessRequestApi,
+} from '@/apis/admin/request'
 import { ref } from 'vue'
-
-const fail_request = ref([
-  {
-    id: 7,
-    studentId: '9109222268',
-    name: '学生1',
-    phone: '15682496592',
-    email: 'vacsbt_om0@qq.com',
-    password: '5f_b6aYn0eI0vrG',
-    status: 0,
-    remark: null,
-    registerToken: 'd9c8030a-ec7e-46fb-9432-46064cfa2cfa',
-  },
-  {
-    id: 14,
-    studentId: '7861232160',
-    name: '谢杰宏',
-    phone: '76908043742',
-    email: 'xiejiehong@hotmail.com',
-    password: 'pg67FEVQd9',
-    status: 0,
-    remark: null,
-    registerToken: 'QmpaCSNMuV',
-  },
-  {
-    id: 16,
-    studentId: '9977654280',
-    name: '丁安琪',
-    phone: '75531174119',
-    email: 'anqiding10@gmail.com',
-    password: 'OjnJ2ORzGi',
-    status: 0,
-    remark: null,
-    registerToken: 'leTidb7Ikq',
-  },
-  {
-    id: 24,
-    studentId: '0102450291',
-    name: '蒋震南',
-    phone: '14570535938',
-    email: 'jizhenn2@icloud.com',
-    password: 'mDDnQKR5F7',
-    status: 0,
-    remark: null,
-    registerToken: 'EO5Dvn5Hpx',
-  },
-  {
-    id: 18,
-    studentId: '9929013995',
-    name: '钟晓明',
-    phone: '14083198181',
-    email: 'zhongxiaoming94@outlook.com',
-    password: 's9VPTu9sYM',
-    status: 0,
-    remark: null,
-    registerToken: 'pCsufxAJCF',
-  },
-  {
-    id: 23,
-    studentId: '6036732234',
-    name: '苏云熙',
-    phone: '7696628026',
-    email: 'suyunx@gmail.com',
-    password: 'WRJYpJt9If',
-    status: 0,
-    remark: null,
-    registerToken: 'icc87GMvLY',
-  },
-  {
-    id: 15,
-    studentId: '6229829390',
-    name: '潘震南',
-    phone: '16959728730',
-    email: 'zhennpa325@gmail.com',
-    password: 'OIkurvnYPA',
-    status: 0,
-    remark: null,
-    registerToken: 'lZ9Ony0ugr',
-  },
-  {
-    id: 17,
-    studentId: '4756166277',
-    name: '林子异',
-    phone: '7691679909',
-    email: 'ziyil59@mail.com',
-    password: 'BaJBCAgMb1',
-    status: 0,
-    remark: null,
-    registerToken: 'ck05DYPpUz',
-  },
-  {
-    id: 13,
-    studentId: '5003525550',
-    name: '何安琪',
-    phone: '1047590707',
-    email: 'hean@icloud.com',
-    password: 'p6Fin0Zon8',
-    status: 0,
-    remark: null,
-    registerToken: 'mheuVCT9k0',
-  },
-  {
-    id: 22,
-    studentId: '7473179618',
-    name: '罗嘉伦',
-    phone: '14936431696',
-    email: 'ljialun@gmail.com',
-    password: 'VR19JUIpZN',
-    status: 0,
-    remark: null,
-    registerToken: 'RiSMnF2eT0',
-  },
-  {
-    id: 9,
-    studentId: '3074093266',
-    name: '袁安琪',
-    phone: '19933193063',
-    email: 'anqiyuan@outlook.com',
-    password: 'DKzGhYOUGU',
-    status: 0,
-    remark: null,
-    registerToken: 'hYe2GlFTfa',
-  },
-  {
-    id: 20,
-    studentId: '5205751527',
-    name: '金睿',
-    phone: '214994162',
-    email: 'jirui10@outlook.com',
-    password: 'ZhXuT9Xn3Z',
-    status: 0,
-    remark: null,
-    registerToken: 'k12v5of1ma',
-  },
-  {
-    id: 25,
-    studentId: '7180203832',
-    name: '李晓明',
-    phone: '75569735962',
-    email: 'xiaomingli@hotmail.com',
-    password: 'e0leyoYQHd',
-    status: 0,
-    remark: null,
-    registerToken: '2qSpxRstzP',
-  },
-  {
-    id: 21,
-    studentId: '7081186143',
-    name: '薛嘉伦',
-    phone: '288996887',
-    email: 'xueji@gmail.com',
-    password: 'rWNxrNFwnL',
-    status: 0,
-    remark: null,
-    registerToken: '2V3T5Cf6Uv',
-  },
-  {
-    id: 10,
-    studentId: '9617285077',
-    name: '王震南',
-    phone: '17011074791',
-    email: 'wangz@hotmail.com',
-    password: 'QystNvwcMK',
-    status: 0,
-    remark: null,
-    registerToken: 'eaBclxpY21',
-  },
-  {
-    id: 12,
-    studentId: '8945900647',
-    name: '田安琪',
-    phone: '7550062254',
-    email: 'ta4@hotmail.com',
-    password: '51xgXc0cPs',
-    status: 0,
-    remark: null,
-    registerToken: '9UvgdMwsel',
-  },
-  {
-    id: 19,
-    studentId: '5288686811',
-    name: '秦致远',
-    phone: '7602356489',
-    email: 'zqin@icloud.com',
-    password: 'eNZgJpUfAd',
-    status: 0,
-    remark: null,
-    registerToken: 'kgMOl3yQOQ',
-  },
-  {
-    id: 8,
-    studentId: '0586460928',
-    name: '丁子韬',
-    phone: '2884445518',
-    email: 'zdin@gmail.com',
-    password: 'stJQzEWSvv',
-    status: 0,
-    remark: null,
-    registerToken: 'vOFcGeO4yY',
-  },
-  {
-    id: 11,
-    studentId: '9637271692',
-    name: '莫云熙',
-    phone: '104074406',
-    email: 'moyu@gmail.com',
-    password: '26iW7SfydF',
-    status: 0,
-    remark: null,
-    registerToken: 'qwLk9zo8Oa',
-  },
-  {
-    id: 26,
-    studentId: '4408633959',
-    name: '郭震南',
-    phone: '76961262345',
-    email: 'guo1001@icloud.com',
-    password: 'wWZUEnQCXl',
-    status: 0,
-    remark: null,
-    registerToken: 'CqOXk3d3zU',
-  },
-  {
-    id: 27,
-    studentId: '9646857155',
-    name: '陈詩涵',
-    phone: '2132594034',
-    email: 'chenshih@gmail.com',
-    password: 'c5xdIa8LzK',
-    status: 0,
-    remark: null,
-    registerToken: '5PaH5oD3sR',
-  },
-])
-function successClick(studentId) {
-  console.log(studentId)
+import { ElMessage } from 'element-plus'
+//获取待审核请求
+const fail_request = ref([])
+async function getFailRequest() {
+  const res = await adminDisplayFailRequestApi()
+  fail_request.value = res.data.records
 }
-function rejectClick(studentId) {
-  console.log(studentId)
+getFailRequest()
+
+//同意请求按钮
+async function successClick(studentId) {
+  const res = await adminSuccessRequestApi({ studentId })
+  if (res.success) {
+    const index = fail_request.value.findIndex(
+      (item) => item.studentId === studentId,
+    )
+    fail_request.value.splice(index, 1)
+    ElMessage.success(res.message)
+  } else {
+    ElMessage.error(res.message)
+  }
+}
+let dialogVisible = ref(false)
+let rejectStudentId = ref('')
+let rejectName = ref('')
+let rejextContent = ref('')
+//点击拒绝，打开拒绝请求确认框
+function rejectConfirm(studentId, name) {
+  rejectStudentId.value = studentId
+  rejectName.value = name
+  rejextContent.value = ''
+  dialogVisible.value = true
+}
+//确认拒绝请求
+async function rejectClick() {
+  dialogVisible.value = false
+  const res = await adminRejectRequestApi({
+    studentId: rejectStudentId.value,
+    remark: rejextContent.value,
+  })
+
+  if (res.success) {
+    const index = fail_request.value.findIndex(
+      (item) => item.studentId === rejectStudentId.value,
+    )
+    fail_request.value.splice(index, 1)
+    ElMessage.success(res.message)
+  } else {
+    ElMessage.error(res.message)
+  }
 }
 </script>
 
 <template>
+  <div class="dialog-container">
+    <el-dialog v-model="dialogVisible" title="您确认要拒绝这条请求吗">
+      <div class="dialog-body-container">
+        <div class="reject-item">
+          <div class="item-header">学生学号</div>
+          <div class="item-body">{{ rejectStudentId }}</div>
+        </div>
+        <div class="reject-item">
+          <div class="item-header">学生姓名</div>
+          <div class="item-body">{{ rejectName }}</div>
+        </div>
+        <div class="reject-item">
+          <div class="item-header">拒绝内容说明</div>
+          <div class="item-body">
+            <el-input class="reject" v-model="rejextContent" />
+          </div>
+        </div>
+      </div>
+
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="dialogVisible = false">取消</el-button>
+          <el-button type="primary" @click="rejectClick"> 确认 </el-button>
+        </span>
+      </template>
+    </el-dialog>
+  </div>
+
   <div class="container">
     <div class="title">待审核请求</div>
     <div class="data-exist" v-if="fail_request.length > 0">
@@ -251,11 +95,10 @@ function rejectClick(studentId) {
         <el-table-column prop="studentId" label="学号" width="180" />
         <el-table-column prop="name" label="姓名" width="100" />
         <el-table-column prop="phone" label="手机号码" width="180" />
-        <el-table-column prop="email" label="邮箱" width="220" />
-        <el-table-column prop="password" label="密码" width="220" />
+        <el-table-column prop="email" label="邮箱" width="300" />
+        <el-table-column prop="password" label="密码" width="300" />
         <el-table-column prop="status" label="状态" width="90" />
-        <el-table-column prop="remark" label="备注" width="90" />
-        <el-table-column prop="registerToken" label="注册Token" width="220" />
+        <el-table-column prop="registerToken" label="注册凭证" width="300" />
         <el-table-column fixed="right" label="操作" width="120">
           <template #default="scope">
             <el-button
@@ -269,7 +112,7 @@ function rejectClick(studentId) {
               link
               type="danger"
               size="default"
-              @click="rejectClick(scope.row.studentId)"
+              @click="rejectConfirm(scope.row.studentId, scope.row.name)"
               >拒绝</el-button
             >
           </template>
@@ -278,7 +121,10 @@ function rejectClick(studentId) {
 
       <div class="example-pagination-block">
         <!-- total除以10，向上取整就是最大页数，total可以表示为请求总条数，配合size使用 -->
-        <el-pagination layout="prev, pager, next" :total="150" />
+        <el-pagination
+          layout="prev, pager, next"
+          :total="fail_request.length"
+        />
       </div>
     </div>
     <el-empty class="data-non-exist" description="暂时没有请求" v-else />
@@ -286,6 +132,34 @@ function rejectClick(studentId) {
 </template>
 
 <style scoped lang="scss">
+.dialog-container {
+  :deep(.el-dialog) {
+    min-width: 500px;
+    padding: 24px;
+  }
+
+  .dialog-body-container {
+    padding: 20px 20px;
+    .reject-item {
+      display: flex;
+      justify-content: start;
+      align-items: center;
+      width: 400px;
+      height: 40px;
+      margin: 5px 0;
+      .item-header {
+        display: flex;
+        justify-content: end;
+        padding-right: 12px;
+        width: 120px;
+      }
+      .item-body {
+        padding-left: 10px;
+        flex: 1;
+      }
+    }
+  }
+}
 .container {
   .title {
     padding-bottom: 10px;
@@ -301,7 +175,11 @@ function rejectClick(studentId) {
     font-weight: 400;
   }
   .data-exist {
-    margin: 0 auto;
+    :deep(.el-table__header-wrapper),
+    :deep(.el-scrollbar__wrap) {
+      display: flex;
+      justify-content: center;
+    }
   }
   .example-pagination-block {
     display: flex;

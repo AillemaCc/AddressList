@@ -1,57 +1,5 @@
-<script setup lang="ts">
+<script setup>
 // import { ref } from 'vue'
-interface Tree {
-  name: string
-  router: string
-  children?: Tree[]
-}
-const navData: Tree[] = [
-  {
-    name: '个人信息',
-    router: '/stu/home',
-  },
-  {
-    name: '我的通讯录',
-    router: '/stu/friends',
-    children: [
-      {
-        name: '通讯录好友',
-        router: '/stu/friends',
-      },
-      {
-        name: '通讯录请求',
-        router: '/stu/enter',
-        children: [
-          {
-            name: '已发送',
-            router: '/stu/enter',
-          },
-          {
-            name: '未通过',
-            router: '/stu/fail',
-          },
-          {
-            name: '已通过',
-            router: '/stu/success',
-          },
-          {
-            name: '已拒绝',
-            router: '/stu/reject',
-          },
-          {
-            name: '已删除',
-            router: '/stu/deleted',
-          },
-        ],
-      },
-    ],
-  },
-  {
-    name: '查询信息',
-    router: '/stu/query',
-  },
-]
-
 const defaultProps = {
   children: 'children',
   label: 'name',

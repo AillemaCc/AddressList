@@ -1,4 +1,11 @@
-<script setup></script>
+<script setup>
+import { ref } from 'vue'
+const failRequestCount = ref(20)
+
+function loginout() {
+  console.log('退出登录')
+}
+</script>
 
 <template>
   <div class="all-container">
@@ -7,10 +14,26 @@
         <img src="../../../assets/imgs/txl.png" alt="" />
       </div>
       <div class="text-container">数计通讯录</div>
+
+      <div class="icon-container">
+        <el-tooltip effect="light" :content="`${failRequestCount}条待审核请求`">
+          <router-link to="/admin/request_fail"
+            ><i class="iconfont icon-youxiang"></i
+          ></router-link>
+        </el-tooltip>
+
+        <el-tooltip effect="light" content="信息查询">
+          <router-link to="/admin/query"
+            ><i class="iconfont icon-sousuo"></i
+          ></router-link>
+        </el-tooltip>
+        <el-tooltip effect="light" content="退出登录">
+          <i class="iconfont icon-tuichudenglu" @click="loginout"></i>
+        </el-tooltip>
+      </div>
       <div class="welcome-container">
         <i class="iconfont icon-yonghu"></i> <span>系统管理员1</span>
       </div>
-      <div class="login-out-container">退出登录</div>
     </div>
 
     <div class="main-container">
@@ -78,9 +101,23 @@
       font-weight: 600;
       color: $mainColor;
     }
-    .welcome-container {
+    .icon-container {
       margin-left: auto;
-      margin-right: 20px;
+      display: flex;
+      gap: 15px;
+      .iconfont {
+        font-size: 20px;
+        color: #666;
+        cursor: pointer;
+        border-radius: 4px;
+        &:hover {
+          color: #000;
+          background-color: #eee;
+        }
+      }
+    }
+    .welcome-container {
+      margin: 0 60px 0 20px;
       cursor: default;
       i {
         display: inline-block;

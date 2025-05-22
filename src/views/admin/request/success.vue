@@ -1,43 +1,36 @@
 <script setup>
+import { adminDisplaySuccessRequestApi } from '@/apis/admin/request'
 import { ref } from 'vue'
-
-const fail_request = ref([
-  {
-    id: 46,
-    studentId: '9109222268',
-    name: '学生1',
-    phone: '15682496592',
-    email: 'vacsbt_om0@qq.com',
-    status: 1,
-    remark: '111',
-    registerToken: '2c4b7820-3a1f-4b76-9b0d-795358fa8209',
-  },
-])
+//获取待审核请求
+const success_request = ref([])
+async function getSuccessRequest() {
+  const res = await adminDisplaySuccessRequestApi()
+  success_request.value = res.data.records
+}
+getSuccessRequest()
 </script>
 
 <template>
   <div class="container">
     <div class="title">已通过请求</div>
-    <div class="data-exist" v-if="fail_request.length > 0">
-      <el-table :data="fail_request" style="width: 100%">
-        <el-table-column prop="id" label="id" width="60" />
-        <el-table-column prop="studentId" label="学号" width="180" />
-        <el-table-column prop="name" label="姓名" width="100" />
+    <div class="data-exist" v-if="success_request.length > 0">
+      <el-table :data="success_request" style="width: 100%">
+        <el-table-column prop="id" label="学生ID" width="80" />
+        <el-table-column prop="studentId" label="学号" width="240" />
+        <el-table-column prop="name" label="姓名" width="200" />
         <el-table-column prop="phone" label="电话号码" width="180" />
-        <el-table-column prop="email" label="邮箱" width="220" />
-        <el-table-column prop="password" label="密码" width="220" />
+        <el-table-column prop="email" label="邮箱" width="300" />
+        <el-table-column prop="password" label="密码" width="300" />
         <el-table-column prop="status" label="状态" width="90" />
-        <el-table-column prop="remark" label="备注" width="90" />
-        <el-table-column
-          prop="registerToken"
-          label="registerToken"
-          width="220"
-        />
+        <el-table-column prop="registerToken" label="注册凭证" width="300" />
       </el-table>
 
       <div class="example-pagination-block">
         <!-- total除以10，向上取整就是最大页数，total可以表示为请求总条数，配合size使用 -->
-        <el-pagination layout="prev, pager, next" :total="150" />
+        <el-pagination
+          layout="prev, pager, next"
+          :total="success_request.length"
+        />
       </div>
     </div>
     <el-empty class="data-non-exist" description="暂时没有请求" v-else />
@@ -60,7 +53,11 @@ const fail_request = ref([
     font-weight: 400;
   }
   .data-exist {
-    margin: 0 auto;
+    :deep(.el-table__header-wrapper),
+    :deep(.el-scrollbar__wrap) {
+      display: flex;
+      justify-content: center;
+    }
   }
   .example-pagination-block {
     display: flex;
