@@ -9,6 +9,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.AList.annotation.Idempotent;
+import org.AList.common.convention.exception.UserException;
 import org.AList.common.convention.exception.ClientException;
 import org.AList.common.convention.exception.ServiceException;
 import org.AList.common.generator.RedisKeyGenerator;
@@ -30,6 +31,7 @@ import org.redisson.api.RReadWriteLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import static org.AList.common.convention.errorcode.BaseErrorCode.*;
 
 import java.util.Objects;
 
@@ -76,14 +78,14 @@ public class AdministerAuditServiceImpl extends ServiceImpl<RegisterMapper, Regi
         // 拿到的注册请求的实体
         RegisterDO aDo = baseMapper.selectOne(updateWrapper);
         if(Objects.isNull(aDo)){
-            throw new ClientException("审核操作失败，数据记录异常，请检查数据记录或者刷新重试");
+            throw new ClientException(REVIEW_DATA_ABNORMAL);                                                            //"B0222", "管理员审核失败,数据异常"
         }
         RegisterDO registerDO=RegisterDO.builder()
                 .status(1)
                 .build();
         int update = baseMapper.update(registerDO, updateWrapper);
         if(update<1){
-            throw new ClientException("审核操作失败，数据记录异常，请检查数据记录或者刷新重试");
+            throw new ClientException(REVIEW_DATA_ABNORMAL);                                                            //"B0222", "管理员审核失败,数据异常"
         }
         LambdaQueryWrapper<StudentDefaultInfoDO> infoDOLambdaQueryWrapper = Wrappers.lambdaQuery(StudentDefaultInfoDO.class)
                 .eq(StudentDefaultInfoDO::getStudentId, requestParam.getStudentId());
@@ -115,16 +117,16 @@ public class AdministerAuditServiceImpl extends ServiceImpl<RegisterMapper, Regi
                 .eq(RegisterDO::getStudentId, requestParam);
         RegisterDO registerDO=baseMapper.selectOne(queryWrapper);
         if(Objects.isNull(registerDO)){
-            throw new ClientException("学号对应的注册记录不存在");
+            throw new ServiceException(REG_REQ_NOT_FOUND);                                                              //"C0361", "处理的注册请求不存在"
         }
         else if(registerDO.getStatus()==1){
-            throw new ClientException("学号对应的注册请求已审核通过，无需重复审核");
+            throw new ServiceException(REG_REQ_APPROVED);                                                               //"C0362", "处理的注册请求已通过"
         }
         else if(registerDO.getStatus()==2){
-            throw new ClientException("学号对应的注册请求已审核拒绝，无需重复审核");
+            throw new ServiceException(REG_REQ_REJECTED);                                                               //"C0363", "处理的注册请求已拒绝"
         }
         else if(registerDO.getDelFlag()==1){
-            throw new ClientException("学号对应的注册请求已删除");
+            throw new ServiceException(REG_REQ_DELETED);                                                                //"C0364", "处理的注册请求已删除"
         }
 
     }
@@ -141,7 +143,7 @@ public class AdministerAuditServiceImpl extends ServiceImpl<RegisterMapper, Regi
         LambdaUpdateWrapper<RegisterDO> updateWrapper = Wrappers.lambdaUpdate(RegisterDO.class)
                 .eq(RegisterDO::getStudentId, requestParam.getStudentId());
         if(Objects.isNull(baseMapper.selectOne(updateWrapper))){
-            throw new ClientException("审核操作失败，未能查询到数据，请检查数据记录或者刷新重试");
+            throw new ClientException(REVIEW_DATA_MISSING);                                                             //"B0223", "管理员审核失败，数据缺失"
         }
         RegisterDO registerDO=RegisterDO.builder()
                 .remark(requestParam.getRemark())
@@ -149,7 +151,7 @@ public class AdministerAuditServiceImpl extends ServiceImpl<RegisterMapper, Regi
                 .build();
         int update = baseMapper.update(registerDO, updateWrapper);
         if(update<1){
-            throw new ClientException("审核操作失败，未能更新数据，请检查数据记录或者刷新重试");
+            throw new ClientException(REVIEW_DATA_UPDATE_FAIL);                                                           //"B0224", "管理员审核失败，数据未更新"
         }
     }
 
@@ -209,7 +211,7 @@ public class AdministerAuditServiceImpl extends ServiceImpl<RegisterMapper, Regi
         RegisterDO registerDO=registerMapper.selectOne(registerDOLambdaQueryWrapper);
         // todo: 这里判空逻辑可能有问题，需要修改
         if(Objects.isNull(studentFrameworkDO)||Objects.isNull(registerDO)){
-            throw new ClientException("该学生信息不存在，请重新查询");
+                throw new ServiceException(ADDR_NOT_FOUND);                                                             //C0351：处理的通讯录记录不存在
         }
         StudentFrameworkDO updateStudentFrameworkDO = StudentFrameworkDO.builder()
                 .status(3)
@@ -241,7 +243,7 @@ public class AdministerAuditServiceImpl extends ServiceImpl<RegisterMapper, Regi
         RegisterDO registerDO=registerMapper.selectOne(registerDOLambdaQueryWrapper);
 
         if(Objects.isNull(studentFrameworkDO)||Objects.isNull(registerDO)){
-            throw new ClientException("该学生信息不存在，请重新查询");
+                throw new ServiceException(ADDR_NOT_FOUND);                                                             //C0351：处理的通讯录记录不存在
         }
 
         StudentFrameworkDO updateStudentFrameworkDO = StudentFrameworkDO.builder()
@@ -264,16 +266,16 @@ public class AdministerAuditServiceImpl extends ServiceImpl<RegisterMapper, Regi
         RReadWriteLock readWriteLock=redissonClient.getReadWriteLock(lockKey);
         RLock rLock=readWriteLock.writeLock();
         if(!rLock.tryLock()){
-            throw new ServiceException("该用户状态信息正在被其他管理员修改，请稍后再试...");
+            throw new ClientException(PERM_EDIT_USER_CONFLICT);                                                         //"B0322", "系统缺乏权限修改正在被其他管理员修改的用户信息"
         }
         try{
             int updateStudentInfo = studentFrameWorkMapper.update(updateStudentFrameworkDO, queryWrapper);
             if(updateStudentInfo<1){
-                throw new ClientException("禁用学生账户信息操作失败");
+                throw new ClientException(ADMIN_BAN_USER_FAIL);                                                         //"B0221", "管理员禁用用户失败"
             }
             int updateRegister=registerMapper.update(updateRegisterDO,registerDOLambdaQueryWrapper);
             if(updateRegister<1){
-                throw new ClientException("禁用学生账户信息操作失败");
+                throw new ClientException(ADMIN_BAN_USER_FAIL);                                                         //"B0221", "管理员禁用用户失败"
             }
         }finally {
             rLock.unlock();

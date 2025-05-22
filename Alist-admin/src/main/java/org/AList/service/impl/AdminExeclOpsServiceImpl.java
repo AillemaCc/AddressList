@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.toolkit.CollectionUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.AList.common.convention.exception.ClientException;
+import org.AList.common.convention.exception.UserException;
 import org.AList.common.listener.StudentDefInfoListener;
 import org.AList.domain.dao.entity.StudentDefaultInfoDO;
 import org.AList.domain.dao.mapper.StudentDefaultInfoMapper;
@@ -22,6 +23,7 @@ import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Optional;
+import static org.AList.common.convention.errorcode.BaseErrorCode.*;
 
 /**
  * 管理员execl操作服务实现层
@@ -38,7 +40,7 @@ public class AdminExeclOpsServiceImpl implements AdminExeclOpsService {
     @Override
     public void saveStudentDefInfo(List<StudentDefaultInfoDO> cachedDataList) {
         if (CollectionUtils.isEmpty(cachedDataList)) {
-            throw new ClientException("传入空数据列表，跳过保存操作");
+            throw new UserException(IMPORT_DATA_EMPTY);                                                                 //"A0801", "传入空数据列表，不保存"
         }
         log.info("开始批量保存{}条数据", cachedDataList.size());
         long startTime = System.currentTimeMillis();
@@ -80,7 +82,7 @@ public class AdminExeclOpsServiceImpl implements AdminExeclOpsService {
     @Override
     public void importStudentDefInfo(MultipartFile file) throws IOException {
         if (file == null || file.isEmpty()) {
-            throw new ClientException("上传文件不能为空");
+            throw new UserException(UPLOAD_FILE_EMPTY);                                                                 //"A0802", "上传的文件为空"
         }
         StudentDefInfoListener listener = new StudentDefInfoListener(this);
         EasyExcel.read(file.getInputStream(), StudentDefaultInfoDO.class, listener)

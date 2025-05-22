@@ -10,6 +10,7 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.AList.common.convention.exception.ClientException;
+import org.AList.common.convention.exception.UserException;
 import org.AList.domain.dao.entity.*;
 import org.AList.domain.dao.mapper.*;
 import org.AList.domain.dto.req.*;
@@ -24,6 +25,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Date;
 import java.util.Objects;
+
+import static org.AList.common.convention.errorcode.BaseErrorCode.*;
+
 /**
  * 班级基本信息服务实现类。
  * 提供班级信息的增删改查、学生列表展示等业务逻辑。
@@ -52,7 +56,7 @@ public class AdminBaseInfoServiceImpl implements AdminBaseInfoService {
     public void addBaseClassInfo(BaseClassInfoAddReqDTO requestParam) {
         Objects.requireNonNull(requestParam, "请求参数不能为空");
         if (requestParam.getClassNum() == null || StringUtils.isBlank(requestParam.getClassName())) {
-            throw new ClientException("班级编号和名称不能为空");
+            throw new UserException(CLASS_ID_NAME_EMPTY);                                                                //"A0601", "班级编号或班级名为空"
         }
         Integer classNum = requestParam.getClassNum();
         String className = requestParam.getClassName();
@@ -66,7 +70,7 @@ public class AdminBaseInfoServiceImpl implements AdminBaseInfoService {
                 .eq(ClassInfoDO::getDelFlag, 0);
         ClassInfoDO uniqueDO = classInfoMapper.selectOne(uniqueWrapper);
         if (uniqueDO != null) {
-            throw new ClientException("新增的班级信息已存在，请不要重复添加");
+            throw new UserException(CLASS_EXIST);                                                                       //"A0611", "新增班级信息已存在"
         }
         ClassInfoDO classInfoDO =ClassInfoDO.builder()
                 .className(className)
@@ -75,7 +79,7 @@ public class AdminBaseInfoServiceImpl implements AdminBaseInfoService {
                 .build();
         int insert = classInfoMapper.insert(classInfoDO);
         if (insert!=1){
-            throw new ClientException("新增异常，请重试");
+            throw new UserException(ADD_CLASS_FAIL);                                                                    //"A0610", "新增班级失败"
         }
         // 处理专业与学院信息
         if (majorNum != null && academyNum != null) {
@@ -97,13 +101,13 @@ public class AdminBaseInfoServiceImpl implements AdminBaseInfoService {
                 // 更新现有记录
                 int updateResult = majorAndAcademyMapper.updateById(majorAndAcademyDO);
                 if (updateResult != 1) {
-                    throw new ClientException("更新专业与学院信息失败，请重试");
+                    throw new UserException(UPDATE_MAJOR_COLLEGE_FAIL);                                                 //"A0623", "更新专业与学院信息失败"
                 }
             } else {
                 // 插入新记录
                 int insertResult = majorAndAcademyMapper.insert(majorAndAcademyDO);
                 if (insertResult != 1) {
-                    throw new ClientException("新增专业与学院信息失败，请重试");
+                    throw new UserException(ADD_MAJOR_COLLEGE_FAIL);                                                    //"A0622", "新增专业与学院信息失败"
                 }
             }
         }
@@ -120,7 +124,7 @@ public class AdminBaseInfoServiceImpl implements AdminBaseInfoService {
         Objects.requireNonNull(requestParam, "请求参数不能为空");
 
         if (requestParam.getClassNum() == null || StringUtils.isBlank(requestParam.getClassName())) {
-            throw new ClientException("班级编号和名称不能为空");
+            throw new UserException(CLASS_ID_NAME_EMPTY);                                                                //A0601：班级编号或班级名为空
         }
 
         LambdaQueryWrapper<ClassInfoDO> queryWrapper = Wrappers.lambdaQuery(ClassInfoDO.class)
@@ -130,7 +134,7 @@ public class AdminBaseInfoServiceImpl implements AdminBaseInfoService {
 
         ClassInfoDO existingDO = classInfoMapper.selectOne(queryWrapper);
         if (existingDO == null) {
-            throw new ClientException("要更新的班级信息不存在");
+            throw new UserException(CLASS_NOT_FOUND);                                                                   //"A0621", "要修改的班级不存在"
         }
 
         ClassInfoDO updateDO = ClassInfoDO.builder()
@@ -140,7 +144,7 @@ public class AdminBaseInfoServiceImpl implements AdminBaseInfoService {
 
         int affectedRows = classInfoMapper.updateById(updateDO);
         if (affectedRows != 1) {
-            throw new ClientException("更新失败，请重试");
+            throw new UserException(UPDATE_CLASS_FAIL);                                                                 //"A0620", "修改班级信息失败"
         }
         baseInfoCacheService.clearStudentContactCacheByClass(requestParam.getClassNum());
         baseInfoCacheService.evictPageCacheByClass(requestParam.getClassNum());
@@ -156,7 +160,7 @@ public class AdminBaseInfoServiceImpl implements AdminBaseInfoService {
     @Override
     public IPage<BaseClassInfoListStuRespDTO> listClassStu(BaseClassInfoListStuReqDTO requestParam) {
         if (requestParam == null || requestParam.getClassNum() == null) {
-            throw new ClientException("请求参数或班级编号不能为空");
+            throw new UserException(REQ_CLASS_ID_EMPTY);                                                                //"A0602", "请求参数或班级编号为空"
         }
 
         Integer classNum = requestParam.getClassNum();
@@ -187,7 +191,7 @@ public class AdminBaseInfoServiceImpl implements AdminBaseInfoService {
     @Override
     public IPage<BaseMajorInfoListClassRespDTO> listMajorClass(BaseMajorInfoListClassReqDTO requestParam) {
         if (requestParam == null || requestParam.getMajorNum() == null) {
-            throw new ClientException("请求参数或专业编号不能为空");
+            throw new UserException(REQ_MAJOR_ID_EMPTY);                                                                //"A0603", "请求参数或专业编号为空"
         }
         int current = requestParam.getCurrent()==null?1:requestParam.getCurrent();
         int size = requestParam.getSize()==null?10:requestParam.getSize();
@@ -231,7 +235,7 @@ public class AdminBaseInfoServiceImpl implements AdminBaseInfoService {
     @Override
     public IPage<BaseAcademyInfoListMajorRespDTO> listAcademyMajor(BaseAcademyInfoListMajorReqDTO requestParam) {
         if(requestParam==null||requestParam.getAcademyNum()==null){
-            throw new ClientException("请求参数或学院编号不能为空");
+            throw new UserException(REQ_COLLEGE_ID_EMPTY);                                                              //"A0604", "请求参数或学院编号为空"
         }
         int current = requestParam.getCurrent()==null?1:requestParam.getCurrent();
         int size = requestParam.getSize()==null?10:requestParam.getSize();
@@ -257,7 +261,7 @@ public class AdminBaseInfoServiceImpl implements AdminBaseInfoService {
     public void updateBaseClassInfoMA(BaseClassInfoUpdateMAReqDTO requestParam) {
         // 参数校验
         if (requestParam == null || requestParam.getClassNum() == null) {
-            throw new ClientException("请求参数或班级编号不能为空");
+            throw new UserException(REQ_CLASS_ID_EMPTY);                                                                //"A0602", "请求参数或班级编号为空"
         }
 
         // 查询原始班级信息
@@ -267,7 +271,7 @@ public class AdminBaseInfoServiceImpl implements AdminBaseInfoService {
         ClassInfoDO originalClassInfo = classInfoMapper.selectOne(classInfoWrapper);
 
         if (originalClassInfo == null) {
-            throw new ClientException("您修改的班级不存在");
+            throw new UserException(CLASS_NOT_FOUND);                                                                   //"A0621", "要修改的班级不存在"
         }
 
         // 查询原始专业和学院信息
@@ -277,7 +281,7 @@ public class AdminBaseInfoServiceImpl implements AdminBaseInfoService {
         MajorAndAcademyDO originalMAInfo = majorAndAcademyMapper.selectOne(MAWrapper);
 
         if (originalMAInfo == null) {
-            throw new ClientException("关联的专业信息不存在");
+            throw new UserException(ORIG_MAJOR_MISSING);                                                                //"A0631", "不存在原始专业"
         }
 
         // 检查哪些字段需要更新
@@ -348,14 +352,14 @@ public class AdminBaseInfoServiceImpl implements AdminBaseInfoService {
     @Override
     public void updateBaseMajorInfo(BaseMajorInfoUpdateReqDTO requestParam) {
         if(requestParam==null){
-            throw new ClientException("请求参数不能为空");
+            throw new UserException(EMPTY_PARAM);                                                                       //"A0002", "请求参数为空"
         }
         LambdaQueryWrapper<MajorAndAcademyDO> originalWrapper = Wrappers.lambdaQuery(MajorAndAcademyDO.class)
                 .eq(MajorAndAcademyDO::getMajorNum, requestParam.getMajorNum())
                 .eq(MajorAndAcademyDO::getDelFlag, 0);
         MajorAndAcademyDO originalMADO = majorAndAcademyMapper.selectOne(originalWrapper);
         if (originalMADO == null) {
-            throw new ClientException("您查询的专业不存在");
+            throw new UserException(MAJOR_NOT_FOUND);                                                                   //"A0632", "查询的专业不存在"
         }
         boolean majorNameChanged = StringUtils.isNotBlank(requestParam.getMajorName())
                 && !requestParam.getMajorName().equals(originalMADO.getMajor());
@@ -386,14 +390,14 @@ public class AdminBaseInfoServiceImpl implements AdminBaseInfoService {
     @Override
     public void updateBaseAcademyInfo(BaseAcademyInfoUpdateReqDTO requestParam) {
         if(requestParam==null){
-            throw new ClientException("请求参数不能为空");
+            throw new UserException(EMPTY_PARAM);                                                                       //"A0002", "请求参数为空"
         }
         LambdaQueryWrapper<MajorAndAcademyDO> originalWrapper = Wrappers.lambdaQuery(MajorAndAcademyDO.class)
                 .eq(MajorAndAcademyDO::getAcademyNum, requestParam.getAcademyNum())
                 .eq(MajorAndAcademyDO::getDelFlag, 0);
         MajorAndAcademyDO originalMADO = majorAndAcademyMapper.selectOne(originalWrapper);
         if (originalMADO == null) {
-            throw new ClientException("您查询的学院不存在");
+            throw new UserException(COLLEGE_NOT_FOUND);                                                                 //"A0633", "查询的学院不存在"
         }
         boolean academyNameChanged = StringUtils.isNotBlank(requestParam.getAcademyName())
                 && !requestParam.getAcademyName().equals(originalMADO.getAcademy());

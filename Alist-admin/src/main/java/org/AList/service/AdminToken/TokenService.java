@@ -14,7 +14,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import static org.AList.common.convention.errorcode.BaseErrorCode.USER_NOT_LOGGED;
+import static org.AList.common.convention.errorcode.BaseErrorCode.*;
 
 @Service
 @RequiredArgsConstructor
@@ -68,13 +68,13 @@ public class TokenService {
         // 验证Refresh Token
         // 检查Token是否在黑名单中
         if (isTokenBlacklisted(refreshToken)) {
-            throw new UserException(USER_NOT_LOGGED);
+            throw new UserException(USER_NOT_LOGGED);                                                                   //A0203：用户未登录或用户token不存在
         }
         String refreshKey = RedisKeyGenerator.genAdministerRefresh(username);
         String storedRefreshToken = stringRedisTemplate.opsForValue().get(refreshKey);  
           
         if (storedRefreshToken == null || !storedRefreshToken.equals(refreshToken)) {  
-            throw new UserException(USER_NOT_LOGGED);
+            throw new UserException(USER_NOT_LOGGED);                                                                   //A0203：用户未登录或用户token不存在
         }  
           
         // 解析Refresh Token获取用户信息  
