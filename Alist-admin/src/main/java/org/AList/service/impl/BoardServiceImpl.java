@@ -9,8 +9,8 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
-import org.AList.common.convention.exception.UserException;
 import org.AList.common.convention.exception.ServiceException;
+import org.AList.common.convention.exception.UserException;
 import org.AList.domain.dao.entity.BoardDO;
 import org.AList.domain.dao.mapper.BoardMapper;
 import org.AList.domain.dto.baseDTO.BoardBaseDTO;
@@ -18,6 +18,10 @@ import org.AList.domain.dto.req.*;
 import org.AList.domain.dto.resp.BoardQueryRespDTO;
 import org.AList.service.BoardService;
 import org.springframework.stereotype.Service;
+
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+
 import static org.AList.common.convention.errorcode.BaseErrorCode.*;
 
 /**
@@ -34,8 +38,11 @@ public class BoardServiceImpl extends ServiceImpl<BoardMapper, BoardDO> implemen
         // 1. 参数校验
         validateAOURequestParam(requestParam);
 
-        // 2. 检查boardId是否已存在
-        if (requestParam.getBoardId() != null) {
+        // 2. 如果boardId为空，自动生成
+        if (requestParam.getBoardId() == null) {
+            requestParam.setBoardId(generateBoardId());
+        } else {
+            // 如果提供了boardId，检查是否已存在
             checkBoardIdNotExists(requestParam.getBoardId());
         }
 
@@ -302,6 +309,32 @@ public class BoardServiceImpl extends ServiceImpl<BoardMapper, BoardDO> implemen
         if (exists) {
             throw new UserException(ANNOUNCE_ID_EXIST);                                                                 //A0702：公告标识号已存在
         }
+    }
+
+    private Integer generateBoardId() {
+        // 使用当前时间戳的后8位数字作为基础ID
+        // 格式：YYYYMMDD + 3位序号 (如: 2025052201)
+        LocalDateTime now = LocalDateTime.now();
+        String dateStr = now.format(DateTimeFormatter.ofPattern("yyyyMMdd"));
+
+        // 查询当天已有的最大序号
+        Integer maxTodayId = boardMapper.selectMaxBoardIdByPrefix(dateStr);
+
+        int sequence = 1;
+        if (maxTodayId != null) {
+            // 提取序号部分并加1
+            String maxIdStr = String.valueOf(maxTodayId);
+            if (maxIdStr.length() > 8) {
+                sequence = Integer.parseInt(maxIdStr.substring(8)) + 1;
+            }
+        }
+
+        // 确保序号不超过3位数（最大999）
+        if (sequence > 999) {
+            throw new ServiceException("当日公告数量已达上限");
+        }
+
+        return Integer.valueOf(dateStr + String.format("%03d", sequence));
     }
 
     private BoardDO convertToBoardDO(BoardAddReqDTO requestParam) {
