@@ -1,20 +1,21 @@
-package org.AList.domain.dto.resp;
+package org.AList.domain.dto.req;
 
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-/**
- * 管理员登录响应类
- */
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class AdminLoginRespDTO {
+@Builder
+public class AdminLoginRefreshToken {
     /**
-     * 分配的token
+     * 学号
      */
-    private String accessToken;
-
+    private String username;
+    /**
+     * 刷新token
+     */
     private String refreshToken;
 }

@@ -24,8 +24,6 @@ public interface AdministerService {
 
     /**
      * 管理员登出接口
-     * @param username 管理员username
-     * @param token 管理员登录返回token
      */
-    void logout(String username, String token);
+    void logout(String username, String token, String refreshToken);
 }
