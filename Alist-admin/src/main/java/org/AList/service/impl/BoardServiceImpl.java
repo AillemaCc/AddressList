@@ -319,6 +319,7 @@ public class BoardServiceImpl extends ServiceImpl<BoardMapper, BoardDO> implemen
         return BoardQueryRespDTO.builder()
                 .title(boardDO.getTitle())
                 .boardId(boardDO.getBoardId())
+                .coverImage(boardDO.getCoverImage())
                 .category(boardDO.getCategory())
                 .content(boardDO.getContent())
                 .status(boardDO.getStatus())

@@ -26,6 +26,8 @@ public class BoardQueryRespDTO {
      */
     private Integer boardId;
 
+    private String coverImage;
+
     /**
      * 公告分类ID
      */
