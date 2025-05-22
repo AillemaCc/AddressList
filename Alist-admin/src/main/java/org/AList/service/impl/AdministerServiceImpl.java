@@ -17,7 +17,7 @@ import org.AList.service.AdministerService;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
-import static org.AList.common.convention.errorcode.BaseErrorCode.USER_NOT_LOGGED;
+import static org.AList.common.convention.errorcode.BaseErrorCode.*;
 
 /**
  * 管理员登录登出服务接口实现层
@@ -40,12 +40,12 @@ public class AdministerServiceImpl extends ServiceImpl<AdministerMapper, Adminis
                 .eq(AdministerDO::getDelFlag, 0);
         AdministerDO administerDO=baseMapper.selectOne(queryWrapper);
         if(administerDO==null){
-            throw new ClientException("管理员账户不存在");
+            throw new UserException(ADMIN_NOT_FOUND);                                                                   //"A0211", "管理员账户不存在"
         }
         // 检查是否已登录
         String accessKey = RedisKeyGenerator.genAdministerLoginAccess(requestParam.getUsername());
         if(Boolean.TRUE.equals(stringRedisTemplate.hasKey(accessKey))) {
-            throw new ClientException("管理员已登录");
+            throw new UserException(ADMIN_LOGGED_IN);                                                                   //"A0212", "管理员已登录"
         }
         TokenPair tokenPair = tokenService.generateAdministerTokens(administerDO);
         return new AdminLoginRespDTO(tokenPair.getAccessToken(), tokenPair.getRefreshToken());
@@ -100,6 +100,6 @@ public class AdministerServiceImpl extends ServiceImpl<AdministerMapper, Adminis
             return;
         }
 
-        throw new UserException(USER_NOT_LOGGED);  // A0203：用户未登录或用户token不存在
+        throw new UserException(USER_NOT_LOGGED);                                                                       // A0203：用户未登录或用户token不存在
     }
 }

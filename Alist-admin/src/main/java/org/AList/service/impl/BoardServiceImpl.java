@@ -9,6 +9,7 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
+import org.AList.common.convention.exception.UserException;
 import org.AList.common.convention.exception.ClientException;
 import org.AList.common.convention.exception.ServiceException;
 import org.AList.domain.dao.entity.BoardDO;
@@ -18,6 +19,7 @@ import org.AList.domain.dto.req.*;
 import org.AList.domain.dto.resp.BoardQueryRespDTO;
 import org.AList.service.BoardService;
 import org.springframework.stereotype.Service;
+import static org.AList.common.convention.errorcode.BaseErrorCode.*;
 
 /**
  * 公告板服务层实现层
@@ -46,7 +48,7 @@ public class BoardServiceImpl extends ServiceImpl<BoardMapper, BoardDO> implemen
 
         // 5. 检查保存结果
         if (!saveResult) {
-            throw new ServiceException("公告保存失败");
+            throw new ServiceException(ANNOUNCE_SAVE_FAIL);                                                             //C0371：处理的公告保存失败
         }
     }
 
@@ -55,7 +57,7 @@ public class BoardServiceImpl extends ServiceImpl<BoardMapper, BoardDO> implemen
         Integer boardId=requestParam.getBoardId();
         // 1. 参数校验
         if (boardId == null || boardId <= 0) {
-            throw new ClientException("无效的公告标识号");
+            throw new UserException(INVALID_ANNOUNCE_ID);                                                               //A0701：无效的公告标识号
         }
         validateAOURequestParam(requestParam);
 
@@ -66,7 +68,7 @@ public class BoardServiceImpl extends ServiceImpl<BoardMapper, BoardDO> implemen
                 .one();
 
         if (existingBoard == null) {
-            throw new ServiceException("公告不存在或已被删除");
+            throw new ServiceException(ANNOUNCE_NOT_FOUND);                                                             //C0373：处理的公告不存在或已删除
         }
 
         // 3. DTO转DO
@@ -77,7 +79,7 @@ public class BoardServiceImpl extends ServiceImpl<BoardMapper, BoardDO> implemen
 
         // 5. 检查更新结果
         if (update==0) {
-            throw new ServiceException("公告更新失败");
+            throw new ServiceException(ANNOUNCE_UPDATE_FAIL);                                                           //C0372：处理的公告更新失败
         }
     }
 
@@ -86,7 +88,7 @@ public class BoardServiceImpl extends ServiceImpl<BoardMapper, BoardDO> implemen
         Integer boardId=requestParam.getBoardId();
         // 1. 参数校验
         if (boardId == null || boardId <= 0) {
-            throw new ClientException("无效的公告标识号");
+            throw new UserException(INVALID_ANNOUNCE_ID);                                                               //A0701：无效的公告标识号
         }
 
         // 2. 根据boardId获取公告
@@ -96,7 +98,7 @@ public class BoardServiceImpl extends ServiceImpl<BoardMapper, BoardDO> implemen
                 .one();
 
         if (existingBoard == null) {
-            throw new ServiceException("公告不存在或已被删除");
+            throw new ServiceException(ANNOUNCE_NOT_FOUND);                                                             //C0373：处理的公告不存在或已删除
         }
 
         // 3. 执行删除
@@ -104,7 +106,7 @@ public class BoardServiceImpl extends ServiceImpl<BoardMapper, BoardDO> implemen
 
         // 4. 检查删除结果
         if (!deleteResult) {
-            throw new ServiceException("公告删除失败");
+            throw new ServiceException(ANNOUNCE_DEL_FAIL);                                                              //C0374：处理的公告删除失败
         }
     }
 
@@ -171,7 +173,7 @@ public class BoardServiceImpl extends ServiceImpl<BoardMapper, BoardDO> implemen
         Integer boardId=requestParam.getBoardId();
         // 1. 参数校验
         if (boardId == null || boardId <= 0) {
-            throw new ClientException("无效的公告标识号");
+            throw new UserException(INVALID_ANNOUNCE_ID);                                                               //A0701：无效的公告标识号
         }
         // 2. 根据boardId获取公告
         BoardDO existingBoard = lambdaQuery()
@@ -180,13 +182,13 @@ public class BoardServiceImpl extends ServiceImpl<BoardMapper, BoardDO> implemen
                 .one();
 
         if (existingBoard == null) {
-            throw new ServiceException("公告不存在或已被删除");
+            throw new ServiceException(ANNOUNCE_NOT_FOUND);                                                             //C0373：处理的公告不存在或已删除
         }
         LambdaUpdateWrapper<BoardDO> set = Wrappers.lambdaUpdate(BoardDO.class)
                 .set(BoardDO::getStatus, 1);
         int update = boardMapper.update(existingBoard, set);
         if (update==0) {
-            throw new ServiceException("公告发布失败");
+            throw new ServiceException(ANNOUNCE_PUBLISH_FAIL);                                                          //C0376：处理的公告发布失败
         }
 
     }
@@ -199,16 +201,16 @@ public class BoardServiceImpl extends ServiceImpl<BoardMapper, BoardDO> implemen
         Integer boardId=requestParam.getBoardId();
         // 1. 参数校验
         if (boardId == null || boardId <= 0) {
-            throw new ClientException("无效的公告标识号");
+            throw new UserException(INVALID_ANNOUNCE_ID);                                                               //A0701：无效的公告标识号
         }
         BoardDO restoredBoard = boardMapper.selectRestoreByBoardId(1,requestParam.getBoardId());
         if (restoredBoard == null) {
-            throw new ServiceException("公告不存在或已被删除");
+            throw new ServiceException(ANNOUNCE_NOT_FOUND);                                                             //C0373：处理的公告不存在或已删除
         }
         restoredBoard.setDelFlag(0);
         int update = boardMapper.restoreBoard(restoredBoard.getBoardId());
         if (update==0) {
-            throw new ServiceException("公告恢复失败");
+            throw new ServiceException(ANNOUNCE_RESTORE_FAIL);                                                          //C0375,处理的公告恢复失败
         }
     }
 
@@ -220,7 +222,7 @@ public class BoardServiceImpl extends ServiceImpl<BoardMapper, BoardDO> implemen
         Integer boardId=requestParam.getBoardId();
         // 1. 参数校验
         if (boardId == null || boardId <= 0) {
-            throw new ClientException("无效的公告标识号");
+            throw new UserException(INVALID_ANNOUNCE_ID);                                                               //A0701：无效的公告标识号
         }
 
         // 2. 根据boardId获取公告
@@ -230,12 +232,12 @@ public class BoardServiceImpl extends ServiceImpl<BoardMapper, BoardDO> implemen
                 .eq(BoardDO::getStatus, 1)
                 .one();
         if (existingBoard == null) {
-            throw new ServiceException("公告不存在或已被删除");
+            throw new ServiceException(ANNOUNCE_NOT_FOUND);                                                             //C0373：处理的公告不存在或已删除
         }
         existingBoard.setStatus(2);
         int update = boardMapper.update(existingBoard, null);
         if (update==0) {
-            throw new ServiceException("公告下架失败");
+            throw new ServiceException(ANNOUNCE_OFFLINE_FAIL);                                                          //C0377：处理的公告下架失败
         }
     }
 
@@ -273,16 +275,16 @@ public class BoardServiceImpl extends ServiceImpl<BoardMapper, BoardDO> implemen
 
     private <T extends BoardBaseDTO> void validateAOURequestParam(T requestParam) {
         if (requestParam == null) {
-            throw new ClientException("请求参数不能为空");
+            throw new UserException(EMPTY_PARAM);                                                                       //A0002：请求参数为空
         }
         if (StringUtils.isBlank(requestParam.getTitle())) {
-            throw new ClientException("公告标题不能为空");
+            throw new UserException(ANNOUNCE_EMPTY_TITLE);                                                              //A0704：公告标题为空
         }
         if (StringUtils.isBlank(requestParam.getContent())) {
-            throw new ClientException("公告内容不能为空");
+            throw new UserException(ANNOUNCE_EMPTY_CONTENT);                                                            //A0703：公告内容为空
         }
         if (requestParam.getStatus() == null) {
-            throw new ClientException("状态不能为空");
+            throw new UserException(ANNOUNCE_EMPTY_STATUS);                                                             //A0705：公告状态为空
         }
     }
 
@@ -291,7 +293,7 @@ public class BoardServiceImpl extends ServiceImpl<BoardMapper, BoardDO> implemen
                 .eq(BoardDO::getBoardId, boardId)
                 .exists();
         if (exists) {
-            throw new ServiceException("公告标识号已存在");
+            throw new UserException(ANNOUNCE_ID_EXIST);                                                                 //A0702：公告标识号已存在
         }
     }
 

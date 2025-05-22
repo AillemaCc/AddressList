@@ -5,6 +5,7 @@ import org.AList.common.convention.errorcode.IErrorCode;
 /**
  * 用户错误码定义
  */
+// todo 建议废弃，其中内容已包含在BaseErrorCode类中
 public enum UserErrorCodeEnum implements IErrorCode {
 
     USER_NULL("B000200", "学生记录不存在，请检查您的学号是否正确"),
