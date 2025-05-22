@@ -70,15 +70,23 @@ public class BoardServiceImpl extends ServiceImpl<BoardMapper, BoardDO> implemen
             throw new ServiceException(ANNOUNCE_NOT_FOUND);                                                             //C0373：处理的公告不存在或已删除
         }
 
-        // 3. DTO转DO
-        BoardDO boardDO = convertToBoardDO(requestParam);
+        // 3. 使用 LambdaUpdateWrapper 精确更新，排除 boardId
+        LambdaUpdateWrapper<BoardDO> updateWrapper = Wrappers.lambdaUpdate(BoardDO.class)
+                .eq(BoardDO::getBoardId, boardId)
+                .eq(BoardDO::getDelFlag, 0)
+                .set(BoardDO::getTitle, requestParam.getTitle())
+                .set(BoardDO::getCategory, requestParam.getCategory())
+                .set(BoardDO::getContent, requestParam.getContent())
+                .set(BoardDO::getStatus, requestParam.getStatus())
+                .set(BoardDO::getPriority, requestParam.getPriority())
+                .set(BoardDO::getCoverImage, requestParam.getCoverImage());
 
-        // 4. 更新数据库
-        int update = boardMapper.update(boardDO, null);
+        // 4. 执行更新
+        boolean updateResult = update(updateWrapper);
 
         // 5. 检查更新结果
-        if (update==0) {
-            throw new ServiceException(ANNOUNCE_UPDATE_FAIL);                                                           //C0372：处理的公告更新失败
+        if (!updateResult) {
+            throw new ServiceException(ANNOUNCE_UPDATE_FAIL);
         }
     }
 
@@ -297,10 +305,6 @@ public class BoardServiceImpl extends ServiceImpl<BoardMapper, BoardDO> implemen
     }
 
     private BoardDO convertToBoardDO(BoardAddReqDTO requestParam) {
-        return convertRequestToBoardDO(requestParam);
-    }
-
-    private BoardDO convertToBoardDO(BoardUpdateReqDTO requestParam) {
         return convertRequestToBoardDO(requestParam);
     }
 
