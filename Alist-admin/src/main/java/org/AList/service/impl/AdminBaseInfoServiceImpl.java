@@ -369,7 +369,7 @@ public class AdminBaseInfoServiceImpl implements AdminBaseInfoService {
             if(academyNameChanged){
                 updateMADO.setAcademy(requestParam.getAcademyName());
             }
-            majorAndAcademyMapper.updateById(updateMADO);
+            majorAndAcademyMapper.update(updateMADO,null);
             baseInfoCacheService.clearStudentContactCacheByMajor(requestParam.getMajorNum());
         }
 
@@ -399,7 +399,7 @@ public class AdminBaseInfoServiceImpl implements AdminBaseInfoService {
         if(academyNameChanged){
             MajorAndAcademyDO updateMADO = new MajorAndAcademyDO();
             updateMADO.setAcademy(requestParam.getAcademyName());
-            majorAndAcademyMapper.updateById(updateMADO);
+            majorAndAcademyMapper.update(updateMADO,null);
             baseInfoCacheService.clearStudentContactCacheByAcademy(requestParam.getAcademyNum());
         }
     }
