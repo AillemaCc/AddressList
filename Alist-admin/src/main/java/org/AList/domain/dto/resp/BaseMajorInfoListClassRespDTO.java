@@ -22,4 +22,23 @@ public class BaseMajorInfoListClassRespDTO {
      * 班级名称
      */
     private String className;
+    /**
+     * 专业标识号
+     */
+    private Integer majorNum;
+
+    /**
+     * 专业名称
+     */
+    private String major;
+
+    /**
+     * 学院名称
+     */
+    private String academy;
+
+    /**
+     * 学院标识号
+     */
+    private Integer academyNum;
 }

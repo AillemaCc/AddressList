@@ -40,6 +40,7 @@ public class AdminBaseInfoServiceImpl implements AdminBaseInfoService {
     private final StudentDefaultInfoMapper studentDefaultInfoMapper;
     private final RegisterMapper registerMapper;
     private final LoginLogMapper loginLogMapper;
+
     /**
      * 新增班级基本信息。
      *
@@ -197,9 +198,26 @@ public class AdminBaseInfoServiceImpl implements AdminBaseInfoService {
                 .orderByDesc(ClassInfoDO::getClassNum);
         IPage<ClassInfoDO> classInfoPage = classInfoMapper.selectPage(page, queryWrapper);
 
+        // 获取专业和学院信息
+        MajorAndAcademyDO majorAndAcademy = majorAndAcademyMapper.selectOne(Wrappers.lambdaQuery(MajorAndAcademyDO.class)
+                .eq(MajorAndAcademyDO::getMajorNum, requestParam.getMajorNum())
+                .eq(MajorAndAcademyDO::getDelFlag, 0));
+
+        // 专业和学院信息
+        final String majorName = majorAndAcademy != null ? majorAndAcademy.getMajor() : null;
+        final String academyName = majorAndAcademy != null ? majorAndAcademy.getAcademy() : null;
+        final Integer academyNum = majorAndAcademy != null ? majorAndAcademy.getAcademyNum() : null;
+
         return classInfoPage.convert(classInfoDO -> {
             BaseMajorInfoListClassRespDTO respDTO = new BaseMajorInfoListClassRespDTO();
             BeanUtils.copyProperties(classInfoDO, respDTO);
+
+            // 设置新增字段
+            respDTO.setMajorNum(requestParam.getMajorNum());
+            respDTO.setMajor(majorName);
+            respDTO.setAcademy(academyName);
+            respDTO.setAcademyNum(academyNum);
+
             return respDTO;
         });
     }
