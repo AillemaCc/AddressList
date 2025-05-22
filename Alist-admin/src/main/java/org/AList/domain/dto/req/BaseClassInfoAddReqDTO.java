@@ -34,12 +34,12 @@ public class BaseClassInfoAddReqDTO {
     private String majorName;
 
     /**
-     * 学院名称
-     */
-    private String academyName;
-
-    /**
      * 学院标识号
      */
     private Integer academyNum;
+
+    /**
+     * 学院名称
+     */
+    private String academyName;
 }

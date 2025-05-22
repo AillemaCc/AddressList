@@ -373,7 +373,8 @@ public class AdminBaseInfoServiceImpl implements AdminBaseInfoService {
             if(academyNameChanged){
                 updateMADO.setAcademy(requestParam.getAcademyName());
             }
-            majorAndAcademyMapper.updateById(updateMADO);
+            LambdaQueryWrapper<MajorAndAcademyDO> queryWrapper = Wrappers.lambdaQuery(MajorAndAcademyDO.class).eq(MajorAndAcademyDO::getMajorNum, requestParam.getMajorNum());
+            majorAndAcademyMapper.update(updateMADO,queryWrapper);
             baseInfoCacheService.clearStudentContactCacheByMajor(requestParam.getMajorNum());
         }
 
@@ -403,7 +404,8 @@ public class AdminBaseInfoServiceImpl implements AdminBaseInfoService {
         if(academyNameChanged){
             MajorAndAcademyDO updateMADO = new MajorAndAcademyDO();
             updateMADO.setAcademy(requestParam.getAcademyName());
-            majorAndAcademyMapper.updateById(updateMADO);
+            LambdaQueryWrapper<MajorAndAcademyDO> queryWrapper = Wrappers.lambdaQuery(MajorAndAcademyDO.class).eq(MajorAndAcademyDO::getAcademyNum, requestParam.getAcademyNum());
+            majorAndAcademyMapper.update(updateMADO,queryWrapper);
             baseInfoCacheService.clearStudentContactCacheByAcademy(requestParam.getAcademyNum());
         }
     }
