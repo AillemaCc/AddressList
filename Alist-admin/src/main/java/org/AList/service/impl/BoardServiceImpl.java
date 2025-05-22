@@ -9,8 +9,8 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
-import org.AList.common.convention.exception.UserException;
 import org.AList.common.convention.exception.ServiceException;
+import org.AList.common.convention.exception.UserException;
 import org.AList.domain.dao.entity.BoardDO;
 import org.AList.domain.dao.mapper.BoardMapper;
 import org.AList.domain.dto.baseDTO.BoardBaseDTO;
@@ -18,6 +18,11 @@ import org.AList.domain.dto.req.*;
 import org.AList.domain.dto.resp.BoardQueryRespDTO;
 import org.AList.service.BoardService;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+
 import static org.AList.common.convention.errorcode.BaseErrorCode.*;
 
 /**
@@ -30,12 +35,16 @@ public class BoardServiceImpl extends ServiceImpl<BoardMapper, BoardDO> implemen
     private final BoardMapper boardMapper;
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void addBoard(BoardAddReqDTO requestParam) {
         // 1. 参数校验
         validateAOURequestParam(requestParam);
 
-        // 2. 检查boardId是否已存在
-        if (requestParam.getBoardId() != null) {
+        // 2. 如果boardId为空，自动生成
+        if (requestParam.getBoardId() == null) {
+            requestParam.setBoardId(generateBoardId());
+        } else {
+            // 如果提供了boardId，检查是否已存在
             checkBoardIdNotExists(requestParam.getBoardId());
         }
 
@@ -52,6 +61,7 @@ public class BoardServiceImpl extends ServiceImpl<BoardMapper, BoardDO> implemen
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void updateBoard(BoardUpdateReqDTO requestParam) {
         Integer boardId=requestParam.getBoardId();
         // 1. 参数校验
@@ -70,19 +80,28 @@ public class BoardServiceImpl extends ServiceImpl<BoardMapper, BoardDO> implemen
             throw new ServiceException(ANNOUNCE_NOT_FOUND);                                                             //C0373：处理的公告不存在或已删除
         }
 
-        // 3. DTO转DO
-        BoardDO boardDO = convertToBoardDO(requestParam);
+        // 3. 使用 LambdaUpdateWrapper 精确更新，排除 boardId
+        LambdaUpdateWrapper<BoardDO> updateWrapper = Wrappers.lambdaUpdate(BoardDO.class)
+                .eq(BoardDO::getBoardId, boardId)
+                .eq(BoardDO::getDelFlag, 0)
+                .set(BoardDO::getTitle, requestParam.getTitle())
+                .set(BoardDO::getCategory, requestParam.getCategory())
+                .set(BoardDO::getContent, requestParam.getContent())
+                .set(BoardDO::getStatus, requestParam.getStatus())
+                .set(BoardDO::getPriority, requestParam.getPriority())
+                .set(BoardDO::getCoverImage, requestParam.getCoverImage());
 
-        // 4. 更新数据库
-        int update = boardMapper.update(boardDO, null);
+        // 4. 执行更新
+        boolean updateResult = update(updateWrapper);
 
         // 5. 检查更新结果
-        if (update==0) {
-            throw new ServiceException(ANNOUNCE_UPDATE_FAIL);                                                           //C0372：处理的公告更新失败
+        if (!updateResult) {
+            throw new ServiceException(ANNOUNCE_UPDATE_FAIL);
         }
     }
 
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void deleteBoard(BoardDeleteReqDTO requestParam) {
         Integer boardId=requestParam.getBoardId();
         // 1. 参数校验
@@ -296,11 +315,33 @@ public class BoardServiceImpl extends ServiceImpl<BoardMapper, BoardDO> implemen
         }
     }
 
-    private BoardDO convertToBoardDO(BoardAddReqDTO requestParam) {
-        return convertRequestToBoardDO(requestParam);
+    private Integer generateBoardId() {
+        // 使用当前时间戳的后8位数字作为基础ID
+        // 格式：YYYYMMDD + 3位序号 (如: 2025052201)
+        LocalDateTime now = LocalDateTime.now();
+        String dateStr = now.format(DateTimeFormatter.ofPattern("yyyyMMdd"));
+
+        // 查询当天已有的最大序号
+        Integer maxTodayId = boardMapper.selectMaxBoardIdByPrefix(dateStr);
+
+        int sequence = 1;
+        if (maxTodayId != null) {
+            // 提取序号部分并加1
+            String maxIdStr = String.valueOf(maxTodayId);
+            if (maxIdStr.length() > 8) {
+                sequence = Integer.parseInt(maxIdStr.substring(8)) + 1;
+            }
+        }
+
+        // 确保序号不超过3位数（最大999）
+        if (sequence > 999) {
+            throw new ServiceException("当日公告数量已达上限");
+        }
+
+        return Integer.valueOf(dateStr + String.format("%03d", sequence));
     }
 
-    private BoardDO convertToBoardDO(BoardUpdateReqDTO requestParam) {
+    private BoardDO convertToBoardDO(BoardAddReqDTO requestParam) {
         return convertRequestToBoardDO(requestParam);
     }
 

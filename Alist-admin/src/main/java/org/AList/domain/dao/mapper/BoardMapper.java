@@ -21,4 +21,7 @@ public interface BoardMapper extends BaseMapper<BoardDO> {
 
     @Update("UPDATE t_bulletin_board SET del_flag = 0 WHERE board_id=#{boardId} AND del_flag = 1 ")
     int restoreBoard(@Param("boardId") Integer boardId);
+
+    @Select("SELECT MAX(board_id) FROM t_board WHERE board_id LIKE CONCAT(#{prefix}, '%') AND del_flag = 0")
+    Integer selectMaxBoardIdByPrefix(@Param("prefix") String prefix);
 }

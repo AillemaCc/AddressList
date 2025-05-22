@@ -82,6 +82,16 @@ public class RedisKeyGenerator {
     }
 
     /**
+     * 生成学生搜索缓存 Key
+     */
+    public static String genStudentSearchCacheKey(String name, Integer current, Integer size) {
+        String nameParam = name != null ? name : "all";
+        Integer currentParam = current != null ? current : 0;
+        Integer sizeParam = size != null ? size : 10;
+        return String.format(RedisKeyTemplates.STUDENT_SEARCH_CACHE, nameParam, currentParam, sizeParam);
+    }
+
+    /**
      * 生成班级--学生信息分页查询缓存 Key
      */
     public static String genClassPageStudentsFullContactInfo(Integer classNum, Integer current, Integer size) {
