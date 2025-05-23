@@ -120,7 +120,14 @@ public class OperLogAspect {
             }
             operLog.setRequestParam(params); // 请求参数
             operLog.setResponseResult(JSON.toJSONString(result)); // 返回结果
-            operLog.setOperName(AdminContext.getAdminister());
+            String administerName=null;
+            if(request!=null){
+                administerName=request.getHeader("username");
+                if(administerName==null||administerName.isEmpty()){
+                    administerName="administer";
+                }
+            }
+            operLog.setOperName(administerName);
             if (request != null) {
                 operLog.setIp(LinkUtil.getActualIp(request));
             }
@@ -183,14 +190,10 @@ public class OperLogAspect {
                 operLog.setRequestMethod(request.getMethod());//设置请求方式
             }
             operLog.setRequestParam(params); // 请求参数
-            String administerName=null;
-            if(request!=null){
-                administerName=request.getHeader("username");
-                if(administerName==null||administerName.isEmpty()){
-                    administerName="administer";
-                }
+            if(AdminContext.getAdminister()==null){
+                operLog.setOperName("Login");
             }
-            operLog.setOperName(administerName);
+            operLog.setOperName(AdminContext.getAdminister());
             if (request != null) {
                 operLog.setIp(LinkUtil.getActualIp(request));
             }
