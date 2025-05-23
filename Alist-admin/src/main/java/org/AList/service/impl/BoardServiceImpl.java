@@ -9,6 +9,7 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
+import org.AList.common.convention.exception.ClientException;
 import org.AList.common.convention.exception.ServiceException;
 import org.AList.common.convention.exception.UserException;
 import org.AList.domain.dao.entity.BoardDO;
@@ -289,6 +290,29 @@ public class BoardServiceImpl extends ServiceImpl<BoardMapper, BoardDO> implemen
                 .orderByDesc(BoardDO::getCreateTime);// 再按创建时间降序
         IPage<BoardDO> boardPage=page(new Page<>(current,size),queryWrapper);
         return boardPage.convert(this::convertToBoardQueryRespDTO);
+    }
+
+    @Override
+    public BoardQueryRespDTO queryBoardById(BoardQueryByIdReqDTO requestParam) {
+        Integer boardId = requestParam.getBoardId();
+
+        // 1. 参数校验
+        if (boardId == null || boardId <= 0) {
+            throw new ClientException("无效的公告标识号");
+        }
+
+        // 2. 根据boardId查询公告
+        BoardDO existingBoard = lambdaQuery()
+                .eq(BoardDO::getBoardId, boardId)
+                .eq(BoardDO::getDelFlag, 0)
+                .one();
+
+        if (existingBoard == null) {
+            throw new ServiceException("公告不存在或已被删除");
+        }
+
+        // 3. 转换为响应DTO并返回
+        return convertToBoardQueryRespDTO(existingBoard);
     }
 
     private <T extends BoardBaseDTO> void validateAOURequestParam(T requestParam) {

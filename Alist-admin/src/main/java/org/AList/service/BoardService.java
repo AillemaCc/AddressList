@@ -62,4 +62,6 @@ public interface BoardService {
      * 分页查询所有草稿
      */
     IPage<BoardQueryRespDTO> queryAllDraft(BoardQueryReqDTO requestParam);
+
+    BoardQueryRespDTO queryBoardById(BoardQueryByIdReqDTO requestParam);
 }
