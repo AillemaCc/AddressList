@@ -118,8 +118,16 @@ public class OperLogAspect{
                 operLog.setRequestMethod(request.getMethod());//设置请求方式
             }
             operLog.setRequestParam(params); // 请求参数
-            operLog.setResponseResult(JSON.toJSONString(result)); // 返回结果
-            operLog.setOperName(StuIdContext.getStudentId());
+            operLog.setResponseResult(JSON.toJSONString(result));
+            String studentId = null;
+            if (request != null) {
+                studentId = request.getHeader("studentId");
+                if (studentId == null || studentId.isEmpty()) {
+                    studentId = "anonymous";
+                }
+            }
+            // 返回结果
+            operLog.setOperName(studentId);
             if (request != null) {
                 operLog.setIp(LinkUtil.getActualIp(request));
             }
