@@ -5,6 +5,7 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.AList.annotation.Idempotent;
+import org.AList.common.convention.errorcode.BaseErrorCode;
 import org.AList.common.convention.exception.ClientException;
 import org.AList.common.convention.exception.ServiceException;
 import org.AList.common.convention.exception.UserException;
@@ -26,6 +27,7 @@ import org.AList.service.StuService;
 import org.AList.service.StuToken.TokenPair;
 import org.AList.service.StuToken.TokenService;
 import org.AList.utils.LinkUtil;
+import org.AList.utils.SentinelUtils;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.dao.DuplicateKeyException;
@@ -55,6 +57,13 @@ public class StuServiceImpl extends ServiceImpl<StudentFrameWorkMapper, StudentF
     private final AbstractChainContext<StuRegisterReqDTO> abstractChainContext;
     private final TokenService tokenService;
 
+    @Override
+    public StuLoginRespDTO login(StuLoginReqDTO requestParam, HttpServletRequest request) {
+        return SentinelUtils.executeWithSentinel("stu-login",
+                () -> performLogin(requestParam, request),
+                BaseErrorCode.FLOW_LIMIT_ERR,
+                "登录请求过于频繁，请稍后再试");
+    }
     /**
      * 学生登录接口实现
      * <p>
@@ -68,8 +77,7 @@ public class StuServiceImpl extends ServiceImpl<StudentFrameWorkMapper, StudentF
      * @see StuLoginReqDTO
      * @see StuLoginRespDTO
      */
-    @Override
-    public StuLoginRespDTO login(StuLoginReqDTO requestParam, HttpServletRequest request) {
+    public StuLoginRespDTO performLogin(StuLoginReqDTO requestParam, HttpServletRequest request) {
         LambdaQueryWrapper<StudentFrameworkDO> queryWrapper = Wrappers.lambdaQuery(StudentFrameworkDO.class)
                 .eq(StudentFrameworkDO::getStudentId, requestParam.getStudentId())
                 .eq(StudentFrameworkDO::getPassword, requestParam.getPassword())

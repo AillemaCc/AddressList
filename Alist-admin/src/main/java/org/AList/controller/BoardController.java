@@ -19,6 +19,11 @@ public class BoardController {
 
     private final BoardService boardService;
 
+    @GetMapping("/queryById")
+    public Result<BoardQueryRespDTO> queryBoardById(@RequestBody BoardQueryByIdReqDTO requestParam){
+        return Results.success(boardService.queryBoardById(requestParam));
+    }
+
     /**
      * 新增公告--默认保存为草稿
      */

@@ -1,5 +1,6 @@
 package org.AList.config;
 
+import org.AList.common.biz.user.SentinelFlowControlFilter;
 import org.AList.common.biz.user.StuTransmitFilter;
 import org.AList.service.StuToken.TokenService;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
@@ -21,4 +22,15 @@ public class StuConfiguration {
         registration.setOrder(0);
         return registration;
     }
+
+    @Bean
+    public FilterRegistrationBean<SentinelFlowControlFilter> sentinelFlowControlFilter() {
+        FilterRegistrationBean<SentinelFlowControlFilter> registration = new FilterRegistrationBean<>();
+        registration.setFilter(new SentinelFlowControlFilter());
+        registration.addUrlPatterns("/api/stu/*");
+        registration.setOrder(1); // 在StuTransmitFilter之后执行
+        return registration;
+    }
+
+
 }
