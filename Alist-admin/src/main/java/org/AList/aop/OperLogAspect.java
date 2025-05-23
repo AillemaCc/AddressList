@@ -183,10 +183,14 @@ public class OperLogAspect {
                 operLog.setRequestMethod(request.getMethod());//设置请求方式
             }
             operLog.setRequestParam(params); // 请求参数
-            if(AdminContext.getAdminister()==null){
-                operLog.setOperName("Login");
+            String administerName=null;
+            if(request!=null){
+                administerName=request.getHeader("username");
+                if(administerName==null||administerName.isEmpty()){
+                    administerName="administer";
+                }
             }
-            operLog.setOperName(AdminContext.getAdminister());
+            operLog.setOperName(administerName);
             if (request != null) {
                 operLog.setIp(LinkUtil.getActualIp(request));
             }

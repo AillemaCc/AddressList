@@ -9,7 +9,6 @@ public final class StudentRegisterVerifyPasswordSafe implements StudentRegisterC
     @Override
     public void handler(StuRegisterReqDTO requestParam) {
         String password = requestParam.getPassword();
-        // todo 抽象错误码
         if (password == null || password.trim().isEmpty()) {
             throw new UserException(PWD_EMPTY);                                                                         //A0121：密码为空
         }
