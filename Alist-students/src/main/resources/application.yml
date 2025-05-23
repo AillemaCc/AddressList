@@ -29,6 +29,19 @@ app:
     group: contact-group
     consumer-id: consumer-1
     poll-timeout: 1000
+  sentinel:
+    enabled: true
+    flow-control:
+      system-qps: 1000
+      user-qps: 50
+      param-qps: 10
+    circuit-breaker:
+      error-ratio: 0.5
+      slow-call-ratio: 0.6
+      time-window: 10
+    system-protection:
+      highest-cpu-usage: 0.8
+      highest-system-load: 10.0
 
 
 mybatis-plus:
@@ -41,10 +54,8 @@ mybatis-plus:
       logic-delete-value: 1
       logic-not-delete-value: 0
       id-type: auto
+
 jwt:
   # 为JWT基础信息加密和解密的密钥，长度需要大于等于43
   # 在实际生产中通常不直接写在配置文件里面。而是通过应用的启动参数传递，并且需要定期修改
   secret: "VGhpcyBpcyBhIHNlY3JldCBrZXkhVGhpcyBpcyBhIHNlY3JldCBrZXkhVGhpcyBpcyBhIHNlY3JldCBrZXkhVGhpcyBpcyBhIHNlY3JldCBrZXkh"
-  # JWT令牌的有效时间，单位秒，默认2周
-  expiration: 1209600
-  token: tk-auth
