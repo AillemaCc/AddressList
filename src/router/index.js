@@ -22,8 +22,9 @@ import admin_query from '@/views/admin/query/index.vue'
 import admin_login from '@/views/admin/login/index.vue'
 import admin_bulletin_draft from '@/views/admin/bulletin/draft.vue'
 import admin_bulletin_released from '@/views/admin/bulletin/released.vue'
-import admin_bulletin_pulledOf from '@/views/admin/bulletin/pulledOf.vue'
+import admin_bulletin_pulledOff from '@/views/admin/bulletin/pulledOff.vue'
 import admin_bulletin_deleted from '@/views/admin/bulletin/deleted.vue'
+import admin_bulletin_edit from '@/views/admin/bulletin/edit.vue'
 
 import { useStuInfoStore } from '@/stores/stuInfo'
 import { stuGetRemarkApi } from '@/apis/stu/stuLogin'
@@ -95,12 +96,16 @@ const router = createRouter({
               component: admin_bulletin_released,
             },
             {
-              path: 'bulletin_pulledOf',
-              component: admin_bulletin_pulledOf,
+              path: 'bulletin_pulledOff',
+              component: admin_bulletin_pulledOff,
             },
             {
               path: 'bulletin_deleted',
               component: admin_bulletin_deleted,
+            },
+            {
+              path: 'bulletin_edit',
+              component: admin_bulletin_edit,
             },
           ],
         },
@@ -124,35 +129,35 @@ const cantAccessPath = [
   '/stu/query',
 ]
 
-router.beforeEach((to, from, next) => {
-  const stuInfoStore = useStuInfoStore()
-  if (cantAccessPath.includes(to.fullPath)) {
-    const token = stuInfoStore.stuInfo.studentToken
-    //判断是否存在token
-    if (token) {
-      //存在,用户查询注册审核结果
-      const studentId = stuInfoStore.stuInfo.studentId
-      stuGetRemarkApi({
-        studentId: studentId.value,
-        registerToken: token.value,
-      }).then((res) => {
-        console.log(res)
-        if (res.data.status === 1) {
-          next()
-        } else if (res.data.status === 2 || res.data.status === 3) {
-          next(`/stu/wait?status=${res.data.status}`)
-        } else {
-          next() //正式连接后修改
-        }
-      })
-    } else {
-      //不存在
-      next('/stu/login')
-    }
-  } else {
-    next()
-  }
-  console.log(to)
-})
+// router.beforeEach((to, from, next) => {
+//   const stuInfoStore = useStuInfoStore()
+//   if (cantAccessPath.includes(to.fullPath)) {
+//     const token = stuInfoStore.stuInfo.studentToken
+//     //判断是否存在token
+//     if (token) {
+//       //存在,用户查询注册审核结果
+//       const studentId = stuInfoStore.stuInfo.studentId
+//       stuGetRemarkApi({
+//         studentId: studentId.value,
+//         registerToken: token.value,
+//       }).then((res) => {
+//         console.log(res)
+//         if (res.data.status === 1) {
+//           next()
+//         } else if (res.data.status === 2 || res.data.status === 3) {
+//           next(`/stu/wait?status=${res.data.status}`)
+//         } else {
+//           next() //正式连接后修改
+//         }
+//       })
+//     } else {
+//       //不存在
+//       next('/stu/login')
+//     }
+//   } else {
+//     next()
+//   }
+//   console.log(to)
+// })
 
 export default router

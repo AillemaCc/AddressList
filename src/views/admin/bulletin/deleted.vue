@@ -1,3 +1,37 @@
+<script setup>
+import { ref } from 'vue'
+import no_img from '../../../assets/imgs/no_img.png'
+import { ElMessage } from 'element-plus'
+import { adminDisplayDeletedApi } from '@/apis/admin/bulletin'
+
+const announcements = ref([])
+const current = ref(1)
+const total = ref(0)
+const pages = ref(0)
+
+async function getDeleted(num) {
+  const res = await adminDisplayDeletedApi({ current: num })
+  if (res.success) {
+    announcements.value = res.data.records
+    total.value = res.data.total
+    pages.value = res.data.pages
+  } else {
+    ElMessage.error(res.message)
+  }
+}
+getDeleted(1)
+const changePage = (val) => {
+  current.value = val
+  getReleased(val)
+}
+// 状态文本映射
+const statusText = {
+  0: '草稿',
+  1: '已发布',
+  2: '已下架',
+}
+</script>
+
 <template>
   <div class="announcement-board">
     <!-- 进度条 -->
@@ -21,95 +55,69 @@
     <!-- 主要区域 -->
     <div class="main-container">
       <div class="header-container">
-        <div class="header-title">已删除公告</div>
+        <div class="header-title">已删除公告（{{ total }}条）</div>
+        <router-link to="/admin/bulletin_edit"
+          ><button class="add-button">
+            <span>新增公告</span>
+          </button></router-link
+        >
       </div>
       <div class="content-container">
-        <div
-          class="board-item"
-          v-for="(item, index) in announcements"
-          :key="index"
-        >
-          <div class="item-info">
-            <!-- 公告头部信息 -->
-            <div class="item-header">
-              <span class="category">{{ item.category }}</span>
-              <span class="priority">优先级: {{ item.priority }}</span>
-              <span class="status" :class="`status-${item.status}`">{{
-                statusText[item.status]
-              }}</span>
+        <div class="data-exist" v-if="announcements.length > 0">
+          <div
+            class="board-item"
+            v-for="(item, index) in announcements"
+            :key="index"
+          >
+            <div class="item-info">
+              <!-- 公告头部信息 -->
+              <div class="item-header">
+                <span class="category">{{ item.category }}</span>
+                <span class="priority">优先级: {{ item.priority }}</span>
+                <span class="status" :class="`status-${item.status}`">{{
+                  statusText[item.status]
+                }}</span>
+              </div>
+
+              <!-- 公告主体内容 -->
+              <h2 class="item-title">{{ item.title }}</h2>
+              <div class="item">
+                <div class="item-desc">创建时间</div>
+                ：
+                <div class="item-body">{{ item.createTime }}</div>
+              </div>
+              <div class="item">
+                <div class="item-desc">最近更新时间</div>
+                ：
+                <div class="item-body">{{ item.updateTime }}</div>
+              </div>
             </div>
 
-            <!-- 公告主体内容 -->
-            <h2 class="item-title">{{ item.title }}</h2>
+            <div class="item-img">
+              <div class="cover-image">
+                <img :src="item.coverImage || no_img" alt="公告封面" />
+              </div>
+            </div>
           </div>
-
-          <div class="item-img">
-            <div class="cover-image">
-              <img :src="item.coverImage || no_img" alt="公告封面" />
-            </div>
+          <div class="example-pagination-block">
+            <!-- total除以10，向上取整就是最大页数，total可以表示为请求总条数，配合size使用 -->
+            <el-pagination
+              layout="prev, pager, next"
+              :total="total"
+              v-model:current-page="current"
+              @current-change="changePage"
+            />
           </div>
         </div>
+        <el-empty
+          class="data-non-exist"
+          description="暂时没有该类公告"
+          v-else
+        />
       </div>
     </div>
   </div>
 </template>
-
-<script setup>
-import { ref } from 'vue'
-import no_img from '../../../assets/imgs/no_img.png'
-import txlimg from '../../../assets/imgs/txl.png'
-
-const announcements = ref([
-  {
-    title: '22222222222222',
-    boardId: 0,
-    category: '测试分类',
-    content: '测试内容2',
-    status: 2,
-    priority: '0',
-    coverImage: null,
-  },
-  {
-    title: '111111111111111',
-    boardId: 0,
-    category: '测试分类5',
-    content: '测试内容4',
-    status: 1,
-    priority: '0',
-    coverImage: txlimg,
-  },
-  {
-    title: '111111111111111',
-    boardId: 0,
-    category: '测试分类2',
-    content: '测试内容1',
-    status: 0,
-    priority: '0',
-    coverImage: txlimg,
-  },
-  {
-    title: '111111111111111',
-    boardId: 0,
-    category: '测试分类2',
-    content: '测试内容1',
-    status: 2,
-    priority: '0',
-    coverImage: txlimg,
-  },
-])
-
-// 状态文本映射
-const statusText = {
-  0: '草稿',
-  1: '已发布',
-  2: '已下架',
-}
-
-// 按优先级排序的公告列表
-// const sortedAnnouncements = computed(() => {
-//   return [...announcements].sort((a, b) => +b.priority - +a.priority)
-// })
-</script>
 
 <style scoped lang="scss">
 .announcement-board {
@@ -143,15 +151,30 @@ const statusText = {
     font-size: 20px;
     color: $mainColor;
   }
+  .add-button {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    background-color: #409eff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    &:hover {
+      background-color: #66b1ff;
+    }
+  }
 }
 .content-container {
   display: flex;
   flex-direction: column;
-  gap: 20px;
   .board-item {
     display: flex;
     width: 100%;
     height: 150px;
+    margin: 20px 0;
     padding: 14px;
     border-radius: 8px;
     background-color: #fff;
@@ -208,6 +231,39 @@ const statusText = {
       font-weight: 500;
       color: #333;
     }
+    .item {
+      display: flex;
+      align-items: center;
+      margin: 4px 0;
+      font-size: 14px;
+      color: #666;
+
+      .item-desc {
+        width: 100px;
+        text-align: right;
+        color: #999;
+        font-weight: 400;
+        margin-right: 8px;
+      }
+
+      .item-body {
+        flex: 1;
+        color: #333;
+        font-weight: 500;
+        margin-left: 8px;
+        word-break: break-all;
+      }
+
+      &:before {
+        content: '';
+        display: inline-block;
+        width: 4px;
+        height: 4px;
+        background-color: #ddd;
+        border-radius: 50%;
+        margin-right: 8px;
+      }
+    }
   }
   .item-img {
     width: 122px;
@@ -258,5 +314,10 @@ const statusText = {
       }
     }
   }
+}
+.example-pagination-block {
+  display: flex;
+  justify-content: center;
+  margin-top: 10px;
 }
 </style>

@@ -64,7 +64,9 @@ function loginout() {
             </template>
             <el-menu-item index="/admin/bulletin_draft">草稿</el-menu-item>
             <el-menu-item index="/admin/bulletin_released">已发布</el-menu-item>
-            <el-menu-item index="/admin/bulletin_pulledOf">已下架</el-menu-item>
+            <el-menu-item index="/admin/bulletin_pulledOff"
+              >已下架</el-menu-item
+            >
             <el-menu-item index="/admin/bulletin_deleted">已删除</el-menu-item>
           </el-sub-menu>
         </el-menu>
@@ -144,7 +146,7 @@ function loginout() {
       }
     }
     .router-container {
-      padding-left: 40px;
+      padding: 0 40px;
       flex: 1;
     }
   }

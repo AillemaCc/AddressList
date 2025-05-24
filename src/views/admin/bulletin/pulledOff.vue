@@ -4,16 +4,16 @@ import no_img from '../../../assets/imgs/no_img.png'
 import { ElMessage } from 'element-plus'
 import {
   adminDeleteBulletinApi,
-  adminPulloffReleasedApi,
-  adminDisplayReleasedApi,
+  adminRestorePulloffApi,
+  adminDisplayPulloffApi,
 } from '@/apis/admin/bulletin'
 
 const announcements = ref([])
 const current = ref(1)
 const total = ref(0)
 const pages = ref(0)
-async function getReleased(num) {
-  const res = await adminDisplayReleasedApi({ current: num })
+async function getPulloff(num) {
+  const res = await adminDisplayPulloffApi({ current: num })
   if (res.success) {
     announcements.value = res.data.records
     total.value = res.data.total
@@ -22,10 +22,11 @@ async function getReleased(num) {
     ElMessage.error(res.message)
   }
 }
-getReleased(1)
+getPulloff(1)
+
 const changePage = (val) => {
   current.value = val
-  getReleased(val)
+  getPulloff(val)
 }
 // 状态文本映射
 const statusText = {
@@ -34,23 +35,21 @@ const statusText = {
   2: '已下架',
 }
 
-// 下架已发布公告
-const pulloffRelease = async (boardId) => {
-  const res = await adminPulloffReleasedApi({ boardId })
+const restorePulloff = async (boardId) => {
+  const res = await adminRestorePulloffApi({ boardId })
   if (res.success) {
     const index = announcements.value.findIndex(
       (item) => item.boardId === boardId,
     )
     announcements.value.splice(index, 1)
-
     if (announcements.value.length === 0) {
       if (current.value === 1) {
         if (pages.value !== 1) {
-          getReleased(1)
+          getPulloff(1)
         }
       } else {
         current.value--
-        getReleased(current.value)
+        getPulloff(current.value)
       }
     }
     ElMessage.success(res.message)
@@ -58,7 +57,6 @@ const pulloffRelease = async (boardId) => {
     ElMessage.error(res.message)
   }
 }
-//删除公告
 const deleteBulletin = async (boardId) => {
   const res = await adminDeleteBulletinApi({ boardId })
   if (res.success) {
@@ -69,11 +67,11 @@ const deleteBulletin = async (boardId) => {
     if (announcements.value.length === 0) {
       if (current.value === 1) {
         if (pages.value !== 1) {
-          getReleased(1)
+          getPulloff(1)
         }
       } else {
         current.value--
-        getReleased(current.value)
+        getPulloff(current.value)
       }
     }
     ElMessage.success(res.message)
@@ -90,7 +88,7 @@ const deleteBulletin = async (boardId) => {
       class="process-container"
       :space="200"
       direction="vertical"
-      :active="1"
+      :active="2"
       finish-status="success"
     >
       <el-step title="新增公告" description="新增的公告默认为草稿" />
@@ -106,7 +104,7 @@ const deleteBulletin = async (boardId) => {
     <!-- 主要区域 -->
     <div class="main-container">
       <div class="header-container">
-        <div class="header-title">已发布公告（{{ total }}条）</div>
+        <div class="header-title">已下架公告（{{ total }}条）</div>
         <router-link to="/admin/bulletin_edit"
           ><button class="add-button">
             <span>新增公告</span>
@@ -154,8 +152,8 @@ const deleteBulletin = async (boardId) => {
               <router-link :to="`/admin/bulletin_edit?id=${item.boardId}`"
                 ><button class="edit">编辑</button></router-link
               >
-              <button class="release" @click="pulloffRelease(item.boardId)">
-                下架
+              <button class="release" @click="restorePulloff(item.boardId)">
+                恢复
               </button>
               <button class="delete" @click="deleteBulletin(item.boardId)">
                 删除

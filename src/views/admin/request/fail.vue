@@ -8,11 +8,26 @@ import { ref } from 'vue'
 import { ElMessage } from 'element-plus'
 //获取待审核请求
 const fail_request = ref([])
-async function getFailRequest() {
-  const res = await adminDisplayFailRequestApi()
-  fail_request.value = res.data.records
+// 分页相关变量
+const currentPage = ref(1)
+const total = ref(0)
+async function getFailRequest(num) {
+  const res = await adminDisplayFailRequestApi({ current: num })
+  if (res.success) {
+    fail_request.value = res.data.records
+    currentPage.value = res.data.current
+    total.value = res.data.total
+  } else {
+    ElMessage.error(res.message)
+  }
 }
-getFailRequest()
+getFailRequest(1)
+
+// 分页改变处理
+const handleCurrentChange = (val) => {
+  currentPage.value = val
+  getFailRequest()
+}
 
 //同意请求按钮
 async function successClick(studentId) {
@@ -22,6 +37,16 @@ async function successClick(studentId) {
       (item) => item.studentId === studentId,
     )
     fail_request.value.splice(index, 1)
+    if (fail_request.value.length === 0) {
+      if (current.value === 1) {
+        if (pages.value !== 1) {
+          getFailRequest(1)
+        }
+      } else {
+        current.value--
+        getFailRequest(current.value)
+      }
+    }
     ElMessage.success(res.message)
   } else {
     ElMessage.error(res.message)
@@ -51,6 +76,16 @@ async function rejectClick() {
       (item) => item.studentId === rejectStudentId.value,
     )
     fail_request.value.splice(index, 1)
+    if (fail_request.value.length === 0) {
+      if (current.value === 1) {
+        if (pages.value !== 1) {
+          getFailRequest(1)
+        }
+      } else {
+        current.value--
+        getFailRequest(current.value)
+      }
+    }
     ElMessage.success(res.message)
   } else {
     ElMessage.error(res.message)
@@ -88,7 +123,7 @@ async function rejectClick() {
   </div>
 
   <div class="container">
-    <div class="title">待审核请求</div>
+    <div class="title">待审核请求（{{ total }}条）</div>
     <div class="data-exist" v-if="fail_request.length > 0">
       <el-table :data="fail_request" style="width: 100%">
         <el-table-column prop="id" label="学生ID" width="80" />
@@ -123,7 +158,9 @@ async function rejectClick() {
         <!-- total除以10，向上取整就是最大页数，total可以表示为请求总条数，配合size使用 -->
         <el-pagination
           layout="prev, pager, next"
-          :total="fail_request.length"
+          :total="total"
+          :current-page="currentPage"
+          @current-change="handleCurrentChange"
         />
       </div>
     </div>

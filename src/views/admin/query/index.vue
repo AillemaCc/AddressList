@@ -1,4 +1,5 @@
 <script setup>
+import { adminBanStudentApi, adminUnbanStudentApi } from '@/apis/admin/ban'
 import {
   adminDisplayMajorApi,
   adminDisplayClassApi,
@@ -12,8 +13,19 @@ import { ref, computed } from 'vue'
 
 const radio1 = ref('')
 const searchInput = ref('')
-const current = ref(1)
 const dialogTitle = ref('')
+
+const majorCurrent = ref(1)
+const majorPages = ref(0)
+const majorTotal = ref(0)
+
+const classCurrent = ref(1)
+const classPages = ref(0)
+const classTotal = ref(0)
+
+const studentCurrent = ref(1)
+const studentPages = ref(0)
+const studentTotal = ref(0)
 
 // 获取查询到的专业
 const majors = ref([])
@@ -22,7 +34,14 @@ async function getMajor(current) {
     academyNum: +searchInput.value,
     current,
   })
-  majors.value = res.data.records
+  if (res.success) {
+    majors.value = res.data.records
+    majorCurrent.value = res.data.current
+    majorPages.value = res.data.pages
+    majorTotal.value = res.data.total
+  } else {
+    ElMessage.error(res.message)
+  }
 }
 
 // 获取查询到的班级
@@ -32,7 +51,14 @@ async function getClass(current) {
     majorNum: +searchInput.value,
     current,
   })
-  classes.value = res.data.records
+  if (res.success) {
+    classes.value = res.data.records
+    classCurrent.value = res.data.current
+    classPages.value = res.data.pages
+    classTotal.value = res.data.total
+  } else {
+    ElMessage.error(res.message)
+  }
 }
 
 // 获取查询到的学生
@@ -42,7 +68,27 @@ async function getStudent(current) {
     classNum: searchInput.value,
     current,
   })
-  students.value = res.data.records
+  if (res.success) {
+    students.value = res.data.records
+    studentCurrent.value = res.data.current
+    studentPages.value = res.data.pages
+    studentTotal.value = res.data.total
+  } else {
+    ElMessage.error(res.message)
+  }
+}
+// 分页改变时的处理
+const handleCurrentChange = (val) => {
+  if (radio1.value === '查询个人') {
+    studentCurrent.value = val
+    getStudent(val)
+  } else if (radio1.value === '查询班级') {
+    classCurrent.value = val
+    getClass(val)
+  } else if (radio1.value === '查询专业') {
+    majorCurrent.value = val
+    getMajor(val)
+  }
 }
 
 // 点击搜索的类别
@@ -71,6 +117,7 @@ const inputPlaceHolder = computed(() => {
   }
 })
 
+//点击单选框清空输入框
 function clearInput() {
   searchInput.value = ''
 }
@@ -83,6 +130,7 @@ const editMajor_majorName = ref('')
 const editMajor_academyNum = ref(0)
 const editMajor_academyName = ref('')
 
+//打开编辑专业框
 function openEditMajor(majorNum, majorName, academyNum, academyName) {
   dialogTitle.value = '编辑专业信息'
   originalMajorNum.value = majorNum
@@ -93,6 +141,7 @@ function openEditMajor(majorNum, majorName, academyNum, academyName) {
   majorDialogVisible.value = true
 }
 
+//点击确认更新专业信息
 async function updateMajor() {
   const res = await adminUpdateMajorApi({
     majorNum: editMajor_majorNum.value,
@@ -129,6 +178,7 @@ const editClass_majorName = ref('')
 const editClass_academyNum = ref(0)
 const editClass_academyName = ref('')
 
+//打开编辑班级框
 function openEditClass(
   title,
   classNum,
@@ -149,6 +199,7 @@ function openEditClass(
   classDialogVisible.value = true
 }
 
+//根据打开的编辑框的不同标题确认是新增班级还是修改班级信息
 async function updateClass() {
   if (dialogTitle.value === '编辑班级信息') {
     const res = await adminUpdateClassApi({
@@ -160,6 +211,7 @@ async function updateClass() {
       academyName: editClass_academyName.value,
     })
     if (res.success) {
+      //回显到原表格
       const index = classes.value.findIndex(
         (item) => item.classNum === originalClassNum.value,
       )
@@ -178,7 +230,7 @@ async function updateClass() {
       ElMessage.error(res.message)
     }
   } else if (dialogTitle.value === '新增班级') {
-    const res = await adminUpdateClassApi({
+    const res = await adminAddClassApi({
       classNum: editClass_classNum.value,
       className: editClass_className.value,
       majorNum: editClass_majorNum.value,
@@ -196,7 +248,24 @@ async function updateClass() {
   classDialogVisible.value = false
 }
 
-//新增班级
+//禁用学生
+async function ban(studentId) {
+  const res = await adminBanStudentApi({ studentId })
+  if (res.success) {
+    ElMessage.success(res.message)
+  } else {
+    ElMessage.error(res.message)
+  }
+}
+//解禁学生
+async function unban(studentId) {
+  const res = await adminUnbanStudentApi({ studentId })
+  if (res.success) {
+    ElMessage.success(res.message)
+  } else {
+    ElMessage.error(res.message)
+  }
+}
 </script>
 
 <template>
@@ -285,8 +354,13 @@ async function updateClass() {
         </el-table-column>
       </el-table>
 
-      <div class="example-pagination-block" v-if="majors.length > 0">
-        <el-pagination layout="prev, pager, next" :total="majors.length" />
+      <div class="example-pagination-block">
+        <el-pagination
+          layout="prev, pager, next"
+          :total="majorTotal"
+          v-model:current-page="majorCurrent"
+          @current-change="handleCurrentChange"
+        />
       </div>
     </div>
 
@@ -384,32 +458,61 @@ async function updateClass() {
         </el-table-column>
       </el-table>
 
-      <div class="example-pagination-block" v-if="classes.length > 0">
-        <el-pagination layout="prev, pager, next" :total="classes.length" />
+      <div class="example-pagination-block">
+        <el-pagination
+          layout="prev, pager, next"
+          :total="classTotal"
+          v-model:current-page="classCurrent"
+          @current-change="handleCurrentChange"
+        />
       </div>
     </div>
 
     <!-- 学生信息部分 -->
     <div class="stu-data-exist" v-else-if="radio1 === '查询个人'">
       <el-table :data="students" style="width: 100%">
-        <el-table-column prop="studentId" label="学号" width="180" />
+        <el-table-column prop="studentId" label="学号" width="160" />
         <el-table-column prop="name" label="姓名" width="100" />
         <el-table-column prop="enrollmentYear" label="入学年份" width="100" />
         <el-table-column prop="graduationYear" label="毕业年份" width="100" />
         <el-table-column prop="employer" label="就业单位" width="150" />
         <el-table-column prop="city" label="就业城市" width="100" />
-        <el-table-column prop="phone" label="手机号码" width="180" />
-        <el-table-column prop="email" label="邮箱" width="220" />
-        <el-table-column prop="registrationTime" label="注册时间" width="280" />
+        <el-table-column prop="phone" label="手机号码" width="140" />
+        <el-table-column prop="email" label="邮箱" width="200" />
+        <el-table-column prop="registrationTime" label="注册时间" width="200" />
         <el-table-column
           prop="lastLoginTime"
           label="上次登录时间"
-          width="280"
+          width="200"
         />
+        <el-table-column prop="status" label="状态" width="60" />
+        <el-table-column fixed="right" label="操作" width="180">
+          <template #default="scope">
+            <el-button
+              link
+              type="danger"
+              size="default"
+              @click="ban(scope.row.studentId)"
+              >禁用</el-button
+            >
+            <el-button
+              link
+              type="success"
+              size="default"
+              @click="unban(scope.row.studentId)"
+              >解禁</el-button
+            >
+          </template></el-table-column
+        >
       </el-table>
 
-      <div class="example-pagination-block" v-if="students.length > 0">
-        <el-pagination layout="prev, pager, next" :total="students.length" />
+      <div class="example-pagination-block">
+        <el-pagination
+          layout="prev, pager, next"
+          :total="studentTotal"
+          v-model:current-page="studentCurrent"
+          @current-change="handleCurrentChange"
+        />
       </div>
     </div>
     <el-empty class="data-non-exist" description="暂时没有数据" v-else />

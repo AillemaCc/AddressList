@@ -1,18 +1,34 @@
 <script setup>
 import { adminDisplayRejectRequestApi } from '@/apis/admin/request'
 import { ref } from 'vue'
+import { ElMessage } from 'element-plus'
 //获取待审核请求
 const reject_request = ref([])
-async function getRejecRequest() {
-  const res = await adminDisplayRejectRequestApi()
-  reject_request.value = res.data.records
+const currentPage = ref(1)
+const total = ref(0)
+const pages = ref(0)
+async function getRejecRequest(num) {
+  const res = await adminDisplayRejectRequestApi({ current: num })
+  if (res.success) {
+    reject_request.value = res.data.records
+    currentPage.value = res.data.current
+    total.value = res.data.total
+    pages.value = res.data.pages
+  } else {
+    ElMessage.error(res.message)
+  }
 }
-getRejecRequest()
+getRejecRequest(1)
+
+function handleCurrentChange(val) {
+  currentPage.value = val
+  getRejecRequest(val)
+}
 </script>
 
 <template>
   <div class="container">
-    <div class="title">已拒绝请求</div>
+    <div class="title">已拒绝请求（{{ total }}条）</div>
     <div class="data-exist" v-if="reject_request.length > 0">
       <el-table :data="reject_request" style="width: 100%">
         <el-table-column prop="id" label="学生ID" width="80" />
@@ -30,7 +46,9 @@ getRejecRequest()
         <!-- total除以10，向上取整就是最大页数，total可以表示为请求总条数，配合size使用 -->
         <el-pagination
           layout="prev, pager, next"
-          :total="reject_request.length"
+          :total="total"
+          v-model:current-page="currentPage"
+          @current-change="handleCurrentChange"
         />
       </div>
     </div>

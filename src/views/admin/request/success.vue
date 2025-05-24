@@ -1,18 +1,34 @@
 <script setup>
 import { adminDisplaySuccessRequestApi } from '@/apis/admin/request'
 import { ref } from 'vue'
+import { ElMessage } from 'element-plus'
 //获取待审核请求
 const success_request = ref([])
-async function getSuccessRequest() {
-  const res = await adminDisplaySuccessRequestApi()
-  success_request.value = res.data.records
+const currentPage = ref(1)
+const total = ref(0)
+const pages = ref(0)
+async function getSuccessRequest(num) {
+  const res = await adminDisplaySuccessRequestApi({ current: num })
+  if (res.success) {
+    success_request.value = res.data.records
+    currentPage.value = res.data.current
+    total.value = res.data.total
+    pages.value = res.data.pages
+  } else {
+    ElMessage.error(res.message)
+  }
 }
-getSuccessRequest()
+getSuccessRequest(1)
+
+const handleCurrentChange = (val) => {
+  currentPage.value = val
+  getSuccessRequest(val)
+}
 </script>
 
 <template>
   <div class="container">
-    <div class="title">已通过请求</div>
+    <div class="title">已通过请求（{{ total }}条）</div>
     <div class="data-exist" v-if="success_request.length > 0">
       <el-table :data="success_request" style="width: 100%">
         <el-table-column prop="id" label="学生ID" width="80" />
@@ -29,7 +45,9 @@ getSuccessRequest()
         <!-- total除以10，向上取整就是最大页数，total可以表示为请求总条数，配合size使用 -->
         <el-pagination
           layout="prev, pager, next"
-          :total="success_request.length"
+          :total="total"
+          :current-page="currentPage"
+          @current-change="handleCurrentChange"
         />
       </div>
     </div>
