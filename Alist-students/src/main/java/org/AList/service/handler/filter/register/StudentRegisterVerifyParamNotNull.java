@@ -8,7 +8,6 @@ import static org.AList.common.convention.errorcode.BaseErrorCode.*;
 
 public final class StudentRegisterVerifyParamNotNull implements StudentRegisterChainFilter<StuRegisterReqDTO>{
     @Override
-    // todo 抽象错误码
     public void handler(StuRegisterReqDTO requestParam) {
         if (StringUtils.isBlank(requestParam.getStudentId())) {
             throw new UserException(STU_ID_EMPTY);                                                                      //A0112：学号为空

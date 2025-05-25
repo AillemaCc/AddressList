@@ -5,20 +5,18 @@ import io.jsonwebtoken.JwtBuilder;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import lombok.Getter;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
+import lombok.extern.slf4j.Slf4j;
+import org.AList.common.monitor.JwtKeyRotationMonitor;
 
-import javax.annotation.PostConstruct;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
-import java.util.Base64;
-import java.util.Date;
-import java.util.UUID;
+import java.util.*;
 
 /**
- * JWT工具类 - 支持双Token认证
+ * JWT工具类 - 支持多密钥验证和密钥轮换
  */
-@Component
+@Slf4j
+
 public class JwtUtils {
 
     // 默认Access Token有效期 - 30分钟
@@ -34,28 +32,35 @@ public class JwtUtils {
     private static final String TOKEN_TYPE_KEY = "tokenType";
     private static final String ACCESS_TOKEN_TYPE = "access";
     private static final String REFRESH_TOKEN_TYPE = "refresh";
+    private static final String KEY_VERSION_CLAIM = "keyVersion";
 
-    @Value("${jwt.secret}")
-    private String SECRET_KEY;
+    private final String currentSecret;
+    private final List<String> historicalSecrets;
+    private final Long keyRotationGracePeriod;
+    private final JwtKeyRotationMonitor monitor; // 添加 JwtKeyRotationMonitor 成员变量
 
-    // 添加无参构造函数
-    public JwtUtils() {
-    }
-
-    // 在初始化后验证密钥
-    @PostConstruct
-    public void init() {
-        if (SECRET_KEY == null || SECRET_KEY.trim().isEmpty()) {
-            throw new IllegalArgumentException("JWT密钥不能为空");
-        }
-    }
-
-    // 直接通过构造函数接收密钥
+    // 兼容原有构造函数
     public JwtUtils(String SECRET_KEY) {
-        if (SECRET_KEY == null || SECRET_KEY.trim().isEmpty()) {
+        this(SECRET_KEY, new ArrayList<>(), 24 * 60 * 60 * 1000L, null); // 默认 monitor 为 null
+    }
+
+    // 多密钥构造函数 (不带 monitor)
+    public JwtUtils(String currentSecret, List<String> historicalSecrets, Long keyRotationGracePeriod) {
+        this(currentSecret, historicalSecrets, keyRotationGracePeriod, null); // 默认 monitor 为 null
+    }
+
+    // 完整构造函数，包含 monitor 注入
+    public JwtUtils(String currentSecret, List<String> historicalSecrets, Long keyRotationGracePeriod, JwtKeyRotationMonitor monitor) {
+        if (currentSecret == null || currentSecret.trim().isEmpty()) {
             throw new IllegalArgumentException("JWT密钥不能为空");
         }
-        this.SECRET_KEY = SECRET_KEY;
+        this.currentSecret = currentSecret;
+        this.historicalSecrets = historicalSecrets != null ? historicalSecrets : new ArrayList<>();
+        this.keyRotationGracePeriod = keyRotationGracePeriod != null ? keyRotationGracePeriod : 24 * 60 * 60 * 1000L;
+        this.monitor = monitor; // 注入 monitor
+
+        log.info("JWT工具类初始化完成，当前密钥长度: {}, 历史密钥数量: {}",
+                currentSecret.length(), this.historicalSecrets.size());
     }
 
     /**
@@ -149,10 +154,10 @@ public class JwtUtils {
     }
 
     /**
-     * 构建JWT Builder
+     * 构建JWT Builder - 使用当前密钥并添加密钥版本标识
      */
     private JwtBuilder getJwtBuilder(String subject, long expirationTimeMillis, String id) {
-        SecretKey secretKey = generateSecretKey();
+        SecretKey secretKey = generateSecretKey(currentSecret);
         long nowMillis = System.currentTimeMillis();
         Date now = new Date(nowMillis);
         Date expirationDate = new Date(nowMillis + expirationTimeMillis);
@@ -163,28 +168,115 @@ public class JwtUtils {
                 .setIssuer(ISSUER)             // 签发者
                 .setIssuedAt(now)              // 签发时间
                 .setExpiration(expirationDate) // 过期时间
+                .claim(KEY_VERSION_CLAIM, getCurrentKeyVersion()) // 添加密钥版本标识
                 .signWith(SignatureAlgorithm.HS256, secretKey); // 使用HS256算法签名
+    }
+
+    /**
+     * 获取当前密钥版本（基于密钥内容的哈希）
+     */
+    private String getCurrentKeyVersion() {
+        return String.valueOf(currentSecret.hashCode());
     }
 
     /**
      * 生成加密后的密钥
      */
-    private SecretKey generateSecretKey() {
-        byte[] decodedKey = Base64.getDecoder().decode(SECRET_KEY);
+    private SecretKey generateSecretKey(String secret) {
+        byte[] decodedKey = Base64.getDecoder().decode(secret);
         return new SecretKeySpec(decodedKey, 0, decodedKey.length, "HmacSHA256");
     }
 
     /**
-     * 解析JWT
-     * @param jwt JWT字符串
-     * @return Claims对象
-     * @throws Exception 解析异常
+     * 兼容原有方法的密钥生成
+     */
+    private SecretKey generateSecretKey() {
+        return generateSecretKey(currentSecret);
+    }
+
+    /**
+     * 多密钥验证解析JWT
      */
     public Claims parseJWT(String jwt) throws Exception {
-        return Jwts.parser()
-                .setSigningKey(generateSecretKey())
-                .parseClaimsJws(jwt)
-                .getBody();
+        Exception lastException = null;
+
+        // 首先尝试使用当前密钥解析
+        try {
+            Claims claims = Jwts.parser()
+                    .setSigningKey(generateSecretKey(currentSecret))
+                    .parseClaimsJws(jwt)
+                    .getBody();
+            log.debug("使用当前密钥成功解析JWT");
+
+            // 记录当前密钥使用
+            if (monitor != null) {
+                monitor.recordCurrentKeyUsage();
+            }
+
+            return claims;
+        } catch (Exception e) {
+            lastException = e;
+            log.debug("当前密钥解析失败，尝试历史密钥: {}", e.getMessage());
+        }
+
+        // 如果当前密钥失败，尝试历史密钥
+        for (int i = 0; i < historicalSecrets.size(); i++) {
+            try {
+                String historicalSecret = historicalSecrets.get(i);
+                Claims claims = Jwts.parser()
+                        .setSigningKey(generateSecretKey(historicalSecret))
+                        .parseClaimsJws(jwt)
+                        .getBody();
+
+                // 检查Token是否在宽限期内
+                if (isWithinGracePeriod(claims)) {
+                    log.info("使用历史密钥[{}]成功解析JWT，建议客户端刷新Token", i);
+
+                    // 记录历史密钥使用
+                    if (monitor != null) {
+                        monitor.recordHistoricalKeyUsage();
+                    }
+
+                    return claims;
+                } else {
+                    log.warn("历史密钥[{}]解析的Token已超过宽限期", i);
+                }
+            } catch (Exception e) {
+                log.debug("历史密钥[{}]解析失败: {}", i, e.getMessage());
+                lastException = e;
+            }
+        }
+
+        // 所有密钥都失败，抛出最后一个异常
+        throw new Exception("所有密钥验证失败", lastException);
+    }
+
+    /**
+     * 检查Token是否在宽限期内
+     */
+    private boolean isWithinGracePeriod(Claims claims) {
+        Date issuedAt = claims.getIssuedAt();
+        if (issuedAt == null) {
+            return false;
+        }
+
+        long tokenAge = System.currentTimeMillis() - issuedAt.getTime();
+        return tokenAge <= keyRotationGracePeriod;
+    }
+
+    /**
+     * 验证Token并返回验证结果
+     */
+    public TokenValidationResult validateToken(String jwt) {
+        try {
+            Claims claims = parseJWT(jwt);
+            String keyVersion = claims.get(KEY_VERSION_CLAIM, String.class);
+            boolean isCurrentKey = getCurrentKeyVersion().equals(keyVersion);
+
+            return new TokenValidationResult(true, claims, isCurrentKey, null);
+        } catch (Exception e) {
+            return new TokenValidationResult(false, null, false, e.getMessage());
+        }
     }
 
     /**
@@ -206,7 +298,25 @@ public class JwtUtils {
     }
 
     /**
-     * Token对类，包含Access Token和Refresh Token  
+     * Token验证结果类
+     */
+    @Getter
+    public static class TokenValidationResult {
+        private final boolean valid;
+        private final Claims claims;
+        private final boolean usedCurrentKey;
+        private final String errorMessage;
+
+        public TokenValidationResult(boolean valid, Claims claims, boolean usedCurrentKey, String errorMessage) {
+            this.valid = valid;
+            this.claims = claims;
+            this.usedCurrentKey = usedCurrentKey;
+            this.errorMessage = errorMessage;
+        }
+    }
+
+    /**
+     * Token对类，包含Access Token和Refresh Token
      */
     @Getter
     public static class TokenPair {
@@ -217,6 +327,5 @@ public class JwtUtils {
             this.accessToken = accessToken;
             this.refreshToken = refreshToken;
         }
-
     }
 }
