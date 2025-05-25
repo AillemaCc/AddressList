@@ -46,6 +46,7 @@ public class StuLoginController {
      * @param token 登录分配的token
      * @return 用户是否登录
      */
+    @MyLog(title = "登录模块", content = "检查学生登录状态")
     @GetMapping("/checkLogin")
     public Result<Boolean> checkLogin(@RequestParam("studentId") String studentId,@RequestParam("token") String token) {
         return Results.success(stuService.checkLogin(studentId,token));
@@ -56,6 +57,7 @@ public class StuLoginController {
      * @param studentId 学号
      * @return 无--直接进行存在判断并且删除
      */
+    @MyLog(title = "登录模块", content = "登出操作")
     @DeleteMapping("/logout")
     public Result<Void> logout(@RequestParam("studentId") String studentId,@RequestParam("token") String accessToken,@RequestParam("refreshToken") String refreshToken) {
         stuService.logout(studentId,accessToken,refreshToken);
@@ -66,6 +68,7 @@ public class StuLoginController {
      * 刷新Access Token接口
      * @return 新的Access Token
      */
+    @MyLog(title = "登录模块", content = "刷新accessToken")
     @PostMapping("/refreshToken")
     public Result<RefreshTokenRespDTO> refreshToken(@RequestBody StuLoginRefreshToken requestParam) {
         try {
