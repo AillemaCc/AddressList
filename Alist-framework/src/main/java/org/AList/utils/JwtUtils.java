@@ -5,10 +5,7 @@ import io.jsonwebtoken.JwtBuilder;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import lombok.Getter;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
 
-import javax.annotation.PostConstruct;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import java.util.Base64;
@@ -18,7 +15,6 @@ import java.util.UUID;
 /**
  * JWT工具类 - 支持双Token认证
  */
-@Component
 public class JwtUtils {
 
     // 默认Access Token有效期 - 30分钟
@@ -35,26 +31,19 @@ public class JwtUtils {
     private static final String ACCESS_TOKEN_TYPE = "access";
     private static final String REFRESH_TOKEN_TYPE = "refresh";
 
-    @Value("${jwt.secret}")
-    private String SECRET_KEY;
 
-    // 添加无参构造函数
-    public JwtUtils() {
-    }
+    private final String SECRET_KEY;
 
-    // 在初始化后验证密钥
-    @PostConstruct
-    public void init() {
-        if (SECRET_KEY == null || SECRET_KEY.trim().isEmpty()) {
-            throw new IllegalArgumentException("JWT密钥不能为空");
-        }
-    }
+
+
 
     // 直接通过构造函数接收密钥
     public JwtUtils(String SECRET_KEY) {
         if (SECRET_KEY == null || SECRET_KEY.trim().isEmpty()) {
             throw new IllegalArgumentException("JWT密钥不能为空");
         }
+        System.out.println("加载的密钥: " + SECRET_KEY.substring(0, Math.min(10, SECRET_KEY.length())) + "...");
+        System.out.println("密钥长度: " + SECRET_KEY.length());
         this.SECRET_KEY = SECRET_KEY;
     }
 
