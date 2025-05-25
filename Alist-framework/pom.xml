@@ -97,6 +97,20 @@
             <artifactId>easyexcel</artifactId>
             <version>3.3.4</version>
         </dependency>
+        <!-- 只添加Nacos原生客户端 -->
+        <dependency>
+            <groupId>com.alibaba.nacos</groupId>
+            <artifactId>nacos-client</artifactId>
+            <version>2.2.0</version>
+        </dependency>
+
+        <!-- YAML解析器 -->
+        <dependency>
+            <groupId>org.yaml</groupId>
+            <artifactId>snakeyaml</artifactId>
+            <version>1.28</version>
+        </dependency>
+
     </dependencies>
 
 </project>
