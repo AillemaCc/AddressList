@@ -1,112 +1,22 @@
 <script setup>
 import { ref } from 'vue'
-const friends = ref([
-  {
-    studentId: '9109222254',
-    name: '黎明',
-    academy: '数学与计算机学院',
-    major: '计算机科学与技术',
-    className: '226班',
-    enrollmentYear: '2022',
-    graduationYear: '2026',
-    employer: '南昌大学',
-    city: '南昌市',
-    phone: '15350280172',
-    email: '235645789@qq.com',
-  },
-  {
-    studentId: '9109222255',
-    name: '张伟',
-    academy: '数学与计算机学院',
-    major: '计算机科学与技术',
-    className: '226班',
-    enrollmentYear: '2022',
-    graduationYear: '2026',
-    employer: '腾讯科技',
-    city: '深圳市',
-    phone: '13800138001',
-    email: 'zhangwei@example.com',
-  },
-  {
-    studentId: '9109222256',
-    name: '李娜',
-    academy: '数学与计算机学院',
-    major: '软件工程',
-    className: '227班',
-    enrollmentYear: '2022',
-    graduationYear: '2026',
-    employer: '阿里巴巴',
-    city: '杭州市',
-    phone: '13912345678',
-    email: 'lina@example.com',
-  },
-  {
-    studentId: '9109222257',
-    name: '王强',
-    academy: '数学与计算机学院',
-    major: '人工智能',
-    className: '228班',
-    enrollmentYear: '2022',
-    graduationYear: '2026',
-    employer: '字节跳动',
-    city: '北京市',
-    phone: '18611112222',
-    email: 'wangqiang@example.com',
-  },
-  {
-    studentId: '9109222258',
-    name: '陈静',
-    academy: '数学与计算机学院',
-    major: '数据科学与大数据技术',
-    className: '229班',
-    enrollmentYear: '2022',
-    graduationYear: '2026',
-    employer: '华为技术',
-    city: '东莞市',
-    phone: '15987654321',
-    email: 'chenjing@example.com',
-  },
-  {
-    studentId: '9109222259',
-    name: '刘洋',
-    academy: '数学与计算机学院',
-    major: '信息安全',
-    className: '230班',
-    enrollmentYear: '2022',
-    graduationYear: '2026',
-    employer: '百度',
-    city: '北京市',
-    phone: '13524681357',
-    email: 'liuyang@example.com',
-  },
-  {
-    studentId: '9109222260',
-    name: '赵敏',
-    academy: '数学与计算机学院',
-    major: '网络工程',
-    className: '231班',
-    enrollmentYear: '2022',
-    graduationYear: '2026',
-    employer: '京东集团',
-    city: '上海市',
-    phone: '13713572468',
-    email: 'zhaomin@example.com',
-  },
-  {
-    studentId: '9109222261',
-    name: '周杰',
-    academy: '数学与计算机学院',
-    major: '物联网工程',
-    className: '232班',
-    enrollmentYear: '2022',
-    graduationYear: '2026',
-    employer: '小米科技',
-    city: '武汉市',
-    phone: '18888888888',
-    email: 'zhoujie@example.com',
-  },
-])
-// const friends = ref([])
+import { useStuInfoStore } from '@/stores/stuInfo'
+import { stuGetFriendsApi } from '@/apis/stu/friends'
+import { ElMessage } from 'element-plus'
+
+const friends = ref([])
+const stuInfoStore = useStuInfoStore()
+const studentId = stuInfoStore.studentId
+async function getFriends() {
+  const res = await stuGetFriendsApi({
+    studentId: studentId.value,
+  })
+  if (res.success) {
+    friends.value = res.data.records
+  } else {
+    ElMessage.error(res.message)
+  }
+}
 </script>
 <template>
   <div class="container">

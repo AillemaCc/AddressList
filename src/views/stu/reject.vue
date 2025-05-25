@@ -1,8 +1,11 @@
 <script setup>
+import { stuGetRejectApi, stuDeleteRequestApi } from '@/apis/stu/request'
 import { handleStatus } from '@/utils/handleStatus'
 import { ref } from 'vue'
+import { ElMessage } from 'element-plus'
+import { useStuInfoStore } from '@/stores/stuInfo'
 
-const requests = ref([
+const reject = ref([
   {
     sender: '9109222258',
     senderName: '谢融悠',
@@ -29,8 +32,60 @@ const requests = ref([
     status: 2,
   },
 ])
+const stuInfoStore = useStuInfoStore()
+const studentId = stuInfoStore.studentId
+const current = ref(1)
+const total = ref(0)
+const pages = ref(0)
 
-const handled_request = handleStatus(requests.value)
+//获取已拒绝请求列表
+async function getReject() {
+  const res = await stuGetRejectApi({
+    studentId: studentId.value,
+  })
+  if (res.success) {
+    reject.value = res.data.records
+    current.value = res.data.current
+    total.value = res.data.total
+    pages.value = res.data.pages
+  } else {
+    ElMessage.error(res.message)
+  }
+}
+getReject()
+
+//点击删除请求
+async function deleteClick(senderId) {
+  const res = await stuDeleteRequestApi({
+    receiver: studentId.value,
+    sender: senderId,
+  })
+  if (res.success) {
+    const index = fail.value.findIndex((item) => item.senderId === senderId)
+    fail.value.splice(index, 1)
+    if (fail.value.length === 0) {
+      if (current.value === 1) {
+        if (pages.value !== 1) {
+          getFail(1)
+        }
+      } else {
+        current.value--
+        getFail(current.value)
+      }
+    }
+    ElMessage.success(res.message)
+  } else {
+    ElMessage.error(res.message)
+  }
+}
+
+//修改页码
+function changePage(val) {
+  current.value = val
+  getFail(val)
+}
+
+const handled_request = handleStatus(reject.value)
 // const requests = ref([])
 
 const getStatusStyle = (status) => {
@@ -44,20 +99,26 @@ const getStatusStyle = (status) => {
 </script>
 <template>
   <div class="container">
-    <div class="title">未通过的请求</div>
+    <div class="title">未通过的请求（{{ total }}条）</div>
     <div class="data-exist" v-if="handled_request.length > 0">
       <el-table :data="handled_request" style="width: 100%">
-        <el-table-column prop="receiver" label="发送对象学号" width="200" />
-        <el-table-column prop="receiverName" label="发送对象姓名" width="200" />
+        <el-table-column prop="sender" label="发送对象学号" width="250" />
+        <el-table-column prop="senderName" label="发送对象姓名" width="250" />
         <el-table-column prop="content" label="发送内容" width="400" />
-        <el-table-column label="请求状态" width="200">
+        <el-table-column label="请求状态" width="250">
           <template #default="{ row }">
             <span :style="getStatusStyle(row.status)">{{ row.status }}</span>
           </template>
         </el-table-column>
-        <el-table-column fixed="right" label="操作" width="120">
-          <template #default>
-            <el-button link type="danger" size="large">删除</el-button>
+        <el-table-column fixed="right" label="操作" width="150">
+          <template #default="{ row }">
+            <el-button
+              link
+              type="danger"
+              size="large"
+              @click="deleteClick(row.sender)"
+              >删除</el-button
+            >
           </template>
         </el-table-column>
       </el-table>
@@ -67,6 +128,8 @@ const getStatusStyle = (status) => {
         <el-pagination
           layout="prev, pager, next"
           :total="handled_request.length"
+          v-model:current-page="current"
+          @current-change="changePage"
         />
       </div>
     </div>
@@ -76,7 +139,6 @@ const getStatusStyle = (status) => {
 
 <style scoped lang="scss">
 .container {
-  padding-left: 40px;
   .title {
     padding-bottom: 10px;
     margin-bottom: 10px;
@@ -97,6 +159,11 @@ const getStatusStyle = (status) => {
     display: flex;
     justify-content: center;
     margin-top: 10px;
+    :deep(.btn-prev),
+    :deep(.number),
+    :deep(.btn-next) {
+      background-color: transparent;
+    }
   }
 }
 </style>

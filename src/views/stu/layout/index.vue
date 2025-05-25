@@ -15,12 +15,12 @@ const defaultProps = {
       </div>
       <div class="welcome-container">
         <div class="welcome-box">你好，谢融悠</div>
-        <div class="dropdown">
+        <!-- <div class="dropdown">
           <router-link to="/stu/home" class="option">个人资料</router-link>
           <router-link to="/stu/friends" class="option">我的好友</router-link>
           <router-link to="/stu/query" class="option">查询信息</router-link>
           <div class="option">退出登录</div>
-        </div>
+        </div> -->
       </div>
     </div>
     <div class="main-container">
@@ -31,7 +31,7 @@ const defaultProps = {
           router
         >
           <el-menu-item index="/stu/home">
-            <span>个人信息</span>
+            <span>个人主页</span>
           </el-menu-item>
           <el-sub-menu index="2">
             <template #title>
@@ -107,66 +107,66 @@ const defaultProps = {
       align-items: center;
       margin-right: 60px;
       height: 50px;
-      &:hover .dropdown {
-        opacity: 1;
-        transform: scaleY(100%);
-      }
-      .welcome-box:hover {
-        color: $mainColor;
-        cursor: pointer;
-      }
+      // &:hover .dropdown {
+      //   opacity: 1;
+      //   transform: scaleY(100%);
+      // }
+      // .welcome-box:hover {
+      //   color: $mainColor;
+      //   cursor: pointer;
+      // }
 
-      .dropdown {
-        position: absolute;
-        top: 50px;
-        left: 0;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        width: 100px;
-        height: 160px;
-        background-color: #fff;
-        border: 1px solid rgba(0, 0, 0, 0.1);
-        border-radius: 4px;
-        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-        opacity: 0;
-        transform: scaleY(0);
-        transition:
-          opacity 0.2s,
-          transform 0.3s;
-        transform-origin: top;
-        z-index: 999;
-        &::before {
-          content: '';
-          position: absolute;
-          top: 0;
-          left: 50%;
-          width: 0;
-          height: 0;
-          border-top: 10px solid transparent;
-          border-left: 10px solid transparent;
-          border-right: 10px solid transparent;
-          border-bottom: 10px solid #fff;
-          /*用 filter 添加三角形阴影*/
-          filter: drop-shadow(0 -7px 5px rgba(0, 0, 0, 0.1));
-          transform: translateX(-50%) translateY(-100%);
-          z-index: 0;
-        }
-        .option {
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          width: 100%;
-          height: 35px;
-          color: #000;
-          cursor: pointer;
-          &:hover {
-            background-color: #f5f7fa;
-            color: $mainColor;
-          }
-        }
-      }
+      // .dropdown {
+      //   position: absolute;
+      //   top: 50px;
+      //   left: 0;
+      //   display: flex;
+      //   flex-direction: column;
+      //   justify-content: center;
+      //   align-items: center;
+      //   width: 100px;
+      //   height: 160px;
+      //   background-color: #fff;
+      //   border: 1px solid rgba(0, 0, 0, 0.1);
+      //   border-radius: 4px;
+      //   box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      //   opacity: 0;
+      //   transform: scaleY(0);
+      //   transition:
+      //     opacity 0.2s,
+      //     transform 0.3s;
+      //   transform-origin: top;
+      //   z-index: 999;
+      //   &::before {
+      //     content: '';
+      //     position: absolute;
+      //     top: 0;
+      //     left: 50%;
+      //     width: 0;
+      //     height: 0;
+      //     border-top: 10px solid transparent;
+      //     border-left: 10px solid transparent;
+      //     border-right: 10px solid transparent;
+      //     border-bottom: 10px solid #fff;
+      //     /*用 filter 添加三角形阴影*/
+      //     filter: drop-shadow(0 -7px 5px rgba(0, 0, 0, 0.1));
+      //     transform: translateX(-50%) translateY(-100%);
+      //     z-index: 0;
+      //   }
+      //   .option {
+      //     display: flex;
+      //     justify-content: center;
+      //     align-items: center;
+      //     width: 100%;
+      //     height: 35px;
+      //     color: #000;
+      //     cursor: pointer;
+      //     &:hover {
+      //       background-color: #f5f7fa;
+      //       color: $mainColor;
+      //     }
+      //   }
+      // }
     }
   }
   .main-container {
@@ -201,6 +201,7 @@ const defaultProps = {
   }
   .right-main {
     flex: 1;
+    padding: 0 20px;
   }
 }
 </style>

@@ -106,7 +106,6 @@ const friends = ref([
     email: 'zhoujie@example.com',
   },
 ])
-// const friends = ref([])
 </script>
 <template>
   <div class="container">

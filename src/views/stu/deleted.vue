@@ -1,8 +1,11 @@
 <script setup>
+import { stuGetDeletedApi } from '@/apis/stu/request'
 import { handleStatus } from '@/utils/handleStatus'
 import { ref } from 'vue'
+import { ElMessage } from 'element-plus'
+import { useStuInfoStore } from '@/stores/stuInfo'
 
-const requests = ref([
+const deleted = ref([
   {
     sender: '9109222258',
     senderName: '谢融悠',
@@ -29,9 +32,28 @@ const requests = ref([
     status: 2,
   },
 ])
+const stuInfoStore = useStuInfoStore()
+const studentId = stuInfoStore.studentId
+const current = ref(1)
+const total = ref(0)
+const pages = ref(0)
 
-const handled_request = handleStatus(requests.value)
-// const requests = ref([])
+async function getDeleted() {
+  const res = await stuGetDeletedApi({
+    studentId: studentId.value,
+  })
+  if (res.success) {
+    deleted.value = res.data.records
+    current.value = res.data.current
+    total.value = res.data.total
+    pages.value = res.data.pages
+  } else {
+    ElMessage.error(res.message)
+  }
+}
+getDeleted()
+
+const handled_request = handleStatus(deleted.value)
 
 const getStatusStyle = (status) => {
   const colorMap = {
@@ -44,13 +66,13 @@ const getStatusStyle = (status) => {
 </script>
 <template>
   <div class="container">
-    <div class="title">已删除的请求</div>
+    <div class="title">已删除的请求（{{ total }}条）</div>
     <div class="data-exist" v-if="handled_request.length > 0">
       <el-table :data="handled_request" style="width: 100%">
-        <el-table-column prop="receiver" label="发送对象学号" width="200" />
-        <el-table-column prop="receiverName" label="发送对象姓名" width="200" />
+        <el-table-column prop="receiver" label="发送对象学号" width="250" />
+        <el-table-column prop="receiverName" label="发送对象姓名" width="250" />
         <el-table-column prop="content" label="发送内容" width="400" />
-        <el-table-column label="请求状态" width="200">
+        <el-table-column label="请求状态" width="250">
           <template #default="{ row }">
             <span :style="getStatusStyle(row.status)">{{ row.status }}</span>
           </template>
@@ -59,10 +81,7 @@ const getStatusStyle = (status) => {
 
       <div class="example-pagination-block">
         <!-- total除以10，向上取整就是最大页数，total可以表示为请求总条数，配合size使用 -->
-        <el-pagination
-          layout="prev, pager, next"
-          :total="handled_request.length"
-        />
+        <el-pagination layout="prev, pager, next" :total="total" />
       </div>
     </div>
     <el-empty class="data-non-exist" description="暂时没有数据" v-else />
@@ -71,7 +90,6 @@ const getStatusStyle = (status) => {
 
 <style scoped lang="scss">
 .container {
-  padding-left: 40px;
   .title {
     padding-bottom: 10px;
     margin-bottom: 10px;
@@ -92,6 +110,11 @@ const getStatusStyle = (status) => {
     display: flex;
     justify-content: center;
     margin-top: 10px;
+    :deep(.btn-prev),
+    :deep(.number),
+    :deep(.btn-next) {
+      background-color: transparent;
+    }
   }
 }
 </style>
