@@ -44,8 +44,14 @@ public class TokenService {
         String refreshToken = jwtUtils.generateJWT(minimalUserJson, REFRESH_TOKEN_EXPIRATION);
 
         // 在Redis中存储完整用户信息
+        // todo 这部分信息存储功能并不是特别有需求 考虑优化掉
         String userInfoKey = RedisKeyGenerator.genStudentLoginInfo(studentInfo.getStudentId());
-        stringRedisTemplate.opsForValue().set(userInfoKey, JSON.toJSONString(studentInfo));
+        StudentFrameworkDO userInfo = StudentFrameworkDO.builder()
+                        .studentId(studentInfo.getStudentId())
+                                .status(studentInfo.getStatus())
+                                        .name(studentInfo.getName())
+                                                .build();
+        stringRedisTemplate.opsForValue().set(userInfoKey, JSON.toJSONString(userInfo));
         stringRedisTemplate.expire(userInfoKey, 7, TimeUnit.DAYS);
 
         // 存储Token关联

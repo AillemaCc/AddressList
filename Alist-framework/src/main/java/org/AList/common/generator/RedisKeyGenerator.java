@@ -47,7 +47,7 @@ public class RedisKeyGenerator {
     }
 
     /**
-     * 生成登录之后的完整用户信息 Key
+     * 生成登录之后的完整用户信息 Key 除去密码
      */
     public static String genStudentLoginInfo(String studentId) {
         return String.format(RedisKeyTemplates.STUDENT_LOGIN_INFO, studentId);

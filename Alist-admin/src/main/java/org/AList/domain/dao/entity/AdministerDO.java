@@ -4,12 +4,10 @@ import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.AList.common.database.BaseDO;
-
-
-import java.util.Date;
 
 /**
  * 管理员实体类
@@ -18,6 +16,7 @@ import java.util.Date;
 @AllArgsConstructor
 @NoArgsConstructor
 @TableName("t_admin_user")
+@Builder
 public class AdministerDO extends BaseDO {
     @TableId(type = IdType.AUTO)
     /**
