@@ -153,6 +153,7 @@ public class ApplicationServiceImpl extends ServiceImpl<ApplicationMapper, Appli
      */
     @Override
     public IPage<ApplicationQueryPageRespDTO> listAllSendApplication(ApplicationSendQueryPageReqDTO requestParam) {
+        StuIdContext.verifyLoginUser(requestParam.getSender());
         LambdaQueryWrapper<ApplicationDO> queryWrapper = Wrappers.lambdaQuery(ApplicationDO.class)
                 .eq(ApplicationDO::getSender, requestParam.getSender())
                 .eq(ApplicationDO::getDelFlag, 0);
