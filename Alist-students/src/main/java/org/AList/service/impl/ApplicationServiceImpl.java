@@ -88,6 +88,7 @@ public class ApplicationServiceImpl extends ServiceImpl<ApplicationMapper, Appli
      */
     @Override
     public IPage<ApplicationQueryPageRespDTO> listAllValidApplication(ApplicationReceiveQueryPageReqDTO requestParam) {
+        StuIdContext.verifyLoginUser(requestParam.getReceiver());
         int current=requestParam.getCurrent()==null?0:requestParam.getCurrent();
         int size=requestParam.getSize()==null?10:requestParam.getSize();
         LambdaQueryWrapper<ApplicationDO> queryWrapper = buildBaseQueryWrapper(requestParam.getReceiver(),0);
@@ -103,6 +104,7 @@ public class ApplicationServiceImpl extends ServiceImpl<ApplicationMapper, Appli
      */
     @Override
     public IPage<ApplicationQueryPageRespDTO> listAllAcceptedApplication(ApplicationReceiveQueryPageReqDTO requestParam) {
+        StuIdContext.verifyLoginUser(requestParam.getReceiver());
         int current=requestParam.getCurrent()==null?0:requestParam.getCurrent();
         int size=requestParam.getSize()==null?10:requestParam.getSize();
         LambdaQueryWrapper<ApplicationDO> queryWrapper = buildBaseQueryWrapper(requestParam.getReceiver(),1);
@@ -118,6 +120,7 @@ public class ApplicationServiceImpl extends ServiceImpl<ApplicationMapper, Appli
      */
     @Override
     public IPage<ApplicationQueryPageRespDTO> listAllRefusedApplication(ApplicationReceiveQueryPageReqDTO requestParam) {
+        StuIdContext.verifyLoginUser(requestParam.getReceiver());
         int current=requestParam.getCurrent()==null?0:requestParam.getCurrent();
         int size=requestParam.getSize()==null?10:requestParam.getSize();
         LambdaQueryWrapper<ApplicationDO> queryWrapper = buildBaseQueryWrapper(requestParam.getReceiver(),2);
@@ -134,6 +137,7 @@ public class ApplicationServiceImpl extends ServiceImpl<ApplicationMapper, Appli
      */
     @Override
     public IPage<ApplicationQueryPageRespDTO> listAllDeleteApplication(ApplicationReceiveQueryPageReqDTO requestParam) {
+        StuIdContext.verifyLoginUser(requestParam.getReceiver());
         int current=requestParam.getCurrent()==null?1:requestParam.getCurrent();
         int size=requestParam.getSize()==null?10:requestParam.getSize();
         Page<ApplicationDO> page = new Page<>(current,size);
