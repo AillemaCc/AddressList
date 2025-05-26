@@ -261,6 +261,7 @@ public class StuContactServiceImpl extends ServiceImpl<ContactMapper, ContactDO>
     @Override
     public IPage<ContactQueryRespDTO> queryContactList(ContactQueryAllOwnReqDTO requestParam) {
         String ownerId=requestParam.getOwnerId();
+        StuIdContext.verifyLoginUser(ownerId);
         int current=requestParam.getCurrent()==null?1:requestParam.getCurrent();
         int size=requestParam.getSize()==null?10:requestParam.getSize();
         LambdaQueryWrapper<ContactGotoDO> queryWrapper = Wrappers.lambdaQuery(ContactGotoDO.class)

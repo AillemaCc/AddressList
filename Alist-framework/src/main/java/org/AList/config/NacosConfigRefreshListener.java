@@ -1,20 +1,21 @@
 package org.AList.config;
 
 import com.alibaba.nacos.api.NacosFactory;
-import com.alibaba.nacos.api.config.ConfigService;  
-import com.alibaba.nacos.api.config.listener.Listener;  
-import lombok.extern.slf4j.Slf4j;  
-import org.springframework.beans.factory.annotation.Value;  
-import org.springframework.context.ApplicationContext;  
-import org.springframework.context.ConfigurableApplicationContext;  
-import org.springframework.core.env.ConfigurableEnvironment;  
-import org.springframework.core.env.PropertiesPropertySource;  
-import org.springframework.stereotype.Component;  
-import org.yaml.snakeyaml.Yaml;  
-  
-import javax.annotation.PostConstruct;  
-import java.util.Map;  
-import java.util.Properties;  
+import com.alibaba.nacos.api.config.ConfigService;
+import com.alibaba.nacos.api.config.listener.Listener;
+import lombok.extern.slf4j.Slf4j;
+import org.AList.common.event.ConfigRefreshCompletedEvent;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.ConfigurableApplicationContext;
+import org.springframework.core.env.ConfigurableEnvironment;
+import org.springframework.core.env.PropertiesPropertySource;
+import org.springframework.stereotype.Component;
+import org.yaml.snakeyaml.Yaml;
+
+import javax.annotation.PostConstruct;
+import java.util.Map;
+import java.util.Properties;
 import java.util.concurrent.Executor;  
   
 @Component  
@@ -96,8 +97,9 @@ public class NacosConfigRefreshListener {
                 new PropertiesPropertySource(sourceName, properties);  
             environment.getPropertySources().addFirst(propertySource);  
               
-            log.info("配置刷新成功: {}", sourceName);  
-              
+            log.info("配置刷新成功: {}", sourceName);
+            // 发布配置刷新完成事件
+            applicationContext.publishEvent(new ConfigRefreshCompletedEvent(sourceName, yamlMap));
         } catch (Exception e) {  
             log.error("配置刷新失败: {}", sourceName, e);  
         }  
@@ -114,5 +116,5 @@ public class NacosConfigRefreshListener {
                 properties.setProperty(key, String.valueOf(value));  
             }  
         }  
-    }  
+    }
 }
