@@ -4,7 +4,6 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
-import org.AList.common.convention.exception.ClientException;
 import org.AList.common.convention.exception.UserException;
 import org.AList.common.generator.RedisKeyGenerator;
 import org.AList.domain.dao.entity.AdministerDO;
@@ -89,7 +88,7 @@ public class AdministerServiceImpl extends ServiceImpl<AdministerMapper, Adminis
             stringRedisTemplate.delete(refreshKey);
 
             // 删除用户信息
-            String userInfoKey = RedisKeyGenerator.genAdministerLoginInfo(username);
+            String userInfoKey = RedisKeyGenerator.genStudentLoginInfo(username);
             stringRedisTemplate.delete(userInfoKey);
 
             // 将Refresh Token加入黑名单
