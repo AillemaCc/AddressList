@@ -45,7 +45,10 @@ public class TokenService {
 
         // 在Redis中存储完整用户信息
         String userInfoKey = RedisKeyGenerator.genAdministerLoginInfo(administer.getUsername());
-        stringRedisTemplate.opsForValue().set(userInfoKey, JSON.toJSONString(administer));
+        AdministerDO userInfo = AdministerDO.builder()
+                .username(administer.getUsername())
+                .build();
+        stringRedisTemplate.opsForValue().set(userInfoKey, JSON.toJSONString(userInfo));
         stringRedisTemplate.expire(userInfoKey, 7, TimeUnit.DAYS);
 
         // 存储Token关联

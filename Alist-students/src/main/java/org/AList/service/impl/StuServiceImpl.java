@@ -137,6 +137,10 @@ public class StuServiceImpl extends ServiceImpl<StudentFrameWorkMapper, StudentF
             // 删除Refresh Token
             stringRedisTemplate.delete(refreshKey);
 
+            // 删除用户信息
+            String studentInfoKey = RedisKeyGenerator.genStudentLoginInfo(studentId);
+            stringRedisTemplate.delete(studentInfoKey);
+
             // 将Refresh Token加入黑名单
             if (refreshToken != null && !refreshToken.isEmpty()) {
                 tokenService.blacklistToken(refreshToken);

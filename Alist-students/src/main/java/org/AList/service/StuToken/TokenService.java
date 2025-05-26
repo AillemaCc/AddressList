@@ -44,8 +44,14 @@ public class TokenService {
         String refreshToken = jwtUtils.generateJWT(minimalUserJson, REFRESH_TOKEN_EXPIRATION);
 
         // 在Redis中存储完整用户信息
+        // todo 这部分信息存储功能并不是特别有需求 考虑优化掉
         String userInfoKey = RedisKeyGenerator.genStudentLoginInfo(studentInfo.getStudentId());
-        stringRedisTemplate.opsForValue().set(userInfoKey, JSON.toJSONString(studentInfo));
+        StudentFrameworkDO userInfo = StudentFrameworkDO.builder()
+                        .studentId(studentInfo.getStudentId())
+                                .status(studentInfo.getStatus())
+                                        .name(studentInfo.getName())
+                                                .build();
+        stringRedisTemplate.opsForValue().set(userInfoKey, JSON.toJSONString(userInfo));
         stringRedisTemplate.expire(userInfoKey, 7, TimeUnit.DAYS);
 
         // 存储Token关联
@@ -69,6 +75,12 @@ public class TokenService {
         // 检查Token是否在黑名单中
         if (isTokenBlacklisted(refreshToken)) {
             throw new UserException(USER_NOT_LOGGED);
+        }
+        String storedAccessKey =RedisKeyGenerator.genStudentLoginAccess(studentId);
+        String storedAccessToken = stringRedisTemplate.opsForValue().get(storedAccessKey);
+        Long ttl=stringRedisTemplate.getExpire(storedAccessKey,TimeUnit.MINUTES);
+        if (storedAccessToken != null && ttl != null && ttl > 5) {
+            throw new UserException("您的accessToken并未过期且达不到刷新要求，请不要尝试重复刷新");
         }
         String refreshKey = RedisKeyGenerator.genStudentLoginRefresh(studentId);
         String storedRefreshToken = stringRedisTemplate.opsForValue().get(refreshKey);  

@@ -223,6 +223,8 @@ public class JwtUtils {
         for (int i = 0; i < historicalSecrets.size(); i++) {
             try {
                 String historicalSecret = historicalSecrets.get(i);
+                // 清理可能的格式问题
+                historicalSecret = cleanSecret(historicalSecret);
                 Claims claims = Jwts.parser()
                         .setSigningKey(generateSecretKey(historicalSecret))
                         .parseClaimsJws(jwt)
@@ -327,5 +329,17 @@ public class JwtUtils {
             this.accessToken = accessToken;
             this.refreshToken = refreshToken;
         }
+    }
+
+    private String cleanSecret(String secret) {
+        if (secret == null) return null;
+        secret = secret.trim();
+        if (secret.startsWith("[")) {
+            secret = secret.substring(1);
+        }
+        if (secret.endsWith("]")) {
+            secret = secret.substring(0, secret.length() - 1);
+        }
+        return secret;
     }
 }

@@ -90,7 +90,7 @@ public class JwtKeyRotationService {
                 String currentSecret = (String) jwtConfig.get("secret");
 
                 // 获取历史密钥列表
-                List<String> historicalSecrets = (List<String>) jwtConfig.get("historicalSecrets");
+                List<String> historicalSecrets = getHistoricalSecretsList(jwtConfig);
                 if (historicalSecrets == null) {
                     historicalSecrets = new ArrayList<>();
                 }
@@ -124,6 +124,46 @@ public class JwtKeyRotationService {
                     throw new RuntimeException("更新Nacos配置失败");
                 }
             }
+        }
+    }
+
+    // 新增辅助方法
+    private List<String> getHistoricalSecretsList(Map<String, Object> jwtConfig) {
+        Object historicalSecretsObj = jwtConfig.get("historicalSecrets");
+        List<String> historicalSecrets = new ArrayList<>();
+
+        if (historicalSecretsObj instanceof List) {
+            List<?> rawList = (List<?>) historicalSecretsObj;
+            for (Object item : rawList) {
+                if (item instanceof String) {
+                    String secret = (String) item;
+                    // 清理可能的方括号
+                    secret = secret.trim();
+                    if (secret.startsWith("[")) {
+                        secret = secret.substring(1);
+                    }
+                    if (secret.endsWith("]")) {
+                        secret = secret.substring(0, secret.length() - 1);
+                    }
+                    // 验证是否为有效的base64字符串
+                    if (isValidBase64(secret)) {
+                        historicalSecrets.add(secret);
+                    }
+                }
+            }
+        }
+
+        return historicalSecrets;
+    }
+
+    // 添加base64验证方法
+    private boolean isValidBase64(String str) {
+        try {
+            Base64.getDecoder().decode(str);
+            return true;
+        } catch (IllegalArgumentException e) {
+            log.warn("无效的base64密钥: {}", str);
+            return false;
         }
     }
 }
