@@ -137,6 +137,7 @@ const getStatusStyle = (status) => {
 
 <style scoped lang="scss">
 .container {
+  padding: 0 40px;
   .title {
     padding-bottom: 10px;
     margin-bottom: 10px;

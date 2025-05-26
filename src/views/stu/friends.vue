@@ -47,7 +47,7 @@ async function getFriends() {
 
 <style scoped lang="scss">
 .container {
-  padding-left: 40px;
+  padding: 0 40px;
   .title {
     padding-bottom: 10px;
     margin-bottom: 10px;

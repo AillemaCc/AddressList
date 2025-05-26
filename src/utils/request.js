@@ -12,7 +12,7 @@ export const stuInstance = axios.create({
 // 学生请求拦截器
 stuInstance.interceptors.request.use(async (config) => {
   const stuInfoStore = useStuInfoStore()
-  const stuInfo = stuInfoStore.getStuInfo()
+  const stuInfo = stuInfoStore.stuInfo
 
   // 添加 accessToken
   if (stuInfo.accessToken) {
@@ -100,7 +100,7 @@ export const adminInstance = axios.create({
 //管理员请求拦截器
 adminInstance.interceptors.request.use(async (config) => {
   const adminInfoStore = useAdminInfoStore()
-  const adminInfo = adminInfoStore.getStuInfo()
+  const adminInfo = adminInfoStore.adminInfo
 
   if (adminInfo.accessToken) {
     config.headers.username = adminInfo.username

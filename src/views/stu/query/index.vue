@@ -136,7 +136,7 @@ const friends = ref([
 
 <style scoped lang="scss">
 .container {
-  padding-left: 40px;
+  padding: 0 40px;
   .title {
     padding-bottom: 10px;
     margin-bottom: 10px;
@@ -157,6 +157,11 @@ const friends = ref([
     display: flex;
     justify-content: center;
     margin-top: 10px;
+    :deep(.btn-prev),
+    :deep(.number),
+    :deep(.btn-next) {
+      background-color: transparent;
+    }
   }
 }
 </style>

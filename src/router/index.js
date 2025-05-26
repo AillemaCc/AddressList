@@ -27,7 +27,6 @@ import admin_bulletin_deleted from '@/views/admin/bulletin/deleted.vue'
 import admin_bulletin_edit from '@/views/admin/bulletin/edit.vue'
 
 import { useStuInfoStore } from '@/stores/stuInfo'
-import { stuGetRemarkApi } from '@/apis/stu/stuLogin'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -132,22 +131,19 @@ const cantAccessPath = [
 // router.beforeEach((to, from, next) => {
 //   const stuInfoStore = useStuInfoStore()
 //   if (cantAccessPath.includes(to.fullPath)) {
-//     const token = stuInfoStore.stuInfo.studentToken
+//     const token = stuInfoStore.stuInfo.accessToken
 //     //判断是否存在token
 //     if (token) {
 //       //存在,用户查询注册审核结果
 //       const studentId = stuInfoStore.stuInfo.studentId
 //       stuGetRemarkApi({
 //         studentId: studentId.value,
-//         registerToken: token.value,
 //       }).then((res) => {
 //         console.log(res)
 //         if (res.data.status === 1) {
 //           next()
-//         } else if (res.data.status === 2 || res.data.status === 3) {
+//         } else if (res.data.status === 0 || res.data.status === 2) {
 //           next(`/stu/wait?status=${res.data.status}`)
-//         } else {
-//           next() //正式连接后修改
 //         }
 //       })
 //     } else {

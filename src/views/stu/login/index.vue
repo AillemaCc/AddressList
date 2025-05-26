@@ -33,7 +33,9 @@ async function login() {
   if (res.success) {
     stuInfoStore.setStuInfo({
       studentId: studentId.value,
-      studentToken: res.data.token,
+      accessToken: res.data.accessToken,
+      refreshToken: res.data.refreshToken,
+      refreshRequired: false,
     })
     ElMessage({
       message: res.message,

@@ -6,69 +6,29 @@ import {
   stuDeleteRequestApi,
 } from '@/apis/stu/request'
 import { handleStatus } from '@/utils/handleStatus'
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useStuInfoStore } from '@/stores/stuInfo'
 
-const fail = ref([
-  {
-    receiver: '9109222258',
-    receiverName: '谢融悠',
-    sender: '9109222256',
-    senderName: '黎明',
-    content: '111',
-    status: 0,
-    //验证状态 0待审核 1通过 2拒绝
-  },
-  {
-    receiver: '9109222258',
-    receiverName: '谢融悠',
-    sender: '9109222257',
-    senderName: '小王',
-    content: '121',
-    status: 0,
-  },
-  {
-    receiver: '9109222258',
-    receiverName: '谢融悠',
-    sender: '9109232259',
-    senderName: '小明',
-    content: '113',
-    status: 0,
-  },
-  {
-    receiver: '9109222258',
-    receiverName: '谢融悠',
-    sender: '9109232259',
-    senderName: '小1',
-    content: '123',
-    status: 0,
-  },
-  {
-    receiver: '9109222258',
-    receiverName: '谢融悠',
-    sender: '9109232259',
-    senderName: '小4',
-    content: '12wwwww',
-    status: 0,
-  },
-])
+const fail = ref([])
 const stuInfoStore = useStuInfoStore()
-const studentId = stuInfoStore.studentId
+const studentId = stuInfoStore.stuInfo.studentId
 const current = ref(1)
 const total = ref(0)
 const pages = ref(0)
 
 async function getFail(num) {
   const res = await stuGetFailApi({
-    studentId: studentId.value,
-    page: num,
+    receiver: studentId.value,
+    current: num,
   })
+
   if (res.success) {
     fail.value = res.data.records
     current.value = res.data.current
     total.value = res.data.total
     pages.value = res.data.pages
+    console.log(fail.value)
   } else {
     ElMessage.error(res.message)
   }
@@ -153,9 +113,7 @@ function changePage(val) {
   current.value = val
   getFail(val)
 }
-
-const handled_request = handleStatus(fail.value)
-// const requests = ref([])
+const handled_request = computed(() => handleStatus(fail.value))
 
 const getStatusStyle = (status) => {
   const colorMap = {
@@ -222,6 +180,7 @@ const getStatusStyle = (status) => {
 
 <style scoped lang="scss">
 .container {
+  padding: 0 40px;
   .title {
     padding-bottom: 10px;
     margin-bottom: 10px;

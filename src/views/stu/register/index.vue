@@ -40,10 +40,6 @@ async function register() {
     password: password.value,
   })
   if (res.success) {
-    stuInfoStore.setStuInfo({
-      studentId: studentId.value,
-      studentToken: res.data,
-    })
     ElMessage({
       message: res.message,
       type: 'success',

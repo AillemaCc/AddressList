@@ -15,11 +15,11 @@ export function stuRegisterApi(data) {
     data,
   })
 }
-//检查用户登录状态接口
-export function stuGetRemarkApi(data) {
+//学生用户登出接口
+export function stuLogoutApi(params) {
   return stuInstance({
-    url: '/api/stu/getRemark',
-    method: 'get',
-    data,
+    url: '/api/stu/logout',
+    method: 'delete',
+    params,
   })
 }

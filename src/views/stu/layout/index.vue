@@ -1,8 +1,32 @@
 <script setup>
+import { stuLogoutApi } from '@/apis/stu/stuLogin'
+import { useStuInfoStore } from '@/stores/stuInfo'
+import { removeStudentInfo } from '@/utils/storage'
+
 // import { ref } from 'vue'
 const defaultProps = {
   children: 'children',
   label: 'name',
+}
+const stuInfoStore = useStuInfoStore()
+async function logout() {
+  const res = await stuLogoutApi({
+    studentId: stuInfoStore.stuInfo.studentId,
+    token: stuInfoStore.stuInfo.accessToken,
+    refreshToken: stuInfoStore.stuInfo.refreshToken,
+  })
+  if (res.success) {
+    removeStudentInfo()
+    stuInfoStore.stuInfo = {}
+    window.location.href = '/stu/login'
+    ElMessage({
+      message: res.message,
+      type: 'success',
+      duration: 2000,
+    })
+  } else {
+    ElMessage.error(res.message)
+  }
 }
 </script>
 
@@ -13,53 +37,38 @@ const defaultProps = {
         <img src="../../../assets/imgs/txl.png" alt="" />
         数计通讯录
       </div>
-      <div class="welcome-container">
-        <div class="welcome-box">你好，谢融悠</div>
-        <!-- <div class="dropdown">
-          <router-link to="/stu/home" class="option">个人资料</router-link>
-          <router-link to="/stu/friends" class="option">我的好友</router-link>
-          <router-link to="/stu/query" class="option">查询信息</router-link>
-          <div class="option">退出登录</div>
-        </div> -->
-      </div>
-    </div>
-    <div class="main-container">
-      <div class="left-nav">
+      <div class="menu-container">
         <el-menu
           :default-active="$route.path"
           class="el-menu-vertical-demo"
           router
+          mode="horizontal"
         >
           <el-menu-item index="/stu/home">
             <span>个人主页</span>
           </el-menu-item>
-          <el-sub-menu index="2">
+          <el-menu-item index="/stu/friends">
+            <span>通讯录好友</span>
+          </el-menu-item>
+          <el-sub-menu index="2-2">
             <template #title>
-              <span>我的通讯录</span>
+              <span>通讯录请求</span>
             </template>
-            <el-menu-item index="/stu/friends">
-              <span>通讯录好友</span>
+            <el-menu-item index="/stu/enter">
+              <span>已发送</span>
             </el-menu-item>
-            <el-sub-menu index="2-2">
-              <template #title>
-                <span>通讯录请求</span>
-              </template>
-              <el-menu-item index="/stu/enter">
-                <span>已发送</span>
-              </el-menu-item>
-              <el-menu-item index="/stu/fail">
-                <span>未通过</span>
-              </el-menu-item>
-              <el-menu-item index="/stu/success">
-                <span>已通过</span>
-              </el-menu-item>
-              <el-menu-item index="/stu/reject">
-                <span>已拒绝</span>
-              </el-menu-item>
-              <el-menu-item index="/stu/deleted">
-                <span>已删除</span>
-              </el-menu-item>
-            </el-sub-menu>
+            <el-menu-item index="/stu/fail">
+              <span>待回复</span>
+            </el-menu-item>
+            <el-menu-item index="/stu/success">
+              <span>已通过</span>
+            </el-menu-item>
+            <el-menu-item index="/stu/reject">
+              <span>已拒绝</span>
+            </el-menu-item>
+            <el-menu-item index="/stu/deleted">
+              <span>已删除</span>
+            </el-menu-item>
           </el-sub-menu>
 
           <el-menu-item index="/stu/query">
@@ -67,26 +76,35 @@ const defaultProps = {
           </el-menu-item>
         </el-menu>
       </div>
-      <div class="right-main">
-        <router-view></router-view>
+      <div class="welcome-container">
+        <div class="welcome-box">你好，谢融悠</div>
+        <div class="logout-box" @click="logout()">退出登录</div>
       </div>
+    </div>
+    <div class="main-container">
+      <router-view></router-view>
     </div>
   </div>
 </template>
 <style scoped lang="scss">
 .all-container {
-  height: 100vh;
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background: url(../../../assets/imgs/n_b2.jpg);
+  background-image: url(../../../assets/imgs/n_b2.jpg);
+  background-repeat: repeat;
   .header-container {
+    position: fixed;
     display: flex;
     justify-content: space-between;
     align-items: center;
     width: 100%;
     height: 96px;
     min-height: 96px;
+    background-color: #fff;
+    z-index: 999;
     .title-container {
+      min-width: 200px;
       display: flex;
       justify-content: center;
       align-items: center;
@@ -100,108 +118,33 @@ const defaultProps = {
         height: 80px;
       }
     }
+    .menu-container {
+      margin-right: auto;
+      margin-left: 40px;
+      width: 500px;
+      :deep(.el-menu) {
+        width: 100%;
+      }
+    }
     .welcome-container {
-      position: relative;
       display: flex;
       justify-content: center;
       align-items: center;
       margin-right: 60px;
       height: 50px;
-      // &:hover .dropdown {
-      //   opacity: 1;
-      //   transform: scaleY(100%);
-      // }
-      // .welcome-box:hover {
-      //   color: $mainColor;
-      //   cursor: pointer;
-      // }
-
-      // .dropdown {
-      //   position: absolute;
-      //   top: 50px;
-      //   left: 0;
-      //   display: flex;
-      //   flex-direction: column;
-      //   justify-content: center;
-      //   align-items: center;
-      //   width: 100px;
-      //   height: 160px;
-      //   background-color: #fff;
-      //   border: 1px solid rgba(0, 0, 0, 0.1);
-      //   border-radius: 4px;
-      //   box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-      //   opacity: 0;
-      //   transform: scaleY(0);
-      //   transition:
-      //     opacity 0.2s,
-      //     transform 0.3s;
-      //   transform-origin: top;
-      //   z-index: 999;
-      //   &::before {
-      //     content: '';
-      //     position: absolute;
-      //     top: 0;
-      //     left: 50%;
-      //     width: 0;
-      //     height: 0;
-      //     border-top: 10px solid transparent;
-      //     border-left: 10px solid transparent;
-      //     border-right: 10px solid transparent;
-      //     border-bottom: 10px solid #fff;
-      //     /*用 filter 添加三角形阴影*/
-      //     filter: drop-shadow(0 -7px 5px rgba(0, 0, 0, 0.1));
-      //     transform: translateX(-50%) translateY(-100%);
-      //     z-index: 0;
-      //   }
-      //   .option {
-      //     display: flex;
-      //     justify-content: center;
-      //     align-items: center;
-      //     width: 100%;
-      //     height: 35px;
-      //     color: #000;
-      //     cursor: pointer;
-      //     &:hover {
-      //       background-color: #f5f7fa;
-      //       color: $mainColor;
-      //     }
-      //   }
-      // }
-    }
-  }
-  .main-container {
-    flex: 1;
-  }
-}
-.main-container {
-  display: flex;
-  .left-nav {
-    min-width: 240px;
-    width: 240px;
-    background: -webkit-linear-gradient(#fff 0%, #fff 70%, #fdf4ef 100%);
-    &::v-deep(.el-tree-node__content) {
-      height: 60px;
-    }
-    .nav-item {
-      display: flex;
-      align-items: center;
-      flex: 1;
-      width: 100%;
-      height: 100%;
-      padding: 0 10px;
-      font-size: 16px;
-      color: #000;
-      text-decoration: none;
-
-      &:hover,
-      &.router-link-active {
-        color: $mainColor;
+      min-width: 96px;
+      gap: 20px;
+      .logout-box {
+        cursor: pointer;
+        &:hover {
+          color: $mainColor;
+        }
       }
     }
   }
-  .right-main {
+  .main-container {
+    margin-top: 96px;
     flex: 1;
-    padding: 0 20px;
   }
 }
 </style>
