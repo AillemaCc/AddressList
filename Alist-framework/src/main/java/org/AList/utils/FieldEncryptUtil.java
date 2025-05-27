@@ -6,7 +6,7 @@ import com.baomidou.mybatisplus.core.toolkit.StringUtils;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.AList.annotation.EncryptField;
-import org.AList.service.FieldEncryptService;
+import org.AList.service.FieldEncryptDecryptService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.stereotype.Component;
@@ -26,7 +26,7 @@ import java.util.Objects;
 public class FieldEncryptUtil {
 
     @Setter(onMethod_ = {@Autowired})
-    private FieldEncryptService fieldEncryptService;
+    private FieldEncryptDecryptService fieldEncryptDecryptService;
 
     /**对EncryptField注解进行加密处理*/
     public void encrypt(Object obj) {
@@ -86,10 +86,10 @@ public class FieldEncryptUtil {
             String logText = null, newValue = null;
             if(encrypt) {
                 logText = "加密";
-                newValue = fieldEncryptService.encrypt(oldValue);
+                newValue = fieldEncryptDecryptService.encrypt(oldValue);
             } else {
                 logText = "解密";
-                newValue = fieldEncryptService.decrypt(oldValue);
+                newValue = fieldEncryptDecryptService.decrypt(oldValue);
             }
 
             log.info("{}成功[{}类的{}字段]. 处理前:{}, 处理后:{}",
