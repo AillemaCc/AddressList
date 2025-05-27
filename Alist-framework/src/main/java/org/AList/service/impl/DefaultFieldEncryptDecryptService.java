@@ -2,16 +2,28 @@ package org.AList.service.impl;
 
 import com.baomidou.mybatisplus.core.toolkit.AES;
 import com.baomidou.mybatisplus.core.toolkit.StringUtils;
+import lombok.RequiredArgsConstructor;
+import org.AList.common.properties.EncryptProperties;
 import org.AList.service.FieldEncryptDecryptService;
 import org.springframework.stereotype.Component;
+
+import javax.annotation.PostConstruct;
 
 /**
  * 使用Mybatis-Plus自带的AES加解密
  */
 @Component
+@RequiredArgsConstructor
 public class DefaultFieldEncryptDecryptService implements FieldEncryptDecryptService {
-    private static final String ENCRYPT_PREFIX = "mpw+";
-    private static final String ENCRYPT_KEY = "abcdefghijklmnop"; // 实际项目应从配置读取
+
+    private final EncryptProperties encryptProperties;
+    private String ENCRYPT_PREFIX;
+    private String ENCRYPT_KEY; // 实际项目应从配置读取
+    @PostConstruct
+    private void init() {
+        this.ENCRYPT_PREFIX = encryptProperties.getEncryptPrefix();
+        this.ENCRYPT_KEY = encryptProperties.getEncryptKey();
+    }
 
     @Override
     public String encrypt(String value) {
