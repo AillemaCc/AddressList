@@ -66,4 +66,6 @@ public interface AdminBaseInfoService {
      * @param requestParam
      */
     void addBaseMajorInfo(BaseMajorInfoAddReqDTO requestParam);
+
+    void changeMajorAcademy(ChangeMajorAcademyReqDTO requestParam);
 }

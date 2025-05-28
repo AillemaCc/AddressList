@@ -47,11 +47,20 @@ public class AdminBaseInfoController {
     }
 
     /**
-     * 更新班级所属的专业信息
+     * 更新班级所属的专业
      */
     @PostMapping("/updateClassMA")
     public Result<Void> updateBaseClassInfoMA(@RequestBody BaseClassInfoUpdateMAReqDTO requestParam){
         adminBaseInfoService.updateBaseClassInfoMA(requestParam);
+        return Results.success();
+    }
+
+    /**
+     * 修改专业所属学院
+     */
+    @PostMapping("/changeMajorAcademy")
+    public Result<Void> changeMajorAcademy(@RequestBody ChangeMajorAcademyReqDTO requestParam){
+        adminBaseInfoService.changeMajorAcademy(requestParam);
         return Results.success();
     }
 

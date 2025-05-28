@@ -462,6 +462,65 @@ public class AdminBaseInfoServiceImpl implements AdminBaseInfoService {
         }
     }
 
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void changeMajorAcademy(ChangeMajorAcademyReqDTO requestParam) {
+        Objects.requireNonNull(requestParam, "请求参数不能为空");
+        if (requestParam.getMajorNum() == null) {
+            throw new ClientException("专业编号不能为空");
+        }
+        if (requestParam.getNewAcademyNum() == null || StringUtils.isBlank(requestParam.getNewAcademyName())) {
+            throw new ClientException("新学院编号和名称不能为空");
+        }
+
+        Integer majorNum = requestParam.getMajorNum();
+        Integer newAcademyNum = requestParam.getNewAcademyNum();
+        String newAcademyName = requestParam.getNewAcademyName();
+        Boolean createNewAcademy = requestParam.getCreateNewAcademy();
+
+        // 查询原始专业信息
+        LambdaQueryWrapper<MajorAndAcademyDO> originalWrapper = Wrappers.lambdaQuery(MajorAndAcademyDO.class)
+                .eq(MajorAndAcademyDO::getMajorNum, majorNum)
+                .eq(MajorAndAcademyDO::getDelFlag, 0);
+        MajorAndAcademyDO originalMajor = majorAndAcademyMapper.selectOne(originalWrapper);
+
+        if (originalMajor == null) {
+            throw new ClientException("指定的专业不存在");
+        }
+
+        // 如果不是创建新学院，验证目标学院是否存在
+        if (!createNewAcademy) {
+            LambdaQueryWrapper<MajorAndAcademyDO> academyWrapper = Wrappers.lambdaQuery(MajorAndAcademyDO.class)
+                    .eq(MajorAndAcademyDO::getAcademyNum, newAcademyNum)
+                    .eq(MajorAndAcademyDO::getDelFlag, 0);
+            MajorAndAcademyDO existingAcademy = majorAndAcademyMapper.selectOne(academyWrapper);
+            if (existingAcademy == null) {
+                throw new ClientException("目标学院不存在，请选择创建新学院或使用正确的学院编号");
+            }
+            // 使用现有学院的名称
+            newAcademyName = existingAcademy.getAcademy();
+        }
+
+        // 检查是否真的需要更新
+        if (originalMajor.getAcademyNum().equals(newAcademyNum)) {
+            throw new ClientException("专业已属于该学院，无需修改");
+        }
+
+        // 更新专业的学院信息
+        MajorAndAcademyDO updateMajor = new MajorAndAcademyDO();
+        updateMajor.setId(originalMajor.getId());
+        updateMajor.setAcademyNum(newAcademyNum);
+        updateMajor.setAcademy(newAcademyName);
+
+        int updateResult = majorAndAcademyMapper.updateById(updateMajor);
+        if (updateResult != 1) {
+            throw new ClientException("修改专业所属学院失败，请重试");
+        }
+
+        // 清理相关缓存
+        baseInfoCacheService.clearStudentContactCacheByMajor(majorNum);
+    }
+
     /**
      * 更新学生信息表中的专业和班级信息
      *
