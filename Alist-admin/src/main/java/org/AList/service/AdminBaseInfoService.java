@@ -60,4 +60,10 @@ public interface AdminBaseInfoService {
      * @param requestParam 请求参数
      */
     void updateBaseAcademyInfo(BaseAcademyInfoUpdateReqDTO requestParam);
+
+    /**
+     * 新增专业信息
+     * @param requestParam
+     */
+    void addBaseMajorInfo(BaseMajorInfoAddReqDTO requestParam);
 }

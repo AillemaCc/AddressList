@@ -27,6 +27,16 @@ public class AdminBaseInfoController {
         adminBaseInfoService.addBaseClassInfo(requestParam);
         return Results.success();
     }
+
+    /**
+     * 新增专业信息
+     */
+    @PutMapping("/addMajor")
+    public Result<Void> addBaseMajorInfo(@RequestBody BaseMajorInfoAddReqDTO requestParam){
+        adminBaseInfoService.addBaseMajorInfo(requestParam);
+        return Results.success();
+    }
+
     /**
      * 更新班级信息
      */
