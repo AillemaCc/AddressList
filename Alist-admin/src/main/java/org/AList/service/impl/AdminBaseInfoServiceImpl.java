@@ -139,7 +139,6 @@ public class AdminBaseInfoServiceImpl implements AdminBaseInfoService {
 
         ClassInfoDO updateDO = ClassInfoDO.builder()
                 .className(requestParam.getClassName())
-                .classNum(requestParam.getClassNum())
                 .build();
 
         int affectedRows = classInfoMapper.updateById(updateDO);
