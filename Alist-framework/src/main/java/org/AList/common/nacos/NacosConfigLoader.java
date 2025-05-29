@@ -1,4 +1,4 @@
-package org.AList.config;
+package org.AList.common.nacos;
 
 import com.alibaba.nacos.api.NacosFactory;
 import com.alibaba.nacos.api.config.ConfigService;  

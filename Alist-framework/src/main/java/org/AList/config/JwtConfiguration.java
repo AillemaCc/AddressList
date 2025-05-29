@@ -2,6 +2,7 @@ package org.AList.config;
 
 import lombok.extern.slf4j.Slf4j;
 import org.AList.common.monitor.JwtKeyRotationMonitor;
+import org.AList.common.properties.JwtProperties;
 import org.AList.utils.JwtUtils;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

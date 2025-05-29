@@ -5,6 +5,9 @@ import org.springframework.context.ApplicationEvent;
 
 import java.util.Map;
 
+/**
+ * 抽象出配置变更事件
+ */
 @Getter
 public class ConfigRefreshCompletedEvent extends ApplicationEvent {
     private final String sourceName;  

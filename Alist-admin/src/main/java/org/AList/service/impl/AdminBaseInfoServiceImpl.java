@@ -139,7 +139,6 @@ public class AdminBaseInfoServiceImpl implements AdminBaseInfoService {
 
         ClassInfoDO updateDO = ClassInfoDO.builder()
                 .className(requestParam.getClassName())
-                .classNum(requestParam.getClassNum())
                 .build();
 
         int affectedRows = classInfoMapper.updateById(updateDO);
@@ -408,6 +407,118 @@ public class AdminBaseInfoServiceImpl implements AdminBaseInfoService {
             majorAndAcademyMapper.update(updateMADO,queryWrapper);
             baseInfoCacheService.clearStudentContactCacheByAcademy(requestParam.getAcademyNum());
         }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void addBaseMajorInfo(BaseMajorInfoAddReqDTO requestParam) {
+        Objects.requireNonNull(requestParam, "请求参数不能为空");
+        if (requestParam.getMajorNum() == null || StringUtils.isBlank(requestParam.getMajorName())) {
+            throw new ClientException("专业编号和名称不能为空");
+        }
+        if (requestParam.getAcademyNum() == null || StringUtils.isBlank(requestParam.getAcademyName())) {
+            throw new ClientException("学院编号和名称不能为空");
+        }
+
+        Integer majorNum = requestParam.getMajorNum();
+        String majorName = requestParam.getMajorName();
+        Integer academyNum = requestParam.getAcademyNum();
+        String academyName = requestParam.getAcademyName();
+        Boolean createNewAcademy = requestParam.getCreateNewAcademy();
+
+        // 检查专业是否已存在
+        LambdaQueryWrapper<MajorAndAcademyDO> uniqueWrapper = Wrappers.lambdaQuery(MajorAndAcademyDO.class)
+                .eq(MajorAndAcademyDO::getMajorNum, majorNum)
+                .eq(MajorAndAcademyDO::getDelFlag, 0);
+        MajorAndAcademyDO uniqueDO = majorAndAcademyMapper.selectOne(uniqueWrapper);
+        if (uniqueDO != null) {
+            throw new ClientException("新增的专业信息已存在，请不要重复添加");
+        }
+
+        // 如果不是新建学院，检查学院是否存在
+        if (!createNewAcademy) {
+            LambdaQueryWrapper<MajorAndAcademyDO> academyWrapper = Wrappers.lambdaQuery(MajorAndAcademyDO.class)
+                    .eq(MajorAndAcademyDO::getAcademyNum, academyNum)
+                    .eq(MajorAndAcademyDO::getDelFlag, 0);
+            MajorAndAcademyDO existingAcademy = majorAndAcademyMapper.selectOne(academyWrapper);
+            if (existingAcademy == null) {
+                throw new ClientException("指定的学院不存在，请选择新建学院或使用正确的学院编号");
+            }
+            // 使用现有学院的名称
+            academyName = existingAcademy.getAcademy();
+        }
+
+        // 插入专业和学院信息
+        MajorAndAcademyDO majorAndAcademyDO = MajorAndAcademyDO.builder()
+                .major(majorName)
+                .majorNum(majorNum)
+                .academy(academyName)
+                .academyNum(academyNum)
+                .build();
+
+        int insert = majorAndAcademyMapper.insert(majorAndAcademyDO);
+        if (insert != 1) {
+            throw new ClientException("新增异常，请重试");
+        }
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void changeMajorAcademy(ChangeMajorAcademyReqDTO requestParam) {
+        Objects.requireNonNull(requestParam, "请求参数不能为空");
+        if (requestParam.getMajorNum() == null) {
+            throw new ClientException("专业编号不能为空");
+        }
+        if (requestParam.getNewAcademyNum() == null || StringUtils.isBlank(requestParam.getNewAcademyName())) {
+            throw new ClientException("新学院编号和名称不能为空");
+        }
+
+        Integer majorNum = requestParam.getMajorNum();
+        Integer newAcademyNum = requestParam.getNewAcademyNum();
+        String newAcademyName = requestParam.getNewAcademyName();
+        Boolean createNewAcademy = requestParam.getCreateNewAcademy();
+
+        // 查询原始专业信息
+        LambdaQueryWrapper<MajorAndAcademyDO> originalWrapper = Wrappers.lambdaQuery(MajorAndAcademyDO.class)
+                .eq(MajorAndAcademyDO::getMajorNum, majorNum)
+                .eq(MajorAndAcademyDO::getDelFlag, 0);
+        MajorAndAcademyDO originalMajor = majorAndAcademyMapper.selectOne(originalWrapper);
+
+        if (originalMajor == null) {
+            throw new ClientException("指定的专业不存在");
+        }
+
+        // 如果不是创建新学院，验证目标学院是否存在
+        if (!createNewAcademy) {
+            LambdaQueryWrapper<MajorAndAcademyDO> academyWrapper = Wrappers.lambdaQuery(MajorAndAcademyDO.class)
+                    .eq(MajorAndAcademyDO::getAcademyNum, newAcademyNum)
+                    .eq(MajorAndAcademyDO::getDelFlag, 0);
+            MajorAndAcademyDO existingAcademy = majorAndAcademyMapper.selectOne(academyWrapper);
+            if (existingAcademy == null) {
+                throw new ClientException("目标学院不存在，请选择创建新学院或使用正确的学院编号");
+            }
+            // 使用现有学院的名称
+            newAcademyName = existingAcademy.getAcademy();
+        }
+
+        // 检查是否真的需要更新
+        if (originalMajor.getAcademyNum().equals(newAcademyNum)) {
+            throw new ClientException("专业已属于该学院，无需修改");
+        }
+
+        // 更新专业的学院信息
+        MajorAndAcademyDO updateMajor = new MajorAndAcademyDO();
+        updateMajor.setId(originalMajor.getId());
+        updateMajor.setAcademyNum(newAcademyNum);
+        updateMajor.setAcademy(newAcademyName);
+
+        int updateResult = majorAndAcademyMapper.updateById(updateMajor);
+        if (updateResult != 1) {
+            throw new ClientException("修改专业所属学院失败，请重试");
+        }
+
+        // 清理相关缓存
+        baseInfoCacheService.clearStudentContactCacheByMajor(majorNum);
     }
 
     /**

@@ -168,7 +168,7 @@ public class ApplicationServiceImpl extends ServiceImpl<ApplicationMapper, Appli
     /**
      * 同意单个站内信申请
      * <p>
-     * 同意后会将接收者的联系信息展示给发送者
+     * 同意后会将接收者的联系信息展示给发送者，也会吧发送者的信息展示给接收者
      *
      * @param requestParam 请求参数，包含发送者和接收者ID
      * @throws ClientException 如果未找到申请记录或更新失败
@@ -184,19 +184,28 @@ public class ApplicationServiceImpl extends ServiceImpl<ApplicationMapper, Appli
         ApplicationDO applicationDO = baseMapper.selectOne(queryWrapper);
         if (applicationDO != null) {
             applicationDO.setStatus(1);
-            baseMapper.update(applicationDO,null);
-            String contactId=requestParam.getReceiver();
-            String ownerId=requestParam.getSender();
-            ContactGotoDO contactGotoDO=ContactGotoDO.builder()
-                    .contactId(contactId)
-                    .ownerId(ownerId)
+            baseMapper.update(applicationDO, null);
+
+            // 创建第一个关系：发送者可以看到接收者的通讯信息
+            ContactGotoDO senderToReceiver = ContactGotoDO.builder()
+                    .contactId(requestParam.getReceiver())
+                    .ownerId(requestParam.getSender())
                     .build();
-            int insert = contactGotoMapper.insert(contactGotoDO);
-            if(insert != 1) {
-                throw new UserException(APPROVE_ERR);                                                                     //A0410：用户同意申请错误
+
+            // 创建第二个关系：接收者可以看到发送者的通讯信息
+            ContactGotoDO receiverToSender = ContactGotoDO.builder()
+                    .contactId(requestParam.getSender())
+                    .ownerId(requestParam.getReceiver())
+                    .build();
+
+            int insert1 = contactGotoMapper.insert(senderToReceiver);
+            int insert2 = contactGotoMapper.insert(receiverToSender);
+
+            if(insert1 != 1 || insert2 != 1) {
+                throw new UserException(APPROVE_ERR);
             }
         } else {
-            throw new UserException(NO_PENDING_APPLY);                                                                    //A0401：不存在待处理申请
+            throw new UserException(NO_PENDING_APPLY);
         }
     }
 

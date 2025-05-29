@@ -3,7 +3,7 @@ package org.AList.service;
 /**
  * 数据加解密接口
  */
-public interface FieldEncryptService {
+public interface FieldEncryptDecryptService {
 
     /**对数据进行加密*/
     String encrypt(String value);

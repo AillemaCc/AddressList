@@ -1,4 +1,4 @@
-package org.AList.config;
+package org.AList.common.properties;
 
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
