@@ -14,7 +14,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import static org.AList.common.convention.errorcode.BaseErrorCode.USER_NOT_LOGGED;
+import static org.AList.common.convention.errorcode.BaseErrorCode.*;
 
 @Service
 @RequiredArgsConstructor
@@ -74,13 +74,13 @@ public class TokenService {
         // 验证Refresh Token
         // 检查Token是否在黑名单中
         if (isTokenBlacklisted(refreshToken)) {
-            throw new UserException(USER_NOT_LOGGED);
+            throw new UserException(USER_NOT_LOGGED);                                                                   //"A0203", "用户未登录或用户token不存在"
         }
         String storedAccessKey =RedisKeyGenerator.genStudentLoginAccess(studentId);
         String storedAccessToken = stringRedisTemplate.opsForValue().get(storedAccessKey);
         Long ttl=stringRedisTemplate.getExpire(storedAccessKey,TimeUnit.MINUTES);
         if (storedAccessToken != null && ttl != null && ttl > 5) {
-            throw new UserException("您的accessToken并未过期且达不到刷新要求，请不要尝试重复刷新");
+            throw new UserException(TOKEN_REFRESH_INVALID);                                                             //A0204：用户accessToken并未过期且达不到刷新要求
         }
         String refreshKey = RedisKeyGenerator.genStudentLoginRefresh(studentId);
         String storedRefreshToken = stringRedisTemplate.opsForValue().get(refreshKey);  

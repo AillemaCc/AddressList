@@ -41,15 +41,28 @@ public class StuTransmitFilter implements Filter {
     public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain) throws IOException, ServletException {
         HttpServletRequest httpServletRequest = (HttpServletRequest) servletRequest;
         HttpServletResponse httpServletResponse = (HttpServletResponse) servletResponse;
+        // 添加 CORS headers
+        httpServletResponse.setHeader("Access-Control-Allow-Origin", "http://localhost:5173");
+        httpServletResponse.setHeader("Access-Control-Allow-Credentials", "true");
+        httpServletResponse.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+        httpServletResponse.setHeader("Access-Control-Allow-Headers", "*");
+        httpServletResponse.setHeader("Access-Control-Expose-Headers", "New-Access-Token, X-Refresh-Required");
+
+        // 处理 OPTIONS 请求（预检）
+        if ("OPTIONS".equalsIgnoreCase(httpServletRequest.getMethod())) {
+            httpServletResponse.setStatus(HttpServletResponse.SC_OK);
+            return;
+        }
+        System.out.println("请求到达过滤器: " + httpServletRequest.getMethod() + " " + httpServletRequest.getRequestURI());
         String requestURI = httpServletRequest.getRequestURI();
 
         if(!IGNORE_URL.contains(requestURI)){
-            String studentId = httpServletRequest.getHeader("studentId");
-            String accessToken = httpServletRequest.getHeader("token");
+            String studentId = httpServletRequest.getHeader("studentid");
+            String accessToken = httpServletRequest.getHeader("accesstoken");
 
             // 场景1：缺少必要请求头
             if (studentId == null || accessToken == null) {
-                String missingField = studentId == null ? "studentId" : "token";
+                String missingField = studentId == null ? "studentid" : "accesstoken";
                 sendUnauthorizedResponse(httpServletResponse,
                         "认证失败：请求头中缺少" + missingField + "字段");
                 return;
@@ -64,6 +77,7 @@ public class StuTransmitFilter implements Filter {
                 // Token有效，设置用户上下文
                 StuIdInfoDTO stuIdInfoDTO = JSON.parseObject(stuInfoJsonStr.toString(), StuIdInfoDTO.class);
                 StuIdContext.setStudentId(stuIdInfoDTO);
+                System.out.println("当前用户上下文id为"+StuIdContext.getStudentId());
                 // 检查token过期时间
                 Long ttl = stringRedisTemplate.getExpire(accessRedisKey, TimeUnit.MINUTES);
 

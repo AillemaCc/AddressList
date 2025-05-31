@@ -36,7 +36,7 @@ public class StuRegisterController {
      * @return 查询响应实体
      */
     @MyLog(title = "注册模块", content = "用户查询注册结果操作")
-    @GetMapping("/getRemark")
+    @PostMapping("/getRemark")
     public Result<StuRegisterRemarkRespDTO> getRemark(@RequestBody StuRegisterRemarkReqDTO requestParam){
         return Results.success(stuService.getRemark(requestParam));
     }

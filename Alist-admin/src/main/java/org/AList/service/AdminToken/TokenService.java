@@ -15,6 +15,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import static org.AList.common.convention.errorcode.BaseErrorCode.TOKEN_REFRESH_INVALID;
 import static org.AList.common.convention.errorcode.BaseErrorCode.USER_NOT_LOGGED;
 
 @Service
@@ -86,7 +87,7 @@ public class TokenService {
         String accessKey = RedisKeyGenerator.genAdministerLoginAccess(username);
         if (Boolean.TRUE.equals(stringRedisTemplate.hasKey(accessKey))) {
             // Access Token仍然存在，说明未过期
-            throw new ClientException("Access Token仍然有效，无需刷新");
+            throw new UserException(TOKEN_REFRESH_INVALID);                                                             //"A0204", "用户accessToken未过期,无需刷新"
         }
 
         // 解析Refresh Token获取用户信息

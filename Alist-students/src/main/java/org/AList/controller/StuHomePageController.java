@@ -7,10 +7,7 @@ import org.AList.common.convention.result.Results;
 import org.AList.domain.dto.req.HomePageQueryReqDTO;
 import org.AList.domain.dto.resp.HomePageDataDTO;
 import org.AList.service.StuHomePageService;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/stu/homepage")
@@ -22,7 +19,7 @@ public class StuHomePageController {
      * @return 学生通讯信息
      */
     @MyLog(title = "学生主页信息模块", content = "获取学生主页通讯信息操作")
-    @GetMapping("/query")
+    @PostMapping("/query")
     public Result<HomePageDataDTO> queryHomepageInfo(@RequestBody HomePageQueryReqDTO requestParam) {
         return Results.success(stuHomePageService.queryHomepageInfo(requestParam.getStudentId()));
     }

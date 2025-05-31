@@ -9,6 +9,7 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.AList.common.biz.user.StuIdContext;
 import org.AList.common.convention.exception.ClientException;
 import org.AList.common.convention.exception.UserException;
@@ -37,6 +38,7 @@ import static org.AList.common.convention.errorcode.BaseErrorCode.*;
  */
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ApplicationServiceImpl extends ServiceImpl<ApplicationMapper, ApplicationDO> implements ApplicationService {
     private final StudentFrameWorkMapper studentFrameWorkMapper;
     private final ApplicationMapper applicationMapper;
@@ -258,6 +260,7 @@ public class ApplicationServiceImpl extends ServiceImpl<ApplicationMapper, Appli
      */
     @Override
     public IPage<QuerySomeoneRespDTO> querySomeone(QuerySomeoneReqDTO requestParam) {
+        log.info("查询的学生姓名为{}", requestParam.getName());
         int current = requestParam.getCurrent() == null ? 0 : requestParam.getCurrent();
         int size = requestParam.getSize() == null ? 10 : requestParam.getSize();
         String cacheKey= studentSearchCacheService.generateCacheKey(requestParam);

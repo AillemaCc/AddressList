@@ -23,7 +23,7 @@ public class ContactApplicationController {
      * 根据姓名查询已注册同学信息
      */
     @MyLog
-    @GetMapping("/querySomeone")
+    @PostMapping("/querySomeone")
     public Result<IPage<QuerySomeoneRespDTO>> querySomeone(@RequestBody QuerySomeoneReqDTO requestParam) {
         return Results.success(applicationService.querySomeone(requestParam));
     }
@@ -74,7 +74,7 @@ public class ContactApplicationController {
      * 分页展示发给自己的所有站内信请求
      * @return 分页返回
      */
-    @GetMapping("/listAll")
+    @PostMapping("/listAll")
     public Result<IPage<ApplicationQueryPageRespDTO>> listAllValidApplication(@RequestBody ApplicationReceiveQueryPageReqDTO requestParam){
         return Results.success(applicationService.listAllValidApplication(requestParam));
     }
@@ -82,7 +82,7 @@ public class ContactApplicationController {
     /**
      * 分页展示所有自己已通过站内信请求
      */
-    @GetMapping("/listAllAccept")
+    @PostMapping("/listAllAccept")
     public Result<IPage<ApplicationQueryPageRespDTO>> listAllAcceptedApplication(@RequestBody ApplicationReceiveQueryPageReqDTO requestParam){
         return Results.success(applicationService.listAllAcceptedApplication(requestParam));
     }
@@ -90,7 +90,7 @@ public class ContactApplicationController {
     /**
      * 分页展示所有自己已拒绝的站内信请求
      */
-    @GetMapping("/listAllRefuse")
+    @PostMapping("/listAllRefuse")
     public Result<IPage<ApplicationQueryPageRespDTO>>  listAllRefuseApplication(@RequestBody ApplicationReceiveQueryPageReqDTO requestParam){
         return Results.success(applicationService.listAllRefusedApplication(requestParam));
     }
@@ -98,7 +98,7 @@ public class ContactApplicationController {
     /**
      * 分页展示所有自己已删除的站内信请求
      */
-    @GetMapping("/listAllDelete")
+    @PostMapping("/listAllDelete")
     public Result<IPage<ApplicationQueryPageRespDTO>> listAllDeleteApplication(@RequestBody ApplicationReceiveQueryPageReqDTO requestParam){
         return Results.success(applicationService.listAllDeleteApplication(requestParam));
     }
@@ -106,7 +106,7 @@ public class ContactApplicationController {
     /**
      * 分页查询所有自己已发送的站内信请求
      */
-    @GetMapping("/listAllSend")
+    @PostMapping("/listAllSend")
     public Result<IPage<ApplicationQueryPageRespDTO>> listAllSendApplication(@RequestBody ApplicationSendQueryPageReqDTO requestParam){
         return Results.success(applicationService.listAllSendApplication(requestParam));
     }
