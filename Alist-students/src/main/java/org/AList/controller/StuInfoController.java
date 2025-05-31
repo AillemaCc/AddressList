@@ -71,7 +71,7 @@ public class StuInfoController {
      * @return void
      */
     @MyLog(title = "个人通讯信息模块", content = "按学号查询自己拥有的某个人的通讯信息操作")
-    @GetMapping("/contact/query")
+    @PostMapping("/contact/query")
     public Result<ContactQueryRespDTO> queryContactByStuId(@RequestBody ContactQueryByIdReqDTO requestParam){
         return Results.success(stuContactService.queryContactById(requestParam));
     }
@@ -81,7 +81,7 @@ public class StuInfoController {
      * @return 分页查询
      */
     @MyLog(title = "个人通讯信息模块", content = "分页查询个人全量通讯信息操作")
-    @GetMapping("/contact/list")
+    @PostMapping("/contact/list")
     public Result<IPage<ContactQueryRespDTO>> queryContactList(@RequestBody ContactQueryAllOwnReqDTO requestParam){
         return Results.success(stuContactService.queryContactList(requestParam));
     }
@@ -90,7 +90,7 @@ public class StuInfoController {
      * 分页展示所有个人拥有的已删除的通讯信息
      */
     @MyLog(title = "个人通讯信息模块", content = "分页展示所有个人拥有的已删除的通讯信息操作")
-    @GetMapping("/contact/listAllDelete")
+    @PostMapping("/contact/listAllDelete")
     public Result<IPage<ContactQueryRespDTO>> queryContactListAllDelete(@RequestBody ContactQueryAllOwnReqDTO requestParam){
         return Results.success(stuContactService.queryContactListAllDelete(requestParam));
     }
