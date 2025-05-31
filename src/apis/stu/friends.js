@@ -31,7 +31,7 @@ export function stuUpdateAddressApi(data) {
 export function stuQueryFriendsApi(data) {
   return stuInstance({
     url: '/api/stu/info/contact/query',
-    method: 'get',
+    method: 'post',
     data,
   })
 }
@@ -40,7 +40,7 @@ export function stuQueryFriendsApi(data) {
 export function stuGetFriendsApi(data) {
   return stuInstance({
     url: '/api/stu/info/contact/list',
-    method: 'get',
+    method: 'post',
     data,
   })
 }
@@ -49,7 +49,7 @@ export function stuGetFriendsApi(data) {
 export function stuQueryDeletedApi(data) {
   return stuInstance({
     url: '/api/stu/info/contact/listAllDelete',
-    method: 'get',
+    method: 'post',
     data,
   })
 }

@@ -18,7 +18,7 @@ const queryStudentId = ref('')
 
 async function getFriends(num) {
   const res = await stuGetFriendsApi({
-    studentId: studentId.value,
+    ownerId: studentId,
     current: num,
     size: 10,
   })
@@ -35,7 +35,7 @@ getFriends(1)
 
 async function deleteFriend(contactId) {
   const res = await stuDeleteAddressApi({
-    owner: studentId.value,
+    ownerId: studentId,
     contactId,
   })
   if (res.success) {
@@ -61,7 +61,7 @@ async function deleteFriend(contactId) {
 
 async function query() {
   const res = await stuQueryFriendsApi({
-    ownerId: studentId.value,
+    ownerId: studentId,
     contactId: queryStudentId.value,
   })
   friends.value = [{ ...res.data }]

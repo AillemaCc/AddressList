@@ -149,30 +149,30 @@ const adminCantAccessPath = [
   '/admin/bulletin_deleted',
   '/admin/bulletin_edit',
 ]
-// router.beforeEach((to, from, next) => {
-//   const stuInfoStore = useStuInfoStore()
-//   const adminInfoStore = useAdminInfoStore()
+router.beforeEach((to, from, next) => {
+  const stuInfoStore = useStuInfoStore()
+  const adminInfoStore = useAdminInfoStore()
 
-//   // 1. 先检查学生权限路径
-//   if (stuCantAccessPath.includes(to.fullPath)) {
-//     if (stuInfoStore.stuInfo.accessToken) {
-//       next()
-//     } else {
-//       return next('/stu/login') // 使用 return 终止后续逻辑
-//     }
-//   }
+  // 1. 先检查学生权限路径
+  if (stuCantAccessPath.includes(to.fullPath)) {
+    if (stuInfoStore.stuInfo.accessToken) {
+      return next()
+    } else {
+      return next('/stu/login') // 使用 return 终止后续逻辑
+    }
+  }
 
-//   // 2. 再检查管理员权限路径
-//   if (adminCantAccessPath.includes(to.fullPath)) {
-//     if (adminInfoStore.adminInfo.accessToken) {
-//       next()
-//     } else {
-//       return next('/admin/login') // 使用 return 终止后续逻辑
-//     }
-//   }
+  // 2. 再检查管理员权限路径
+  if (adminCantAccessPath.includes(to.fullPath)) {
+    if (adminInfoStore.adminInfo.accessToken) {
+      return next()
+    } else {
+      return next('/admin/login') // 使用 return 终止后续逻辑
+    }
+  }
 
-//   // 3. 默认放行
-//   next()
-// })
+  // 3. 默认放行
+  next()
+})
 
 export default router

@@ -4,7 +4,7 @@ import { stuInstance } from '@/utils/request'
 export function stuNameQueryApi(data) {
   return stuInstance({
     url: '/api/application/querySomeone',
-    method: 'get',
+    method: 'post',
     data,
   })
 }
@@ -13,7 +13,7 @@ export function stuNameQueryApi(data) {
 export function stuHomePageInfoApi(data) {
   return stuInstance({
     url: '/api/stu/homepage/query',
-    method: 'get',
+    method: 'post',
     data,
   })
 }

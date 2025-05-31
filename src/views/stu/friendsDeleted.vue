@@ -13,7 +13,7 @@ const pages = ref(0)
 
 async function getDeletedFriends(num) {
   const res = await stuQueryDeletedApi({
-    studentId: studentId.value,
+    ownerId: studentId,
     current: num,
     size: 10,
   })

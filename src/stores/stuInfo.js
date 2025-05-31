@@ -8,8 +8,8 @@ import {
 
 export const useStuInfoStore = defineStore('stuInfo', () => {
   const stuInfo = getStudentInfo()
-  const isRefreshing = false
-  const refreshSubscribers = []
+  let isRefreshing = false
+  let refreshSubscribers = []
   function setStuInfo(newValue) {
     stuInfo.value = newValue
     setStudentInfo(newValue)

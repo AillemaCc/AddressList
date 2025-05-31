@@ -16,7 +16,7 @@ const pages = ref(0)
 //获取已发送请求列表
 async function getEnter(num) {
   const res = await stuGetEnterApi({
-    sender: studentId.value,
+    sender: studentId,
     current: num,
     size: 10,
   })

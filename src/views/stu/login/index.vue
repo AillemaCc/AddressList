@@ -48,9 +48,9 @@ async function login() {
           type: 'success',
           duration: 2000,
         })
-        setTimeout(() => {
+
           router.push('/stu/home')
-        }, 2000)
+
       } else {
         ElMessage.error(res.message)
       }

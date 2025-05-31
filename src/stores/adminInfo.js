@@ -10,8 +10,8 @@ export const useAdminInfoStore = defineStore('adminInfo', () => {
   const adminInfo = getAdministrationInfo()
 
   // 用来存储每个管理员的刷新状态和订阅者
-  const isRefreshing = false
-  const refreshSubscribers = []
+  let isRefreshing = false
+  let refreshSubscribers = []
 
   function setAdminInfo(newValue) {
     adminInfo.value = newValue

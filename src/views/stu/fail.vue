@@ -20,7 +20,7 @@ const pages = ref(0)
 
 async function getFail(num) {
   const res = await stuGetFailApi({
-    receiver: studentId.value,
+    receiver: studentId,
     current: num,
     size: 10,
   })
@@ -39,7 +39,7 @@ getFail(1)
 //点击同意请求
 async function successClick(senderId) {
   const res = await stuSuccessRequestApi({
-    receiver: studentId.value,
+    receiver: studentId,
     sender: senderId,
   })
   if (res.success) {
@@ -63,7 +63,7 @@ async function successClick(senderId) {
 //点击拒绝请求
 async function rejectClick(senderId) {
   const res = await stuRejectRequestApi({
-    receiver: studentId.value,
+    receiver: studentId,
     sender: senderId,
   })
   if (res.success) {
@@ -88,7 +88,7 @@ async function rejectClick(senderId) {
 //点击删除请求
 async function deleteClick(senderId) {
   const res = await stuDeleteRequestApi({
-    receiver: studentId.value,
+    receiver: studentId,
     sender: senderId,
   })
   if (res.success) {

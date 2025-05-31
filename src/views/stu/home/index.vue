@@ -20,7 +20,7 @@ const dialogVisible = ref(false)
 
 async function getInfo() {
   const res = await stuHomePageInfoApi({
-    studentId: studentId.value,
+    studentId: studentId,
   })
   if (res.success) {
     info.value = res.data.stuInfo
@@ -73,7 +73,7 @@ async function submit() {
   if (operation.value == 1) {
     if (info.value.employer !== '' && info.value.city !== '') {
       const res = await stuCreateAddressApi({
-        studentId: studentId.value,
+        studentId: studentId,
         employer: info.value.employer,
         city: info.value.city,
       })
@@ -89,7 +89,7 @@ async function submit() {
   } else {
     if (info.value.employer !== '' && info.value.city !== '') {
       const res = await stuUpdateAddressApi({
-        studentId: studentId.value,
+        studentId: studentId,
         employer: info.value.employer,
         city: info.value.city,
       })

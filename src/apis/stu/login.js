@@ -28,7 +28,7 @@ export function stuLogoutApi(params) {
 export function stuGetRemarkApi(data) {
   return stuInstance({
     url: '/api/stu/getRemark',
-    method: 'get',
+    method: 'post',
     data,
   })
 }

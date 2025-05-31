@@ -3,7 +3,7 @@ import { stuInstance } from '@/utils/request'
 export function stuGetEnterApi(data) {
   return stuInstance({
     url: '/api/application/listAllSend',
-    method: 'get',
+    method: 'post',
     data,
   })
 }
@@ -12,7 +12,7 @@ export function stuGetEnterApi(data) {
 export function stuGetFailApi(data) {
   return stuInstance({
     url: '/api/application/listAll',
-    method: 'get',
+    method: 'post',
     data,
   })
 }
@@ -21,7 +21,7 @@ export function stuGetFailApi(data) {
 export function stuGetSuccessApi(data) {
   return stuInstance({
     url: '/api/application/listAllAccept',
-    method: 'get',
+    method: 'post',
     data,
   })
 }
@@ -30,7 +30,7 @@ export function stuGetSuccessApi(data) {
 export function stuGetRejectApi(data) {
   return stuInstance({
     url: '/api/application/listAllRefuse',
-    method: 'get',
+    method: 'post',
     data,
   })
 }
@@ -39,7 +39,7 @@ export function stuGetRejectApi(data) {
 export function stuGetDeletedApi(data) {
   return stuInstance({
     url: '/api/application/listAllDelete',
-    method: 'get',
+    method: 'post',
     data,
   })
 }

@@ -16,7 +16,7 @@ const pages = ref(0)
 //获取已通过请求列表
 async function getSuccess(num) {
   const res = await stuGetSuccessApi({
-    receiver: studentId.value,
+    receiver: studentId,
     current: num,
     size: 10,
   })
@@ -34,7 +34,7 @@ getSuccess(1)
 //删除请求
 async function deleteClick(senderId) {
   const res = await stuDeleteRequestApi({
-    receiver: studentId.value,
+    receiver: studentId,
     sender: senderId,
   })
   if (res.success) {

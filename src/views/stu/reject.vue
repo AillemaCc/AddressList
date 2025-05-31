@@ -16,7 +16,7 @@ const pages = ref(0)
 //获取已拒绝请求列表
 async function getReject(num) {
   const res = await stuGetRejectApi({
-    receiver: studentId.value,
+    receiver: studentId,
     current: num,
     size: 10,
   })
@@ -34,7 +34,7 @@ getReject(1)
 //点击删除请求
 async function deleteClick(senderId) {
   const res = await stuDeleteRequestApi({
-    receiver: studentId.value,
+    receiver: studentId,
     sender: senderId,
   })
   if (res.success) {

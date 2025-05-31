@@ -15,8 +15,8 @@ async function nameQuery(num) {
   const res = await stuNameQueryApi({
     name: queryInput.value,
     current: num,
+    size: 10,
   })
-  console.log(res)
   if (res.success) {
     queryResult.value = res.data.records
     current.value = res.data.current
@@ -82,7 +82,7 @@ function changePage(val) {
     <div class="input-container">
       <input
         class="query-input"
-        v-model="searchInput"
+        v-model="queryInput"
         placeholder="请输入查询学生的姓名"
       />
       <button class="query-button" @click="nameQuery(1)">

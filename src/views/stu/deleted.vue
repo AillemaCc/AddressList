@@ -15,7 +15,7 @@ const pages = ref(0)
 
 async function getDeleted(num) {
   const res = await stuGetDeletedApi({
-    receiver: studentId.value,
+    receiver: studentId,
     current: num,
     size: 10,
   })
