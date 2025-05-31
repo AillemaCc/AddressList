@@ -86,7 +86,7 @@ public class AdminBaseInfoController {
     /**
      * 分页展示某个班级下的学生信息
      */
-    @GetMapping("/listClassStu")
+    @PostMapping("/listClassStu")
     public Result<IPage<BaseClassInfoListStuRespDTO>> listClassStu(@RequestBody BaseClassInfoListStuReqDTO requestParam){
         return Results.success(adminBaseInfoService.listClassStu(requestParam));
     }
@@ -94,7 +94,7 @@ public class AdminBaseInfoController {
     /**
      * 分页展示某个专业下的班级信息
      */
-    @GetMapping("/listMajorClass")
+    @PostMapping("/listMajorClass")
     public Result<IPage<BaseMajorInfoListClassRespDTO>> listMajorClass(@RequestBody BaseMajorInfoListClassReqDTO requestParam){
         return Results.success(adminBaseInfoService.listMajorClass(requestParam));
     }
@@ -102,7 +102,7 @@ public class AdminBaseInfoController {
     /**
      * 分页展示某个学院下的专业信息
      */
-    @GetMapping("/listAcademyMajor")
+    @PostMapping("/listAcademyMajor")
     public Result<IPage<BaseAcademyInfoListMajorRespDTO>> listAcademyMajor(@RequestBody BaseAcademyInfoListMajorReqDTO requestParam){
         return Results.success(adminBaseInfoService.listAcademyMajor(requestParam));
     }

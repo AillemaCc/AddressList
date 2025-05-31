@@ -25,7 +25,7 @@ public class AdministerAuditController {
      * 分页查询所有待审核请求
      * @return 所有待审核请求
      */
-    @GetMapping("/auditList")
+    @PostMapping("/auditList")
     public Result<IPage<AuditUserPageRespDTO>> listAuditRegister(@RequestBody AuditListReqDTO requestParam){
         return Results.success(administerAuditService.listAuditRegister(requestParam));
     }
@@ -34,7 +34,7 @@ public class AdministerAuditController {
      * 分页查询所有已通过请求
      * @return 所有已通过请求
      */
-    @GetMapping("/validList")
+    @PostMapping("/validList")
     public Result<IPage<AuditUserPageRespDTO>> listAuditRegisterValid(@RequestBody AuditListReqDTO requestParam){
         return Results.success(administerAuditService.listAuditRegisterValid(requestParam));
     }
@@ -43,7 +43,7 @@ public class AdministerAuditController {
      * 分页查询所有被拒绝请求
      * @return 所有被拒绝请求
      */
-    @GetMapping("/refuseList")
+    @PostMapping("/refuseList")
     public Result<IPage<AuditUserPageRespDTO>> listAuditRegisterRefuse(@RequestBody AuditListReqDTO requestParam){
         return Results.success(administerAuditService.listAuditRegisterRefuse(requestParam));
     }
