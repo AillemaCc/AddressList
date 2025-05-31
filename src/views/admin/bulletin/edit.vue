@@ -1,15 +1,22 @@
 <script setup>
-import { ref, computed, onUnmounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { ref, onUnmounted } from 'vue'
+import { marked } from 'marked'
+import { useRoute, useRouter } from 'vue-router'
+import {
+  adminAddBulletinApi,
+  adminQueryBulletinApi,
+  adminUpdateBulletinApi,
+} from '@/apis/admin/bulletin'
+const route = useRoute()
 const router = useRouter()
 function routerBack() {
   router.back()
 }
 const bulletinTitle = ref('')
 const bulletinCategory = ref('')
-const bulletinStatus = ref('')
+const bulletinStatus = ref('0')
 const bulletinPriority = ref('')
-
+const bulletinCoverImgUrl = ref('')
 const options = [
   {
     value: '0',
@@ -24,9 +31,67 @@ const options = [
     label: '已下架',
   },
 ]
-import { marked } from 'marked' // 需要安装 marked 库
 
 const rawText = ref('')
+
+//如果有id回显公告数据
+if (route.query.id) {
+  ;(async () => {
+    const res = await adminQueryBulletinApi()
+    if (res.success) {
+      bulletinTitle.value = res.data.title
+      bulletinCategory.value = res.data.category
+      bulletinStatus.value = res.data.status
+      bulletinPriority.value = res.data.priority
+      bulletinCoverImgUrl.value = res.data.coverImage
+      rawText.value = res.data.content
+    } else {
+      ElMessage.error(res.message)
+    }
+  })()
+}
+
+//发布公告
+async function release() {
+  if (route.query.id) {
+    //编辑公告
+    const res = await adminUpdateBulletinApi({
+      title: bulletinTitle.value,
+      boardId: +route.query.id,
+      category: bulletinCategory.value,
+      content: rawText.value,
+      status: +bulletinStatus.value,
+      priority: bulletinPriority.value,
+      coverImage: bulletinCoverImgUrl.value,
+    })
+    if (res.success) {
+      ElMessage.success(res.message)
+      setTimeout(() => {
+        router.back()
+      }, 1000)
+    } else {
+      ElMessage.error(res.message)
+    }
+  } else {
+    //新增公告
+    const res = await adminAddBulletinApi({
+      title: bulletinTitle.value,
+      category: bulletinCategory.value,
+      content: rawText.value,
+      status: +bulletinStatus.value,
+      priority: bulletinPriority.value,
+      coverImage: bulletinCoverImgUrl.value,
+    })
+    if (res.success) {
+      ElMessage.success(res.message)
+      setTimeout(() => {
+        router.back()
+      }, 1000)
+    } else {
+      ElMessage.error(res.message)
+    }
+  }
+}
 
 // 防抖延时器
 let debounceTimer = null
@@ -60,63 +125,77 @@ onUnmounted(() => {
       </div>
       <div class="header">编辑公告</div>
       <div class="release-button">
-        <el-button>发布</el-button>
+        <el-button @click="release">发布</el-button>
       </div>
     </div>
     <div class="main-container">
-      <div class="desc-container">
-        <div class="desc">
-          <label for="title">标题</label>
-          <div class="input-container">
-            <el-input
-              id="title"
-              v-model="bulletinTitle"
-              size="large"
-              placeholder="请输入公告标题"
-            />
-          </div>
-        </div>
-        <div class="desc">
-          <label for="category">分类</label>
-          <div class="input-container">
-            <el-input
-              id="category"
-              v-model="bulletinCategory"
-              size="large"
-              placeholder="请输入公告分类"
-            />
-          </div>
-        </div>
-        <div class="desc">
-          <label for="status">状态</label>
-          <div class="input-container">
-            <el-select
-              v-model="bulletinStatus"
-              placeholder="请选择公告状态"
-              size="large"
-              id="status"
-            >
-              <el-option
-                v-for="item in options"
-                :key="item.value"
-                :label="item.label"
-                :value="item.value"
+      <div class="detail-container">
+        <div class="desc-container">
+          <div class="desc">
+            <label for="title">标题</label>
+            <div class="input-container">
+              <el-input
+                id="title"
+                v-model="bulletinTitle"
+                size="large"
+                placeholder="请输入公告标题"
               />
-            </el-select>
+            </div>
           </div>
-        </div>
-        <div class="desc">
-          <label for="priority">优先级</label>
-          <div class="input-container">
-            <el-input
-              id="priority"
-              v-model="bulletinPriority"
-              size="large"
-              placeholder="请输入公告优先级"
-            />
+          <div class="desc">
+            <label for="category">分类</label>
+            <div class="input-container">
+              <el-input
+                id="category"
+                v-model="bulletinCategory"
+                size="large"
+                placeholder="请输入公告分类"
+              />
+            </div>
+          </div>
+          <div class="desc">
+            <label for="status">状态</label>
+            <div class="input-container">
+              <el-select
+                v-model="bulletinStatus"
+                placeholder="请选择公告状态"
+                size="large"
+                id="status"
+              >
+                <el-option
+                  v-for="item in options"
+                  :key="item.value"
+                  :label="item.label"
+                  :value="item.value"
+                />
+              </el-select>
+            </div>
+          </div>
+          <div class="desc">
+            <label for="priority">优先级</label>
+            <div class="input-container">
+              <el-input
+                id="priority"
+                v-model="bulletinPriority"
+                size="large"
+                placeholder="请输入公告优先级"
+              />
+            </div>
+          </div>
+          <div class="desc">
+            <label for="coverImg">图片链接</label>
+            <div class="input-container">
+              <el-input
+                id="coverImg"
+                v-model="bulletinCoverImgUrl"
+                size="large"
+                placeholder="请输入公告封面外链地址"
+              />
+            </div>
           </div>
         </div>
       </div>
+
       <div class="content-container">
         <div class="input-section">
           <textarea
@@ -164,20 +243,28 @@ onUnmounted(() => {
     flex: 1;
   }
 }
+.detail-container {
+  display: flex;
+  gap: 20px;
+  .desc-container {
+    flex: 4;
+  }
+  .img-container {
+    flex: 1;
+  }
+}
 .desc-container {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   margin: 20px 30px;
   gap: 20px;
-  @media (max-width: 1200px) {
-    grid-template-columns: repeat(2, 1fr);
-  }
   .desc {
     display: flex;
     justify-content: center;
     align-items: center;
     label {
       width: 20%;
+      min-width: 100px;
       display: flex;
       justify-content: center;
       align-items: center;
@@ -187,6 +274,10 @@ onUnmounted(() => {
     }
   }
 }
+.img-container {
+  background-color: skyblue;
+}
+
 .content-container {
   display: grid;
   grid-template-columns: 1fr 1fr; // 左右等宽

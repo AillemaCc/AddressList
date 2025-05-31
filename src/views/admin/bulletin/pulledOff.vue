@@ -13,9 +13,10 @@ const current = ref(1)
 const total = ref(0)
 const pages = ref(0)
 async function getPulloff(num) {
-  const res = await adminDisplayPulloffApi({ current: num })
+  const res = await adminDisplayPulloffApi({ current: num, size: 10 })
   if (res.success) {
     announcements.value = res.data.records
+    current.value = res.data.current
     total.value = res.data.total
     pages.value = res.data.pages
   } else {

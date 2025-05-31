@@ -1,13 +1,13 @@
 <script setup>
-import { stuLogoutApi } from '@/apis/stu/stuLogin'
+import { stuLogoutApi } from '@/apis/stu/login'
+import { stuHomePageInfoApi } from '@/apis/stu/other'
 import { useStuInfoStore } from '@/stores/stuInfo'
 import { removeStudentInfo } from '@/utils/storage'
 
-// import { ref } from 'vue'
-const defaultProps = {
-  children: 'children',
-  label: 'name',
-}
+import { ref } from 'vue'
+
+const stuName = ref('')
+
 const stuInfoStore = useStuInfoStore()
 async function logout() {
   const res = await stuLogoutApi({
@@ -28,6 +28,12 @@ async function logout() {
     ElMessage.error(res.message)
   }
 }
+
+stuHomePageInfoApi({
+  studentId: stuInfoStore.stuInfo.studentId,
+}).then((res) => {
+  stuName.value = res.data.stuInfo.name
+})
 </script>
 
 <template>
@@ -35,7 +41,7 @@ async function logout() {
     <div class="header-container">
       <div class="title-container">
         <img src="../../../assets/imgs/txl.png" alt="" />
-        数计通讯录
+        网上通讯录
       </div>
       <div class="menu-container">
         <el-menu
@@ -47,10 +53,18 @@ async function logout() {
           <el-menu-item index="/stu/home">
             <span>个人主页</span>
           </el-menu-item>
-          <el-menu-item index="/stu/friends">
-            <span>通讯录好友</span>
-          </el-menu-item>
-          <el-sub-menu index="2-2">
+          <el-sub-menu index="2">
+            <template #title>
+              <span>通讯录好友</span>
+            </template>
+            <el-menu-item index="/stu/friends">
+              <span>我的好友</span>
+            </el-menu-item>
+            <el-menu-item index="/stu/friends_deleted">
+              <span>已删除好友</span>
+            </el-menu-item>
+          </el-sub-menu>
+          <el-sub-menu index="3">
             <template #title>
               <span>通讯录请求</span>
             </template>
@@ -77,7 +91,7 @@ async function logout() {
         </el-menu>
       </div>
       <div class="welcome-container">
-        <div class="welcome-box">你好，谢融悠</div>
+        <div class="welcome-box">你好，{{ stuName }}</div>
         <div class="logout-box" @click="logout()">退出登录</div>
       </div>
     </div>
@@ -121,7 +135,7 @@ async function logout() {
     .menu-container {
       margin-right: auto;
       margin-left: 40px;
-      width: 500px;
+      width: 540px;
       :deep(.el-menu) {
         width: 100%;
       }
@@ -132,7 +146,7 @@ async function logout() {
       align-items: center;
       margin-right: 60px;
       height: 50px;
-      min-width: 96px;
+      min-width: 180px;
       gap: 20px;
       .logout-box {
         cursor: pointer;

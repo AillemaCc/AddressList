@@ -24,6 +24,14 @@ export function adminDisplayStudentApi(data) {
     data,
   })
 }
+//更新班级名称
+export function adminUpdateClassNameApi(data) {
+  return adminInstance({
+    url: '/api/admin/base/updateClass',
+    method: 'post',
+    data,
+  })
+}
 
 //更新班级信息
 export function adminUpdateClassApi(data) {
@@ -34,10 +42,19 @@ export function adminUpdateClassApi(data) {
   })
 }
 
-//更新专业信息
+//更新专业名称和所属学院名称
 export function adminUpdateMajorApi(data) {
   return adminInstance({
     url: '/api/admin/base/updateMajor',
+    method: 'post',
+    data,
+  })
+}
+
+//更新专业所属学院
+export function adminUpdateMajorAcademyApi(data) {
+  return adminInstance({
+    url: '/api/admin/base/changeMajorAcademy',
     method: 'post',
     data,
   })
@@ -56,6 +73,15 @@ export function adminUpdateAcademyApi(data) {
 export function adminAddClassApi(data) {
   return adminInstance({
     url: '/api/admin/base/addClass',
+    method: 'put',
+    data,
+  })
+}
+
+//新增专业信息
+export function adminAddMajorApi(data) {
+  return adminInstance({
+    url: '/api/admin/base/addMajor',
     method: 'put',
     data,
   })

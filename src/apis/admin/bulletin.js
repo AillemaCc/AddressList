@@ -4,7 +4,7 @@ import { adminInstance } from '@/utils/request'
 export function adminAddBulletinApi(data) {
   return adminInstance({
     url: '/api/admin/board/add',
-    method: 'post',
+    method: 'put',
     data,
   })
 }
@@ -56,6 +56,15 @@ export function adminDisplayPulloffApi(data) {
 export function adminDisplayDeletedApi(data) {
   return adminInstance({
     url: '/api/admin/board/queryAllDeleted',
+    method: 'get',
+    data,
+  })
+}
+
+//根据公告标识号查询公告
+export function adminQueryBulletinApi(data) {
+  return adminInstance({
+    url: '/api/admin/board/queryById',
     method: 'get',
     data,
   })

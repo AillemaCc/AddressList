@@ -1,10 +1,38 @@
 <script setup>
 import { ref } from 'vue'
-const failRequestCount = ref(20)
+import { useAdminInfoStore } from '@/stores/adminInfo'
+import { removeAdministrationInfo } from '@/utils/storage'
+import router from '@/router'
+import { ElMessage } from 'element-plus'
+import { adminLogoutApi } from '@/apis/admin/login'
+import { adminGetHomeInfoApi } from '@/apis/admin/other'
+const adminInfoStore = useAdminInfoStore()
 
-function loginout() {
-  console.log('退出登录')
+const failRequestCount = ref(20)
+const username = ref(adminInfoStore.adminInfo.username)
+const accessToken = adminInfoStore.adminInfo.accessToken
+const refreshToken = adminInfoStore.adminInfo.refreshToken
+async function loginout() {
+  const res = await adminLogoutApi({
+    username: username.value,
+    accessToken: accessToken.value,
+    refreshToken: refreshToken.value,
+  })
+  if (res.success) {
+    removeAdministrationInfo()
+    adminInfoStore.setAdminInfo({})
+    router.push('/admin/login')
+    ElMessage.success(res.message)
+  } else {
+    ElMessage.error(res.message)
+  }
 }
+
+adminGetHomeInfoApi().then((res) => {
+  if (res.success) {
+    username.value = res.data.username
+  }
+})
 </script>
 
 <template>
@@ -13,7 +41,7 @@ function loginout() {
       <div class="logo-container">
         <img src="../../../assets/imgs/txl.png" alt="" />
       </div>
-      <div class="text-container">数计通讯录</div>
+      <div class="text-container">网上通讯录</div>
 
       <div class="icon-container">
         <el-tooltip effect="light" :content="`${failRequestCount}条待审核请求`">
@@ -32,7 +60,7 @@ function loginout() {
         </el-tooltip>
       </div>
       <div class="welcome-container">
-        <i class="iconfont icon-yonghu"></i> <span>系统管理员1</span>
+        <i class="iconfont icon-yonghu"></i> <span>{{ username }}</span>
       </div>
     </div>
 

@@ -25,7 +25,7 @@ function handleFocus(key) {
   hasFocus.value[key] = true
 }
 
-import { stuRegisterApi } from '@/apis/stu/stuLogin'
+import { stuRegisterApi } from '@/apis/stu/login'
 import { useStuInfoStore } from '@/stores/stuInfo'
 import { ElMessage } from 'element-plus'
 import { useRouter } from 'vue-router'
@@ -55,14 +55,11 @@ async function register() {
 </script>
 <template>
   <div class="container">
-    <div class="logo-container">
-      <div class="logo-img-container">
-        <img
-          class="logo-img"
-          src="../../../assets/imgs/academic_logo.png"
-          alt=""
-        />
+    <div class="header">
+      <div class="logo-container">
+        <img class="logo" src="../../../assets/imgs/txl.png" alt="" />
       </div>
+      <div class="title-container">网上通讯录</div>
     </div>
     <div class="main-container">
       <div class="main-box-container">
@@ -70,7 +67,7 @@ async function register() {
           <div class="img">
             <img src="../../../assets/imgs/txl.png" alt="" />
           </div>
-          <div class="title">数计通讯录</div>
+          <div class="title">网上通讯录</div>
         </div>
         <div class="form-container">
           <div class="registerForm">
@@ -144,16 +141,27 @@ async function register() {
   display: flex;
   flex-direction: column;
   background: url(../../../assets/imgs/n_b2.jpg);
-  .logo-container {
+  .header {
+    display: flex;
+    align-items: center;
     width: 100%;
-    height: 96px;
-    .logo-img-container {
-      width: 580px;
+    height: 150px;
+    .logo-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-left: 80px;
+      width: 96px;
       height: 96px;
-      .logo-img {
+      .logo {
         width: 100%;
         height: 100%;
       }
+    }
+    .title-container {
+      font-size: 24px;
+      font-weight: 600;
+      color: $mainColor;
     }
   }
   .main-container {

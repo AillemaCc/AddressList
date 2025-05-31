@@ -1,46 +1,23 @@
 <script setup>
 import { stuGetDeletedApi } from '@/apis/stu/request'
 import { handleStatus } from '@/utils/handleStatus'
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useStuInfoStore } from '@/stores/stuInfo'
 
-const deleted = ref([
-  {
-    sender: '9109222258',
-    senderName: '谢融悠',
-    receiver: '9109222256',
-    receiverName: '黎明',
-    content: '111',
-    status: 0,
-    //验证状态 0待审核 1通过 2拒绝
-  },
-  {
-    sender: '9109222258',
-    senderName: '谢融悠',
-    receiver: '9109222257',
-    receiverName: '小王',
-    content: '121',
-    status: 1,
-  },
-  {
-    sender: '9109222258',
-    senderName: '谢融悠',
-    receiver: '9109232259',
-    receiverName: '小明',
-    content: '113',
-    status: 2,
-  },
-])
+const deleted = ref([])
+const handled_request = computed(() => handleStatus(deleted.value))
 const stuInfoStore = useStuInfoStore()
-const studentId = stuInfoStore.studentId
+const studentId = stuInfoStore.stuInfo.studentId
 const current = ref(1)
 const total = ref(0)
 const pages = ref(0)
 
-async function getDeleted() {
+async function getDeleted(num) {
   const res = await stuGetDeletedApi({
-    studentId: studentId.value,
+    receiver: studentId.value,
+    current: num,
+    size: 10,
   })
   if (res.success) {
     deleted.value = res.data.records
@@ -51,9 +28,7 @@ async function getDeleted() {
     ElMessage.error(res.message)
   }
 }
-getDeleted()
-
-const handled_request = handleStatus(deleted.value)
+getDeleted(1)
 
 const getStatusStyle = (status) => {
   const colorMap = {
@@ -69,8 +44,8 @@ const getStatusStyle = (status) => {
     <div class="title">已删除的请求（{{ total }}条）</div>
     <div class="data-exist" v-if="handled_request.length > 0">
       <el-table :data="handled_request" style="width: 100%">
-        <el-table-column prop="receiver" label="发送对象学号" width="250" />
-        <el-table-column prop="receiverName" label="发送对象姓名" width="250" />
+        <el-table-column prop="receiver" label="发送人学号" width="250" />
+        <el-table-column prop="receiverName" label="发送人姓名" width="250" />
         <el-table-column prop="content" label="发送内容" width="400" />
         <el-table-column label="请求状态" width="250">
           <template #default="{ row }">

@@ -10,9 +10,10 @@ const total = ref(0)
 const pages = ref(0)
 
 async function getDeleted(num) {
-  const res = await adminDisplayDeletedApi({ current: num })
+  const res = await adminDisplayDeletedApi({ current: num, size: 10 })
   if (res.success) {
     announcements.value = res.data.records
+    current.value = res.data.current
     total.value = res.data.total
     pages.value = res.data.pages
   } else {

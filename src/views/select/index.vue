@@ -11,13 +11,10 @@ function goToAdministrator() {
 
 <template>
   <div class="header">
-    <div class="academic-logo-container">
-      <img
-        class="academic-logo"
-        src="../../assets/imgs/academic_logo.png"
-        alt=""
-      />
+    <div class="logo-container">
+      <img class="logo" src="../../assets/imgs/txl.png" alt="" />
     </div>
+    <div class="title-container">网上通讯录</div>
   </div>
   <div class="main-container">
     <h1 class="title">网上通讯录系统</h1>
@@ -48,13 +45,22 @@ function goToAdministrator() {
   align-items: center;
   width: 100%;
   height: 150px;
-  .academic-logo-container {
-    width: 580px;
+  .logo-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-left: 80px;
+    width: 96px;
     height: 96px;
-    .academic-logo {
+    .logo {
       width: 100%;
       height: 100%;
     }
+  }
+  .title-container {
+    font-size: 24px;
+    font-weight: 600;
+    color: $mainColor;
   }
 }
 .main-container {

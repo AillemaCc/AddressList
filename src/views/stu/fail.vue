@@ -11,6 +11,7 @@ import { ElMessage } from 'element-plus'
 import { useStuInfoStore } from '@/stores/stuInfo'
 
 const fail = ref([])
+const handled_request = computed(() => handleStatus(fail.value))
 const stuInfoStore = useStuInfoStore()
 const studentId = stuInfoStore.stuInfo.studentId
 const current = ref(1)
@@ -21,6 +22,7 @@ async function getFail(num) {
   const res = await stuGetFailApi({
     receiver: studentId.value,
     current: num,
+    size: 10,
   })
 
   if (res.success) {
@@ -28,7 +30,6 @@ async function getFail(num) {
     current.value = res.data.current
     total.value = res.data.total
     pages.value = res.data.pages
-    console.log(fail.value)
   } else {
     ElMessage.error(res.message)
   }
@@ -62,7 +63,7 @@ async function successClick(senderId) {
 //点击拒绝请求
 async function rejectClick(senderId) {
   const res = await stuRejectRequestApi({
-    studentId: studentId.value,
+    receiver: studentId.value,
     sender: senderId,
   })
   if (res.success) {
@@ -113,7 +114,6 @@ function changePage(val) {
   current.value = val
   getFail(val)
 }
-const handled_request = computed(() => handleStatus(fail.value))
 
 const getStatusStyle = (status) => {
   const colorMap = {
@@ -129,8 +129,8 @@ const getStatusStyle = (status) => {
     <div class="title">未通过的请求（{{ total }}条）</div>
     <div class="data-exist" v-if="handled_request.length > 0">
       <el-table :data="handled_request" style="width: 100%">
-        <el-table-column prop="sender" label="发送对象学号" width="250" />
-        <el-table-column prop="senderName" label="发送对象姓名" width="250" />
+        <el-table-column prop="sender" label="发送人学号" width="250" />
+        <el-table-column prop="senderName" label="发送人姓名" width="250" />
         <el-table-column prop="content" label="发送内容" width="400" />
         <el-table-column label="请求状态" width="250">
           <template #default="{ row }">

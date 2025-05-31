@@ -23,3 +23,12 @@ export function stuLogoutApi(params) {
     params,
   })
 }
+
+//用户查询注册审核结果
+export function stuGetRemarkApi(data) {
+  return stuInstance({
+    url: '/api/stu/getRemark',
+    method: 'get',
+    data,
+  })
+}

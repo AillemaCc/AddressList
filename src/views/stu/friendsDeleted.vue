@@ -1,11 +1,7 @@
 <script setup>
 import { ref } from 'vue'
 import { useStuInfoStore } from '@/stores/stuInfo'
-import {
-  stuDeleteAddressApi,
-  stuGetFriendsApi,
-  stuQueryFriendsApi,
-} from '@/apis/stu/friends'
+import { stuDeleteAddressApi, stuQueryDeletedApi } from '@/apis/stu/friends'
 import { ElMessage } from 'element-plus'
 
 const friends = ref([])
@@ -14,10 +10,9 @@ const studentId = stuInfoStore.stuInfo.studentId
 const current = ref(1)
 const total = ref(0)
 const pages = ref(0)
-const queryStudentId = ref('')
 
-async function getFriends(num) {
-  const res = await stuGetFriendsApi({
+async function getDeletedFriends(num) {
+  const res = await stuQueryDeletedApi({
     studentId: studentId.value,
     current: num,
     size: 10,
@@ -31,44 +26,7 @@ async function getFriends(num) {
     ElMessage.error(res.message)
   }
 }
-getFriends(1)
-
-async function deleteFriend(contactId) {
-  const res = await stuDeleteAddressApi({
-    owner: studentId.value,
-    contactId,
-  })
-  if (res.success) {
-    const index = friends.value.findIndex(
-      (item) => item.studentId === contactId,
-    )
-    friends.value.splice(index, 1)
-    if (friends.value.length === 0) {
-      if (current.value === 1) {
-        if (pages.value !== 1) {
-          getFriends(1)
-        }
-      } else {
-        current.value--
-        getFriends(current.value)
-      }
-    }
-    ElMessage.success(res.message)
-  } else {
-    ElMessage.error(res.message)
-  }
-}
-
-async function query() {
-  const res = await stuQueryFriendsApi({
-    ownerId: studentId.value,
-    contactId: queryStudentId.value,
-  })
-  friends.value = [{ ...res.data }]
-  current.value = 1
-  total.value = 1
-  pages.value = 1
-}
+getDeletedFriends(1)
 function changePage(val) {
   current.value = val
   getFriends(val)
@@ -76,19 +34,7 @@ function changePage(val) {
 </script>
 <template>
   <div class="container">
-    <div class="title">
-      <div class="left">我的好友（共{{ total }}位）</div>
-      <div class="right">
-        <div class="input-container">
-          <input
-            type="text"
-            v-model="queryStudentId"
-            placeholder="请输入查询学号"
-          />
-          <button @click="query"><i class="iconfont icon-sousuo"></i></button>
-        </div>
-      </div>
-    </div>
+    <div class="title">已删除好友（共{{ total }}位）</div>
     <div class="data-exist" v-if="friends.length > 0">
       <el-table :data="friends" style="width: 100%">
         <el-table-column prop="studentId" label="学号" width="180" />
@@ -102,17 +48,6 @@ function changePage(val) {
         <el-table-column prop="city" label="就业城市" width="100" />
         <el-table-column prop="phone" label="手机号码" width="180" />
         <el-table-column prop="email" label="电子邮箱" width="220" />
-        <el-table-column fixed="right" label="操作" width="120">
-          <template #default="{ row }">
-            <el-button
-              link
-              type="danger"
-              size="large"
-              @click="deleteFriend(row.studentId)"
-              >删除</el-button
-            >
-          </template>
-        </el-table-column>
       </el-table>
 
       <div class="example-pagination-block">
@@ -133,48 +68,13 @@ function changePage(val) {
 .container {
   padding: 0 40px;
   .title {
-    display: flex;
-    justify-content: space-between;
     padding-bottom: 10px;
     margin-bottom: 10px;
+    font-size: 20px;
+    color: $mainColor;
     background-color: #fff;
     border-bottom: 1px solid #a1a1a1;
-
-    .left {
-      font-size: 20px;
-      color: $mainColor;
-      cursor: default;
-    }
-    .right {
-      width: 150px;
-      height: 26px;
-      .input-container {
-        display: flex;
-        border-radius: 13px;
-        border: 1px solid #a1a1a1;
-        overflow: hidden;
-        input {
-          width: 124px;
-          flex: 1;
-          border: none;
-          outline: none;
-          text-indent: 10px;
-          font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-        button {
-          width: 26px;
-          height: 26px;
-          border: none;
-          outline: none;
-          font-weight: 600;
-          background-color: #fff;
-          cursor: pointer;
-          &:hover {
-            color: $mainColor;
-          }
-        }
-      }
-    }
+    cursor: default;
   }
   :deep(.el-table thead th) {
     font-family: 'micro yahei';

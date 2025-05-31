@@ -70,3 +70,12 @@ export function stuDeleteRequestApi(data) {
     data,
   })
 }
+
+//发送申请站内信
+export function stuEnterRequestApi(data) {
+  return stuInstance({
+    url: '/api/application/send',
+    method: 'put',
+    data,
+  })
+}

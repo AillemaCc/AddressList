@@ -5,8 +5,11 @@ import {
   adminDisplayClassApi,
   adminDisplayStudentApi,
   adminUpdateMajorApi,
+  adminUpdateMajorAcademyApi,
   adminUpdateClassApi,
   adminAddClassApi,
+  adminUpdateClassNameApi,
+  adminAddMajorApi,
 } from '@/apis/admin/query'
 import { ElMessage } from 'element-plus'
 import { ref, computed } from 'vue'
@@ -33,6 +36,7 @@ async function getMajor(current) {
   const res = await adminDisplayMajorApi({
     academyNum: +searchInput.value,
     current,
+    size: 10,
   })
   if (res.success) {
     majors.value = res.data.records
@@ -50,6 +54,7 @@ async function getClass(current) {
   const res = await adminDisplayClassApi({
     majorNum: +searchInput.value,
     current,
+    size: 10,
   })
   if (res.success) {
     classes.value = res.data.records
@@ -65,8 +70,9 @@ async function getClass(current) {
 const students = ref([])
 async function getStudent(current) {
   const res = await adminDisplayStudentApi({
-    classNum: searchInput.value,
+    classNum: +searchInput.value,
     current,
+    size: 10,
   })
   if (res.success) {
     students.value = res.data.records
@@ -129,10 +135,19 @@ const editMajor_majorNum = ref(0)
 const editMajor_majorName = ref('')
 const editMajor_academyNum = ref(0)
 const editMajor_academyName = ref('')
-
+const editMajor_operation = ref(0)
+const radio2 = ref(1)
 //打开编辑专业框
-function openEditMajor(majorNum, majorName, academyNum, academyName) {
-  dialogTitle.value = '编辑专业信息'
+function openEditMajor(
+  operation,
+  title,
+  majorNum,
+  majorName,
+  academyNum,
+  academyName,
+) {
+  editMajor_operation.value = operation
+  dialogTitle.value = title
   originalMajorNum.value = majorNum
   editMajor_majorNum.value = majorNum
   editMajor_majorName.value = majorName
@@ -143,34 +158,76 @@ function openEditMajor(majorNum, majorName, academyNum, academyName) {
 
 //点击确认更新专业信息
 async function updateMajor() {
-  const res = await adminUpdateMajorApi({
-    majorNum: editMajor_majorNum.value,
-    majorName: editMajor_majorName.value,
-    academyNum: editMajor_academyNum.value,
-    academyName: editMajor_academyName.value,
-  })
-  if (res.success) {
-    const index = majors.value.findIndex(
-      (item) => item.majorNum === originalMajorNum.value,
-    )
-    if (index !== -1) {
-      majors.value[index] = {
-        majorNum: editMajor_majorNum.value,
-        major: editMajor_majorName.value,
-        academyNum: editMajor_academyNum.value,
-        academy: editMajor_academyName.value,
+  if (editMajor_operation.value === 0) {
+    //更新专业名称和所属学院名称
+    const res = await adminUpdateMajorApi({
+      majorNum: editMajor_majorNum.value,
+      majorName: editMajor_majorName.value,
+      academyNum: editMajor_academyNum.value,
+      academyName: editMajor_academyName.value,
+    })
+    if (res.success) {
+      const index = majors.value.findIndex(
+        (item) => item.majorNum === originalMajorNum.value,
+      )
+      if (index !== -1) {
+        majors.value[index] = {
+          majorNum: editMajor_majorNum.value,
+          major: editMajor_majorName.value,
+          academyNum: editMajor_academyNum.value,
+          academy: editMajor_academyName.value,
+        }
       }
+      ElMessage.success(res.message)
+    } else {
+      ElMessage.error(res.message)
     }
-    ElMessage.success(res.message)
+  } else if (editMajor_operation.value === 1) {
+    //更新专业所属学院
+    const res = await adminUpdateMajorAcademyApi({
+      majorNum: editMajor_majorNum.value,
+      newAcademyNum: editMajor_academyNum.value,
+      newAcademyName: editMajor_academyName.value,
+      createNewAcademy: radio2.value === 1,
+    })
+    if (res.success) {
+      const index = majors.value.findIndex(
+        (item) => item.majorNum === originalMajorNum.value,
+      )
+      if (index !== -1) {
+        majors.value[index] = {
+          majorNum: editMajor_majorNum.value,
+          major: editMajor_majorName.value,
+          academyNum: editMajor_academyNum.value,
+          academy: editMajor_academyName.value,
+        }
+      }
+      ElMessage.success(res.message)
+    } else {
+      ElMessage.error(res.message)
+    }
   } else {
-    ElMessage.error(res.message)
+    //新增专业
+    const res = await adminAddMajorApi({
+      majorNum: editMajor_majorNum.value,
+      majorName: editMajor_majorName.value,
+      academyNum: editMajor_academyNum.value,
+      academyName: editMajor_academyName.value,
+      createNewAcademy: radio2.value === 1,
+    })
+    if (res.success) {
+      ElMessage.success(res.message)
+    } else {
+      ElMessage.error(res.message)
+    }
   }
+
   majorDialogVisible.value = false
 }
 
 // 班级编辑相关
 const classDialogVisible = ref(false)
-const originalClassNum = ref('')
+const originalClassNum = ref(0)
 const editClass_classNum = ref(0)
 const editClass_className = ref('')
 const editClass_majorNum = ref(0)
@@ -178,8 +235,11 @@ const editClass_majorName = ref('')
 const editClass_academyNum = ref(0)
 const editClass_academyName = ref('')
 
+const editClass_operation = ref(0)
+
 //打开编辑班级框
 function openEditClass(
+  operation,
   title,
   classNum,
   className,
@@ -189,6 +249,7 @@ function openEditClass(
   academyName,
 ) {
   dialogTitle.value = title
+  editClass_operation.value = operation
   originalClassNum.value = classNum
   editClass_classNum.value = classNum
   editClass_className.value = className
@@ -201,13 +262,14 @@ function openEditClass(
 
 //根据打开的编辑框的不同标题确认是新增班级还是修改班级信息
 async function updateClass() {
-  if (dialogTitle.value === '编辑班级信息') {
+  if (editClass_operation.value === 1) {
+    //更新班级信息
     const res = await adminUpdateClassApi({
-      classNum: editClass_classNum.value,
+      classNum: +editClass_classNum.value,
       className: editClass_className.value,
-      majorNum: editClass_majorNum.value,
+      majorNum: +editClass_majorNum.value,
       majorName: editClass_majorName.value,
-      academyNum: editClass_academyNum.value,
+      academyNum: +editClass_academyNum.value,
       academyName: editClass_academyName.value,
     })
     if (res.success) {
@@ -217,7 +279,6 @@ async function updateClass() {
       )
       if (index !== -1) {
         classes.value[index] = {
-          classNum: editClass_classNum.value,
           className: editClass_className.value,
           majorNum: editClass_majorNum.value,
           major: editClass_majorName.value,
@@ -229,7 +290,8 @@ async function updateClass() {
     } else {
       ElMessage.error(res.message)
     }
-  } else if (dialogTitle.value === '新增班级') {
+  } else if (editClass_operation.value === 2) {
+    //新增班级
     const res = await adminAddClassApi({
       classNum: editClass_classNum.value,
       className: editClass_className.value,
@@ -243,8 +305,25 @@ async function updateClass() {
     } else {
       ElMessage.error(res.message)
     }
+  } else {
+    //修改班级名称
+    const res = await adminUpdateClassNameApi({
+      classNum: editClass_classNum.value,
+      className: editClass_className.value,
+    })
+    if (res.success) {
+      //回显到原表格
+      const index = classes.value.findIndex(
+        (item) => item.classNum === originalClassNum.value,
+      )
+      if (index !== -1) {
+        classes.value[index].className = editClass_className.value
+      }
+      ElMessage.success(res.message)
+    } else {
+      ElMessage.error(res.message)
+    }
   }
-
   classDialogVisible.value = false
 }
 
@@ -252,6 +331,7 @@ async function updateClass() {
 async function ban(studentId) {
   const res = await adminBanStudentApi({ studentId })
   if (res.success) {
+    getStudent(studentCurrent.value)
     ElMessage.success(res.message)
   } else {
     ElMessage.error(res.message)
@@ -261,6 +341,7 @@ async function ban(studentId) {
 async function unban(studentId) {
   const res = await adminUnbanStudentApi({ studentId })
   if (res.success) {
+    getStudent(studentCurrent.value)
     ElMessage.success(res.message)
   } else {
     ElMessage.error(res.message)
@@ -296,13 +377,30 @@ async function unban(studentId) {
             <div class="reject-item">
               <div class="item-header">专业编号</div>
               <div class="item-body">
-                <el-input class="reject" v-model="editMajor_majorNum" />
+                <el-input
+                  class="reject"
+                  :disabled="editMajor_operation !== 2"
+                  v-model="editMajor_majorNum"
+                />
               </div>
             </div>
             <div class="reject-item">
               <div class="item-header">专业名称</div>
               <div class="item-body">
-                <el-input class="reject" v-model="editMajor_majorName" />
+                <el-input
+                  class="reject"
+                  :disabled="editMajor_operation === 1"
+                  v-model="editMajor_majorName"
+                />
+              </div>
+            </div>
+            <div class="reject-item" v-if="editMajor_operation !== 0">
+              <div class="item-header">是否新增学院</div>
+              <div class="item-body">
+                <el-radio-group v-model="radio2">
+                  <el-radio label="1" size="large">是</el-radio>
+                  <el-radio label="2" size="large">否</el-radio>
+                </el-radio-group>
               </div>
             </div>
             <div class="reject-item">
@@ -329,11 +427,11 @@ async function unban(studentId) {
           </template>
         </el-dialog>
       </div>
-      <el-table :data="majors" style="width: 100%">
+      <el-table :data="majors" stripe style="width: 100%">
         <el-table-column prop="majorNum" label="专业编号" width="240" />
-        <el-table-column prop="major" label="专业名称" width="480" />
+        <el-table-column prop="major" label="专业名称" width="300" />
         <el-table-column prop="academyNum" label="学院编号" width="240" />
-        <el-table-column prop="academy" label="学院名称" width="480" />
+        <el-table-column prop="academy" label="学院名称" width="300" />
         <el-table-column fixed="right" label="操作" width="240">
           <template #default="scope">
             <el-button
@@ -342,13 +440,31 @@ async function unban(studentId) {
               size="default"
               @click="
                 openEditMajor(
+                  0,
+                  '更新专业名称和所属学院名称',
                   scope.row.majorNum,
                   scope.row.major,
                   scope.row.academyNum,
                   scope.row.academy,
                 )
               "
-              >编辑</el-button
+              >更新名称</el-button
+            >
+            <el-button
+              link
+              type="primary"
+              size="default"
+              @click="
+                openEditMajor(
+                  1,
+                  '更新专业所属学院',
+                  scope.row.majorNum,
+                  scope.row.major,
+                  scope.row.academyNum,
+                  scope.row.academy,
+                )
+              "
+              >更新所属学院</el-button
             >
           </template>
         </el-table-column>
@@ -362,6 +478,15 @@ async function unban(studentId) {
           @current-change="handleCurrentChange"
         />
       </div>
+
+      <div class="create-class-button-container">
+        <div
+          class="create-class-button"
+          @click="openEditMajor(2, '新增专业', '', '', '', '')"
+        >
+          +新增专业
+        </div>
+      </div>
     </div>
 
     <!-- 班级信息部分 -->
@@ -372,7 +497,11 @@ async function unban(studentId) {
             <div class="reject-item">
               <div class="item-header">班级编号</div>
               <div class="item-body">
-                <el-input class="reject" v-model="editClass_classNum" />
+                <el-input
+                  class="reject"
+                  v-model="editClass_classNum"
+                  :disabled="editClass_operation !== 2"
+                />
               </div>
             </div>
             <div class="reject-item">
@@ -381,25 +510,26 @@ async function unban(studentId) {
                 <el-input class="reject" v-model="editClass_className" />
               </div>
             </div>
-            <div class="reject-item">
+            <div class="reject-item" v-if="editClass_operation !== 0">
               <div class="item-header">专业编号</div>
               <div class="item-body">
                 <el-input class="reject" v-model="editClass_majorNum" />
               </div>
             </div>
-            <div class="reject-item">
+
+            <div class="reject-item" v-if="editClass_operation !== 0">
               <div class="item-header">专业名称</div>
               <div class="item-body">
                 <el-input class="reject" v-model="editClass_majorName" />
               </div>
             </div>
-            <div class="reject-item">
+            <div class="reject-item" v-if="editClass_operation !== 0">
               <div class="item-header">学院编号</div>
               <div class="item-body">
                 <el-input class="reject" v-model="editClass_academyNum" />
               </div>
             </div>
-            <div class="reject-item">
+            <div class="reject-item" v-if="editClass_operation !== 0">
               <div class="item-header">学院名称</div>
               <div class="item-body">
                 <el-input class="reject" v-model="editClass_academyName" />
@@ -418,23 +548,14 @@ async function unban(studentId) {
         </el-dialog>
       </div>
 
-      <div class="create-class-button-container">
-        <div
-          class="create-class-button"
-          @click="openEditClass('新增班级', '', '', '', '', '', '')"
-        >
-          +新增班级
-        </div>
-      </div>
-
-      <el-table :data="classes" style="width: 100%">
-        <el-table-column prop="classNum" label="班级编号" width="220" />
-        <el-table-column prop="className" label="班级名称" width="300" />
-        <el-table-column prop="majorNum" label="专业编号" width="220" />
-        <el-table-column prop="major" label="专业名称" width="300" />
-        <el-table-column prop="academyNum" label="学院编号" width="220" />
-        <el-table-column prop="academy" label="学院名称" width="300" />
-        <el-table-column fixed="right" label="操作" width="150">
+      <el-table :data="classes" stripe style="width: 100%">
+        <el-table-column prop="classNum" label="班级编号" width="150" />
+        <el-table-column prop="className" label="班级名称" width="250" />
+        <el-table-column prop="majorNum" label="专业编号" width="150" />
+        <el-table-column prop="major" label="专业名称" width="250" />
+        <el-table-column prop="academyNum" label="学院编号" width="150" />
+        <el-table-column prop="academy" label="学院名称" width="250" />
+        <el-table-column fixed="right" label="操作" width="200">
           <template #default="scope">
             <el-button
               link
@@ -442,6 +563,22 @@ async function unban(studentId) {
               size="default"
               @click="
                 openEditClass(
+                  0,
+                  '更改班级名称',
+                  scope.row.classNum,
+                  scope.row.className,
+                )
+              "
+            >
+              更改班级名称
+            </el-button>
+            <el-button
+              link
+              type="primary"
+              size="default"
+              @click="
+                openEditClass(
+                  1,
                   '编辑班级信息',
                   scope.row.classNum,
                   scope.row.className,
@@ -466,15 +603,24 @@ async function unban(studentId) {
           @current-change="handleCurrentChange"
         />
       </div>
+
+      <div class="create-class-button-container">
+        <div
+          class="create-class-button"
+          @click="openEditClass(2, '新增班级', '', '', '', '', '', '')"
+        >
+          +新增班级
+        </div>
+      </div>
     </div>
 
     <!-- 学生信息部分 -->
     <div class="stu-data-exist" v-else-if="radio1 === '查询个人'">
-      <el-table :data="students" style="width: 100%">
+      <el-table :data="students" stripe style="width: 100%">
         <el-table-column prop="studentId" label="学号" width="160" />
         <el-table-column prop="name" label="姓名" width="100" />
-        <el-table-column prop="enrollmentYear" label="入学年份" width="100" />
-        <el-table-column prop="graduationYear" label="毕业年份" width="100" />
+        <el-table-column prop="enrollmentYear" label="入学年份" width="60" />
+        <el-table-column prop="graduationYear" label="毕业年份" width="60" />
         <el-table-column prop="employer" label="就业单位" width="150" />
         <el-table-column prop="city" label="就业城市" width="100" />
         <el-table-column prop="phone" label="手机号码" width="140" />

@@ -3,6 +3,7 @@ import select from '@/views/select/index.vue'
 import stu_layout from '@/views/stu/layout/index.vue'
 import stu_home from '@/views/stu/home/index.vue'
 import stu_friends from '@/views/stu/friends.vue'
+import stu_friends_deleted from '@/views/stu/friendsDeleted.vue'
 import stu_enter from '@/views/stu/enter.vue'
 import stu_fail from '@/views/stu/fail.vue'
 import stu_success from '@/views/stu/success.vue'
@@ -12,6 +13,7 @@ import stu_query from '@/views/stu/query/index.vue'
 import stu_login from '@/views/stu/login/index.vue'
 import stu_register from '@/views/stu/register/index.vue'
 import stu_wait from '@/views/stu/wait/index.vue'
+import stu_bulletinDetail from '@/views/stu/bulletin/detail.vue'
 
 import admin_layout from '@/views/admin/layout/index.vue'
 import admin_home from '@/views/admin/home/index.vue'
@@ -27,6 +29,7 @@ import admin_bulletin_deleted from '@/views/admin/bulletin/deleted.vue'
 import admin_bulletin_edit from '@/views/admin/bulletin/edit.vue'
 
 import { useStuInfoStore } from '@/stores/stuInfo'
+import { useAdminInfoStore } from '@/stores/adminInfo'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -50,6 +53,7 @@ const router = createRouter({
           children: [
             { path: 'home', component: stu_home },
             { path: 'friends', component: stu_friends },
+            { path: 'friends_deleted', component: stu_friends_deleted },
             { path: 'enter', component: stu_enter },
             { path: 'fail', component: stu_fail },
             { path: 'success', component: stu_success },
@@ -69,6 +73,10 @@ const router = createRouter({
         {
           path: 'wait',
           component: stu_wait,
+        },
+        {
+          path: 'bulletin/detail',
+          component: stu_bulletinDetail,
         },
       ],
     },
@@ -117,7 +125,7 @@ const router = createRouter({
   ],
 })
 
-const cantAccessPath = [
+const stuCantAccessPath = [
   '/stu/home',
   '/stu/friends',
   '/stu/enter',
@@ -126,34 +134,45 @@ const cantAccessPath = [
   '/stu/reject',
   '/stu/deleted',
   '/stu/query',
+  '/stu/bulletin/detail',
 ]
 
+const adminCantAccessPath = [
+  '/admin/home',
+  '/admin/query',
+  '/admin/request_fail',
+  '/admin/request_success',
+  '/admin/request_reject',
+  '/admin/bulletin_draft',
+  '/admin/bulletin_released',
+  '/admin/bulletin_pulledOff',
+  '/admin/bulletin_deleted',
+  '/admin/bulletin_edit',
+]
 // router.beforeEach((to, from, next) => {
 //   const stuInfoStore = useStuInfoStore()
-//   if (cantAccessPath.includes(to.fullPath)) {
-//     const token = stuInfoStore.stuInfo.accessToken
-//     //判断是否存在token
-//     if (token) {
-//       //存在,用户查询注册审核结果
-//       const studentId = stuInfoStore.stuInfo.studentId
-//       stuGetRemarkApi({
-//         studentId: studentId.value,
-//       }).then((res) => {
-//         console.log(res)
-//         if (res.data.status === 1) {
-//           next()
-//         } else if (res.data.status === 0 || res.data.status === 2) {
-//           next(`/stu/wait?status=${res.data.status}`)
-//         }
-//       })
+//   const adminInfoStore = useAdminInfoStore()
+
+//   // 1. 先检查学生权限路径
+//   if (stuCantAccessPath.includes(to.fullPath)) {
+//     if (stuInfoStore.stuInfo.accessToken) {
+//       next()
 //     } else {
-//       //不存在
-//       next('/stu/login')
+//       return next('/stu/login') // 使用 return 终止后续逻辑
 //     }
-//   } else {
-//     next()
 //   }
-//   console.log(to)
+
+//   // 2. 再检查管理员权限路径
+//   if (adminCantAccessPath.includes(to.fullPath)) {
+//     if (adminInfoStore.adminInfo.accessToken) {
+//       next()
+//     } else {
+//       return next('/admin/login') // 使用 return 终止后续逻辑
+//     }
+//   }
+
+//   // 3. 默认放行
+//   next()
 // })
 
 export default router

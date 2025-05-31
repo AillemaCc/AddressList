@@ -1,47 +1,24 @@
 <script setup>
 import { stuGetSuccessApi, stuDeleteRequestApi } from '@/apis/stu/request'
 import { handleStatus } from '@/utils/handleStatus'
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useStuInfoStore } from '@/stores/stuInfo'
 
-const success = ref([
-  {
-    sender: '9109222258',
-    senderName: '谢融悠',
-    receiver: '9109222256',
-    receiverName: '黎明',
-    content: '111',
-    status: 1,
-    //验证状态 0待审核 1通过 2拒绝
-  },
-  {
-    sender: '9109222258',
-    senderName: '谢融悠',
-    receiver: '9109222257',
-    receiverName: '小王',
-    content: '121',
-    status: 1,
-  },
-  {
-    sender: '9109222258',
-    senderName: '谢融悠',
-    receiver: '9109232259',
-    receiverName: '小明',
-    content: '113',
-    status: 1,
-  },
-])
+const success = ref([])
+const handled_request = computed(() => handleStatus(success.value))
 const stuInfoStore = useStuInfoStore()
-const studentId = stuInfoStore.studentId
+const studentId = stuInfoStore.stuInfo.studentId
 const current = ref(1)
 const total = ref(0)
 const pages = ref(0)
 
 //获取已通过请求列表
-async function getSuccess() {
+async function getSuccess(num) {
   const res = await stuGetSuccessApi({
-    studentId: studentId.value,
+    receiver: studentId.value,
+    current: num,
+    size: 10,
   })
   if (res.success) {
     success.value = res.data.records
@@ -52,7 +29,7 @@ async function getSuccess() {
     ElMessage.error(res.message)
   }
 }
-getSuccess()
+getSuccess(1)
 
 //删除请求
 async function deleteClick(senderId) {
@@ -84,8 +61,6 @@ function changePage(val) {
   getSuccess(val)
 }
 
-const handled_request = handleStatus(success.value)
-
 const getStatusStyle = (status) => {
   const colorMap = {
     待通过: '#275dbb',
@@ -100,8 +75,8 @@ const getStatusStyle = (status) => {
     <div class="title">已通过的请求（{{ total }}条）</div>
     <div class="data-exist" v-if="handled_request.length > 0">
       <el-table :data="handled_request" style="width: 100%">
-        <el-table-column prop="sender" label="发送对象学号" width="250" />
-        <el-table-column prop="senderName" label="发送对象姓名" width="250" />
+        <el-table-column prop="sender" label="发送人学号" width="250" />
+        <el-table-column prop="senderName" label="发送人姓名" width="250" />
         <el-table-column prop="content" label="发送内容" width="400" />
         <el-table-column label="请求状态" width="250">
           <template #default="{ row }">

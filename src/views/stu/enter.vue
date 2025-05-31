@@ -1,67 +1,42 @@
 <script setup>
 import { stuGetEnterApi } from '@/apis/stu/request'
 import { handleStatus } from '@/utils/handleStatus'
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { ElMessage } from 'element-plus'
 import { useStuInfoStore } from '@/stores/stuInfo'
 
-const enter = ref([
-  {
-    sender: '9109222258',
-    senderName: '谢融悠',
-    receiver: '9109222256',
-    receiverName: '黎明',
-    content: '111',
-    status: 0,
-    //验证状态 0待审核 1通过 2拒绝
-  },
-  {
-    sender: '9109222258',
-    senderName: '谢融悠',
-    receiver: '9109222257',
-    receiverName: '小王',
-    content: '121',
-    status: 1,
-  },
-  {
-    sender: '9109222258',
-    senderName: '谢融悠',
-    receiver: '9109232259',
-    receiverName: '小明',
-    content: '113',
-    status: 2,
-  },
-])
+const enter = ref([])
+const handled_request = computed(() => handleStatus(enter.value))
 const stuInfoStore = useStuInfoStore()
-const studentId = stuInfoStore.studentId
+const studentId = stuInfoStore.stuInfo.studentId
 const current = ref(1)
 const total = ref(0)
 const pages = ref(0)
 
 //获取已发送请求列表
-async function getEnter() {
+async function getEnter(num) {
   const res = await stuGetEnterApi({
-    studentId: studentId.value,
+    sender: studentId.value,
+    current: num,
+    size: 10,
   })
+  console.log(res.success)
+
   if (res.success) {
     enter.value = res.data.records
     current.value = res.data.current
     total.value = res.data.total
     pages.value = res.data.pages
   } else {
-    ElMessage.error(res.message)
+    ElMessage.error('1')
   }
 }
-getEnter()
+getEnter(1)
 
 function changePage(val) {
   current.value = val
   getEnter(val)
 }
-
-//处理该列表的status
-const handled_request = handleStatus(enter.value)
-
 //status文字着色
 const getStatusStyle = (status) => {
   const colorMap = {

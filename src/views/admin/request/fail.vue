@@ -11,12 +11,20 @@ const fail_request = ref([])
 // 分页相关变量
 const currentPage = ref(1)
 const total = ref(0)
+const pages = ref(0)
+//拒绝弹窗的变量
+let dialogVisible = ref(false)
+let rejectStudentId = ref('')
+let rejectName = ref('')
+let rejextContent = ref('')
+//获取待审核的请求
 async function getFailRequest(num) {
-  const res = await adminDisplayFailRequestApi({ current: num })
+  const res = await adminDisplayFailRequestApi({ current: num, size: 10 })
   if (res.success) {
     fail_request.value = res.data.records
     currentPage.value = res.data.current
     total.value = res.data.total
+    pages.value = res.data.pages
   } else {
     ElMessage.error(res.message)
   }
@@ -26,7 +34,7 @@ getFailRequest(1)
 // 分页改变处理
 const handleCurrentChange = (val) => {
   currentPage.value = val
-  getFailRequest()
+  getFailRequest(val)
 }
 
 //同意请求按钮
@@ -52,10 +60,7 @@ async function successClick(studentId) {
     ElMessage.error(res.message)
   }
 }
-let dialogVisible = ref(false)
-let rejectStudentId = ref('')
-let rejectName = ref('')
-let rejextContent = ref('')
+
 //点击拒绝，打开拒绝请求确认框
 function rejectConfirm(studentId, name) {
   rejectStudentId.value = studentId
@@ -133,7 +138,7 @@ async function rejectClick() {
         <el-table-column prop="email" label="邮箱" width="300" />
         <el-table-column prop="password" label="密码" width="300" />
         <el-table-column prop="status" label="状态" width="90" />
-        <el-table-column prop="registerToken" label="注册凭证" width="300" />
+        <el-table-column prop="registerToken" label="注册令牌" width="300" />
         <el-table-column fixed="right" label="操作" width="120">
           <template #default="scope">
             <el-button

@@ -8,7 +8,7 @@ const currentPage = ref(1)
 const total = ref(0)
 const pages = ref(0)
 async function getRejecRequest(num) {
-  const res = await adminDisplayRejectRequestApi({ current: num })
+  const res = await adminDisplayRejectRequestApi({ current: num, size: 10 })
   if (res.success) {
     reject_request.value = res.data.records
     currentPage.value = res.data.current
