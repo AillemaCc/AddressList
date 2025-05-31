@@ -23,6 +23,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static org.AList.common.convention.errorcode.BaseErrorCode.ADMIN_INFO_UNAVAILABLE;
+
 // Service实现
 @Service
 @RequiredArgsConstructor
@@ -38,7 +40,7 @@ public class AdminHomePageServiceImpl implements AdminHomePageService {
         if (username == null || username.trim().isEmpty()) {
             username = AdminContext.getAdminister();
             if (username == null) {
-                throw new ClientException("无法获取当前管理员信息");
+                throw new ClientException(ADMIN_INFO_UNAVAILABLE);                                                      //"B0202", "系统无法获取当前管理员信息"
             }
         }
 

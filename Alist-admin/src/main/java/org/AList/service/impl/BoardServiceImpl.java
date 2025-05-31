@@ -298,7 +298,7 @@ public class BoardServiceImpl extends ServiceImpl<BoardMapper, BoardDO> implemen
 
         // 1. 参数校验
         if (boardId == null || boardId <= 0) {
-            throw new ClientException("无效的公告标识号");
+            throw new UserException(INVALID_ANNOUNCE_ID);
         }
 
         // 2. 根据boardId查询公告
@@ -308,7 +308,7 @@ public class BoardServiceImpl extends ServiceImpl<BoardMapper, BoardDO> implemen
                 .one();
 
         if (existingBoard == null) {
-            throw new ServiceException("公告不存在或已被删除");
+            throw new ServiceException(ANNOUNCE_NOT_FOUND);
         }
 
         // 3. 转换为响应DTO并返回
@@ -359,7 +359,7 @@ public class BoardServiceImpl extends ServiceImpl<BoardMapper, BoardDO> implemen
 
         // 确保序号不超过3位数（最大999）
         if (sequence > 999) {
-            throw new ServiceException("当日公告数量已达上限");
+            throw new ServiceException(ANNOUNCE_DAILY_LIMIT);                                                           //A0706：当日公告已达上限
         }
 
         return Integer.valueOf(dateStr + String.format("%03d", sequence));
