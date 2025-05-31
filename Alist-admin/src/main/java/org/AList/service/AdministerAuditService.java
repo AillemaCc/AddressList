@@ -1,7 +1,7 @@
 package org.AList.service;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
-import org.AList.domain.dto.req.AccpetRegistrationReqDTO;
+import org.AList.domain.dto.req.AcceptRegistrationReqDTO;
 import org.AList.domain.dto.req.AuditListReqDTO;
 import org.AList.domain.dto.req.BanStudentReqDTO;
 import org.AList.domain.dto.req.RefuseRegistrationReqDTO;
@@ -21,7 +21,7 @@ public interface AdministerAuditService {
      * 通过注册
      * @param requestParam 通过注册请求实体类
      */
-    void acceptRegistration(AccpetRegistrationReqDTO requestParam);
+    void acceptRegistration(AcceptRegistrationReqDTO requestParam);
 
     /**
      * 检查学号对应的注册请求的审核状态

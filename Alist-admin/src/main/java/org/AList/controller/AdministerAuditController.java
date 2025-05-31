@@ -4,7 +4,7 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import lombok.RequiredArgsConstructor;
 import org.AList.common.convention.result.Result;
 import org.AList.common.convention.result.Results;
-import org.AList.domain.dto.req.AccpetRegistrationReqDTO;
+import org.AList.domain.dto.req.AcceptRegistrationReqDTO;
 import org.AList.domain.dto.req.AuditListReqDTO;
 import org.AList.domain.dto.req.BanStudentReqDTO;
 import org.AList.domain.dto.req.RefuseRegistrationReqDTO;
@@ -53,7 +53,7 @@ public class AdministerAuditController {
      * @param requestParam 注册表单所属的学生学号
      */
     @PostMapping("/accept")
-    public Result<Void> acceptRegistration(@RequestBody AccpetRegistrationReqDTO requestParam){
+    public Result<Void> acceptRegistration(@RequestBody AcceptRegistrationReqDTO requestParam){
         administerAuditService.acceptRegistration(requestParam);
         return Results.success().setMessage("审核通过操作成功");
     }
