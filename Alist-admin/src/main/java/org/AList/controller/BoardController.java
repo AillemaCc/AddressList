@@ -19,7 +19,7 @@ public class BoardController {
 
     private final BoardService boardService;
 
-    @GetMapping("/queryById")
+    @PostMapping("/queryById")
     public Result<BoardQueryRespDTO> queryBoardById(@RequestBody BoardQueryByIdReqDTO requestParam){
         return Results.success(boardService.queryBoardById(requestParam));
     }
@@ -62,7 +62,7 @@ public class BoardController {
     /**
      * 分页查询所有已删除公告
      */
-    @GetMapping("/queryAllDeleted")
+    @PostMapping("/queryAllDeleted")
     public Result<IPage<BoardQueryRespDTO>> queryAllDeleted(@RequestBody BoardQueryReqDTO requestParam){
         return Results.success(boardService.queryAllDeleted(requestParam));
     }
@@ -70,7 +70,7 @@ public class BoardController {
     /**
      * 分页查询所有已发布公告
      */
-    @GetMapping("/queryAllReleased")
+    @PostMapping("/queryAllReleased")
     public Result<IPage<BoardQueryRespDTO>> queryAllReleased(@RequestBody BoardQueryReqDTO requestParam){
         return Results.success(boardService.queryAllReleased(requestParam));
     }
@@ -78,7 +78,7 @@ public class BoardController {
     /**
      * 分页查询所有草稿
      */
-    @GetMapping("/queryAllDraft")
+    @PostMapping("/queryAllDraft")
     public Result<IPage<BoardQueryRespDTO>> queryAllDraft(@RequestBody BoardQueryReqDTO requestParam){
         return Results.success(boardService.queryAllDraft(requestParam));
     }
@@ -86,7 +86,7 @@ public class BoardController {
     /**
      * 分页查询所有草稿
      */
-    @GetMapping("/queryAllPullOff")
+    @PostMapping("/queryAllPullOff")
     public Result<IPage<BoardQueryRespDTO>> queryAllPullOff(@RequestBody BoardQueryReqDTO requestParam){
         return Results.success(boardService.queryAllPullOff(requestParam));
     }
