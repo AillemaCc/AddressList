@@ -5,14 +5,13 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import lombok.RequiredArgsConstructor;
 import org.AList.common.biz.user.AdminContext;
+import org.AList.common.convention.exception.ClientException;
 import org.AList.domain.dao.entity.OperLogDO;
 import org.AList.domain.dao.mapper.OperLogMapper;
+import org.AList.domain.dto.req.AdminHomePageReqDTO;
 import org.AList.domain.dto.req.AuditListReqDTO;
 import org.AList.domain.dto.req.BoardQueryReqDTO;
-import org.AList.domain.dto.resp.AdminHomePageRespDTO;
-import org.AList.domain.dto.resp.AuditUserPageRespDTO;
-import org.AList.domain.dto.resp.BoardQueryRespDTO;
-import org.AList.domain.dto.resp.OperLogDTO;
+import org.AList.domain.dto.resp.*;
 import org.AList.service.AdminHomePageService;
 import org.AList.service.AdministerAuditService;
 import org.AList.service.BoardService;
@@ -33,53 +32,117 @@ public class AdminHomePageServiceImpl implements AdminHomePageService {
     private final OperLogMapper operLogMapper;
       
     @Override  
-    public AdminHomePageRespDTO getAdminHomePageData(Integer days) {
-        // 1. 获取当前管理员用户名  
-        String username = AdminContext.getAdminister();
-          
-        // 2. 获取待审核请求数量  
-        Long pendingAuditCount = getPendingAuditCount();  
-          
-        // 3. 获取已发布公告数量  
-        Long releasedBoardCount = getReleasedBoardCount();  
-          
-        // 4. 获取最近操作日志  
-        List<OperLogDTO> recentOperations = getRecentOperations(days);
-          
-        // 5. 构建并返回结果  
-        return AdminHomePageRespDTO.builder()  
-                .username(username)  
-                .pendingAuditCount(pendingAuditCount)  
-                .releasedBoardCount(releasedBoardCount)  
-                .recentOperations(recentOperations)  
-                .build();  
-    }  
-      
-    private Long getPendingAuditCount() {
-        // 创建查询参数，只需要统计数量，所以页码和大小可以最小化
+    public AdminHomePageDataDTO getAdminHomePageData(AdminHomePageReqDTO requestParam) {
+        // 1. 获取用户名
+        String username = requestParam.getUsername();
+        if (username == null || username.trim().isEmpty()) {
+            username = AdminContext.getAdminister();
+            if (username == null) {
+                throw new ClientException("无法获取当前管理员信息");
+            }
+        }
+
+        // 2. 获取公告统计数据
+        BoardDTO boardStats = getBoardStatistics();
+
+        // 3. 获取请求统计数据
+        RequestDTO requestStats = getRequestStatistics();
+
+        // 4. 构建并返回结果
+        return AdminHomePageDataDTO.builder()
+                .username(username)
+                .board(boardStats)
+                .request(requestStats)
+                .build();
+    }
+
+    /**
+     * 获取公告统计数据
+     */
+    private BoardDTO getBoardStatistics() {
+        // 获取草稿数量
+        Integer draftCount = getDraftBoardCount();
+
+        // 获取已发布数量
+        Integer releasedCount = getReleasedBoardCount();
+
+        // 获取已下架数量
+        Integer pulledOffCount = getPulledOffBoardCount();
+
+        return BoardDTO.builder()
+                .draft(draftCount)
+                .released(releasedCount)
+                .pulledoff(pulledOffCount)
+                .build();
+    }
+
+    /**
+     * 获取请求统计数据
+     */
+    private RequestDTO getRequestStatistics() {
+        // 获取待审核数量
+        Integer pendingCount = getPendingAuditCount();
+
+        // 获取已通过数量
+        Integer approvedCount = getApprovedAuditCount();
+
+        // 获取已拒绝数量
+        Integer rejectedCount = getRejectedAuditCount();
+
+        return RequestDTO.builder()
+                .pending(pendingCount)
+                .approved(approvedCount)
+                .rejected(rejectedCount)
+                .build();
+    }
+
+    private Integer getPendingAuditCount() {
         AuditListReqDTO requestParam = new AuditListReqDTO();
         requestParam.setCurrent(1);
         requestParam.setSize(1);
-
-        // 调用审核服务获取待审核请求的分页信息
         IPage<AuditUserPageRespDTO> auditPage = administerAuditService.listAuditRegister(requestParam);
+        return Math.toIntExact(auditPage.getTotal());
+    }
 
-        // 返回总记录数
-        return auditPage.getTotal();
-    }  
-      
-    private Long getReleasedBoardCount() {
-        // 创建查询参数，只需要统计数量，所以页码和大小可以最小化
+    private Integer getApprovedAuditCount() {
+        AuditListReqDTO requestParam = new AuditListReqDTO();
+        requestParam.setCurrent(1);
+        requestParam.setSize(1);
+        IPage<AuditUserPageRespDTO> auditPage = administerAuditService.listAuditRegisterValid(requestParam);
+        return Math.toIntExact(auditPage.getTotal());
+    }
+
+    private Integer getRejectedAuditCount() {
+        AuditListReqDTO requestParam = new AuditListReqDTO();
+        requestParam.setCurrent(1);
+        requestParam.setSize(1);
+        IPage<AuditUserPageRespDTO> auditPage = administerAuditService.listAuditRegisterRefuse(requestParam);
+        return Math.toIntExact(auditPage.getTotal());
+    }
+
+    private Integer getReleasedBoardCount() {
         BoardQueryReqDTO requestParam = new BoardQueryReqDTO();
         requestParam.setCurrent(1);
         requestParam.setSize(1);
-
-        // 调用公告服务获取已发布公告的分页信息
         IPage<BoardQueryRespDTO> boardPage = boardService.queryAllReleased(requestParam);
+        return Math.toIntExact(boardPage.getTotal());
+    }
 
-        // 返回总记录数
-        return boardPage.getTotal();
-    }  
+    private Integer getDraftBoardCount() {
+        BoardQueryReqDTO requestParam = new BoardQueryReqDTO();
+        requestParam.setCurrent(1);
+        requestParam.setSize(1);
+        IPage<BoardQueryRespDTO> boardPage = boardService.queryAllDraft(requestParam);
+        return Math.toIntExact(boardPage.getTotal());
+    }
+
+    private Integer getPulledOffBoardCount() {
+        BoardQueryReqDTO requestParam = new BoardQueryReqDTO();
+        requestParam.setCurrent(1);
+        requestParam.setSize(1);
+        IPage<BoardQueryRespDTO> boardPage = boardService.queryAllPullOff(requestParam);
+        return Math.toIntExact(boardPage.getTotal());
+    }
       
     private List<OperLogDTO> getRecentOperations(Integer days) {
         // 获取当前管理员用户名
