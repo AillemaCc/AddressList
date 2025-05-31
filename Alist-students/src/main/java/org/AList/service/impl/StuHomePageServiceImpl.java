@@ -5,16 +5,12 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.AList.common.convention.exception.ServiceException;
-import org.AList.domain.dao.entity.ClassInfoDO;
-import org.AList.domain.dao.entity.ContactDO;
-import org.AList.domain.dao.entity.MajorAndAcademyDO;
-import org.AList.domain.dao.entity.StudentFrameworkDO;
-import org.AList.domain.dao.mapper.ClassInfoMapper;
-import org.AList.domain.dao.mapper.ContactMapper;
-import org.AList.domain.dao.mapper.MajorAndAcademyMapper;
-import org.AList.domain.dao.mapper.StudentFrameWorkMapper;
+import org.AList.domain.dao.entity.*;
+import org.AList.domain.dao.mapper.*;
 import org.AList.domain.dto.resp.ContactQueryRespDTO;
-import org.AList.domain.dto.resp.HomePageQueryRespDTO;
+import org.AList.domain.dto.resp.DataStatisticDTO;
+import org.AList.domain.dto.resp.HomePageDataDTO;
+import org.AList.domain.dto.resp.StuInfoDTO;
 import org.AList.service.CacheService.ContactCacheService;
 import org.AList.service.StuHomePageService;
 import org.springframework.beans.BeanUtils;
@@ -34,16 +30,34 @@ public class StuHomePageServiceImpl implements StuHomePageService {
     private final StudentFrameWorkMapper studentFrameWorkMapper;
     private final MajorAndAcademyMapper majorAndAcademyMapper;
     private final ClassInfoMapper classInfoMapper;
+    private final ApplicationMapper applicationMapper;
+    private final ContactGotoMapper contactGotoMapper;
 
     @Override
-    public HomePageQueryRespDTO queryHomepageInfo(String studentId) {
+    public HomePageDataDTO queryHomepageInfo(String studentId) {
+        // 1. 获取学生信息
+        StuInfoDTO stuInfo = getStuInfo(studentId);
 
+        // 2. 获取统计数据
+        DataStatisticDTO dataStatistic = getDataStatistic(studentId);
+
+        // 3. 构建响应
+        return HomePageDataDTO.builder()
+                .stuInfo(stuInfo)
+                .dataStatistic(dataStatistic)
+                .build();
+    }
+
+    /**
+     * 获取学生信息
+     */
+    private StuInfoDTO getStuInfo(String studentId) {
         // 1. 尝试从缓存获取
         ContactQueryRespDTO cachedData = contactCacheService.getContactCache(studentId, studentId);
 
         if (cachedData != null) {
-            // 将 ContactQueryRespDTO 转换为 HomePageQueryRespDTO
-            return convertToHomePageDTO(cachedData);
+            // 将 ContactQueryRespDTO 转换为 StuInfoDTO
+            return convertToStuInfoDTO(cachedData);
         }
 
         // 2. 缓存未命中，从数据库获取
@@ -93,17 +107,20 @@ public class StuHomePageServiceImpl implements StuHomePageService {
             }
         }
 
-        // 3. 构建响应对象
-        HomePageQueryRespDTO response = new HomePageQueryRespDTO();
-        response.setStudentId(studentId);
-        response.setName(student.getName());
-        response.setAcademy(academyName);
-        response.setMajor(majorName);
-        response.setClassName(className);
-        response.setEnrollmentYear(student.getEnrollmentYear());
-        response.setGraduationYear(student.getGraduationYear());
-        response.setEmployer(contact.getEmployer());
-        response.setCity(contact.getCity());
+        // 3. 构建学生信息响应对象
+        StuInfoDTO stuInfo = StuInfoDTO.builder()
+                .studentId(studentId)
+                .name(student.getName())
+                .academy(academyName)
+                .major(majorName)
+                .className(className)
+                .enrollmentYear(student.getEnrollmentYear())
+                .graduationYear(student.getGraduationYear())
+                .employer(contact.getEmployer())
+                .city(contact.getCity())
+                .phone(student.getPhone())
+                .email(student.getEmail())
+                .build();
 
         // 4. 构建缓存对象并异步更新缓存
         ContactQueryRespDTO cacheDTO = ContactQueryRespDTO.builder()
@@ -124,15 +141,73 @@ public class StuHomePageServiceImpl implements StuHomePageService {
                 contactCacheService.setContactCache(studentId, studentId, cacheDTO)
         );
 
-        return response;
+        return stuInfo;
     }
 
     /**
-     * 将 ContactQueryRespDTO 转换为 HomePageQueryRespDTO
+     * 获取统计数据
      */
-    private HomePageQueryRespDTO convertToHomePageDTO(ContactQueryRespDTO source) {
-        HomePageQueryRespDTO target = new HomePageQueryRespDTO();
-        // 复制相同属性
+    private DataStatisticDTO getDataStatistic(String studentId) {
+        // 查询已通过的申请数量 (作为接收者，status = 1)
+        Integer approved = Math.toIntExact(applicationMapper.selectCount(
+                Wrappers.lambdaQuery(ApplicationDO.class)
+                        .eq(ApplicationDO::getReceiver, studentId)
+                        .eq(ApplicationDO::getStatus, 1)
+                        .eq(ApplicationDO::getDelFlag, 0)
+        ));
+
+        // 查询已拒绝的申请数量 (作为接收者，status = 2)
+        Integer rejected = Math.toIntExact(applicationMapper.selectCount(
+                Wrappers.lambdaQuery(ApplicationDO.class)
+                        .eq(ApplicationDO::getReceiver, studentId)
+                        .eq(ApplicationDO::getStatus, 2)
+                        .eq(ApplicationDO::getDelFlag, 0)
+        ));
+
+        // 查询待回复的申请数量 (作为接收者，status = 0)
+        Integer pendingReply = Math.toIntExact(applicationMapper.selectCount(
+                Wrappers.lambdaQuery(ApplicationDO.class)
+                        .eq(ApplicationDO::getReceiver, studentId)
+                        .eq(ApplicationDO::getStatus, 0)
+                        .eq(ApplicationDO::getDelFlag, 0)
+        ));
+
+        // 查询已发送的申请数量 (作为发送者)
+        Integer sent = Math.toIntExact(applicationMapper.selectCount(
+                Wrappers.lambdaQuery(ApplicationDO.class)
+                        .eq(ApplicationDO::getSender, studentId)
+                        .eq(ApplicationDO::getDelFlag, 0)
+        ));
+
+        // 查询已删除的申请数量 (作为接收者，delFlag = 1)
+        Integer deleted = Math.toIntExact(applicationMapper.selectCount(
+                Wrappers.lambdaQuery(ApplicationDO.class)
+                        .eq(ApplicationDO::getReceiver, studentId)
+                        .eq(ApplicationDO::getDelFlag, 1)
+        ));
+
+        // 查询总通讯录数量 (该学生可访问的联系人数量)
+        Integer totalContacts = Math.toIntExact(contactGotoMapper.selectCount(
+                Wrappers.lambdaQuery(ContactGotoDO.class)
+                        .eq(ContactGotoDO::getOwnerId, studentId)
+                        .eq(ContactGotoDO::getDelFlag, 0)
+        ));
+
+        return DataStatisticDTO.builder()
+                .approved(approved)
+                .rejected(rejected)
+                .pendingReply(pendingReply)
+                .sent(sent)
+                .deleted(deleted)
+                .totalContacts(totalContacts)
+                .build();
+    }
+
+    /**
+     * 将 ContactQueryRespDTO 转换为 StuInfoDTO
+     */
+    private StuInfoDTO convertToStuInfoDTO(ContactQueryRespDTO source) {
+        StuInfoDTO target = new StuInfoDTO();
         BeanUtils.copyProperties(source, target);
         return target;
     }

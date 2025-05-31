@@ -9,7 +9,6 @@ import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.AList.annotation.Idempotent;
-import org.AList.common.convention.exception.UserException;
 import org.AList.common.convention.exception.ClientException;
 import org.AList.common.convention.exception.ServiceException;
 import org.AList.common.generator.RedisKeyGenerator;
@@ -19,7 +18,7 @@ import org.AList.domain.dao.entity.StudentFrameworkDO;
 import org.AList.domain.dao.mapper.RegisterMapper;
 import org.AList.domain.dao.mapper.StudentDefaultInfoMapper;
 import org.AList.domain.dao.mapper.StudentFrameWorkMapper;
-import org.AList.domain.dto.req.AccpetRegistrationReqDTO;
+import org.AList.domain.dto.req.AcceptRegistrationReqDTO;
 import org.AList.domain.dto.req.AuditListReqDTO;
 import org.AList.domain.dto.req.BanStudentReqDTO;
 import org.AList.domain.dto.req.RefuseRegistrationReqDTO;
@@ -68,7 +67,7 @@ public class AdministerAuditServiceImpl extends ServiceImpl<RegisterMapper, Regi
      */
     @Transactional(rollbackFor = Exception.class)
     @Override
-    public void acceptRegistration(AccpetRegistrationReqDTO requestParam) {
+    public void acceptRegistration(AcceptRegistrationReqDTO requestParam) {
         checkReviewStatus(requestParam.getStudentId());
         // 从注册请求表当中拿一个符合条件的请求出来
         LambdaUpdateWrapper<RegisterDO> updateWrapper = Wrappers.lambdaUpdate(RegisterDO.class)

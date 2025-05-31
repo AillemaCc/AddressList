@@ -6,7 +6,7 @@ import lombok.Data;
  * 通过审核注册请求实体类
  */
 @Data
-public class AccpetRegistrationReqDTO {
+public class AcceptRegistrationReqDTO {
     /**
      * 注册审核请求的学号
      */

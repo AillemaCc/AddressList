@@ -3,6 +3,7 @@ package org.AList.service.AdminToken;
 import com.alibaba.fastjson.JSON;
 import io.jsonwebtoken.Claims;
 import lombok.RequiredArgsConstructor;
+import org.AList.common.convention.exception.ClientException;
 import org.AList.common.convention.exception.UserException;
 import org.AList.common.generator.RedisKeyGenerator;
 import org.AList.domain.dao.entity.AdministerDO;
@@ -14,7 +15,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import static org.AList.common.convention.errorcode.BaseErrorCode.*;
+import static org.AList.common.convention.errorcode.BaseErrorCode.USER_NOT_LOGGED;
 
 @Service
 @RequiredArgsConstructor
@@ -71,28 +72,35 @@ public class TokenService {
         // 验证Refresh Token
         // 检查Token是否在黑名单中
         if (isTokenBlacklisted(refreshToken)) {
-            throw new UserException(USER_NOT_LOGGED);                                                                   //A0203：用户未登录或用户token不存在
+            throw new UserException(USER_NOT_LOGGED);
         }
+
         String refreshKey = RedisKeyGenerator.genAdministerRefresh(username);
-        String storedRefreshToken = stringRedisTemplate.opsForValue().get(refreshKey);  
-          
-        if (storedRefreshToken == null || !storedRefreshToken.equals(refreshToken)) {  
-            throw new UserException(USER_NOT_LOGGED);                                                                   //A0203：用户未登录或用户token不存在
-        }  
-          
-        // 解析Refresh Token获取用户信息  
-        Claims claims = jwtUtils.parseJWT(refreshToken);
-        String userJson = claims.getSubject();  
-          
-        // 生成新的Access Token  
-        String newAccessToken = jwtUtils.generateJWT(userJson, ACCESS_TOKEN_EXPIRATION);  
-          
-        // 更新Redis中的Access Token  
+        String storedRefreshToken = stringRedisTemplate.opsForValue().get(refreshKey);
+
+        if (storedRefreshToken == null || !storedRefreshToken.equals(refreshToken)) {
+            throw new UserException(USER_NOT_LOGGED);
+        }
+
+        // 检查Access Token是否已存在且未过期
         String accessKey = RedisKeyGenerator.genAdministerLoginAccess(username);
-        stringRedisTemplate.opsForHash().put(accessKey, newAccessToken, userJson);  
-        stringRedisTemplate.expire(accessKey, 30, TimeUnit.MINUTES);  
-          
-        return newAccessToken;  
+        if (Boolean.TRUE.equals(stringRedisTemplate.hasKey(accessKey))) {
+            // Access Token仍然存在，说明未过期
+            throw new ClientException("Access Token仍然有效，无需刷新");
+        }
+
+        // 解析Refresh Token获取用户信息
+        Claims claims = jwtUtils.parseJWT(refreshToken);
+        String userJson = claims.getSubject();
+
+        // 生成新的Access Token
+        String newAccessToken = jwtUtils.generateJWT(userJson, ACCESS_TOKEN_EXPIRATION);
+
+        // 更新Redis中的Access Token
+        stringRedisTemplate.opsForHash().put(accessKey, newAccessToken, userJson);
+        stringRedisTemplate.expire(accessKey, 30, TimeUnit.MINUTES);
+
+        return newAccessToken;
     }
 
     /**
