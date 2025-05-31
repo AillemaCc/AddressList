@@ -414,10 +414,10 @@ public class AdminBaseInfoServiceImpl implements AdminBaseInfoService {
     public void addBaseMajorInfo(BaseMajorInfoAddReqDTO requestParam) {
         Objects.requireNonNull(requestParam, "请求参数不能为空");
         if (requestParam.getMajorNum() == null || StringUtils.isBlank(requestParam.getMajorName())) {
-            throw new ClientException("专业编号和名称不能为空");
+            throw new UserException(MAJOR_ID_NAME_EMPTY);                                                               //"A0605", "专业编号或名称不能为空"
         }
         if (requestParam.getAcademyNum() == null || StringUtils.isBlank(requestParam.getAcademyName())) {
-            throw new ClientException("学院编号和名称不能为空");
+            throw new UserException(COLLEGE_ID_NAME_EMPTY);                                                             //"A0606", "学院编号或名称不能为空"
         }
 
         Integer majorNum = requestParam.getMajorNum();
@@ -432,7 +432,7 @@ public class AdminBaseInfoServiceImpl implements AdminBaseInfoService {
                 .eq(MajorAndAcademyDO::getDelFlag, 0);
         MajorAndAcademyDO uniqueDO = majorAndAcademyMapper.selectOne(uniqueWrapper);
         if (uniqueDO != null) {
-            throw new ClientException("新增的专业信息已存在，请不要重复添加");
+            throw new UserException(MAJOR_EXIST);                                                                       //"A0624", "新增专业信息已存在"
         }
 
         // 如果不是新建学院，检查学院是否存在
@@ -442,7 +442,7 @@ public class AdminBaseInfoServiceImpl implements AdminBaseInfoService {
                     .eq(MajorAndAcademyDO::getDelFlag, 0);
             MajorAndAcademyDO existingAcademy = majorAndAcademyMapper.selectOne(academyWrapper);
             if (existingAcademy == null) {
-                throw new ClientException("指定的学院不存在，请选择新建学院或使用正确的学院编号");
+                throw new ClientException(COLLEGE_NOT_FOUND);                                                           //"A0633", "查询的学院不存在"
             }
             // 使用现有学院的名称
             academyName = existingAcademy.getAcademy();
@@ -458,7 +458,7 @@ public class AdminBaseInfoServiceImpl implements AdminBaseInfoService {
 
         int insert = majorAndAcademyMapper.insert(majorAndAcademyDO);
         if (insert != 1) {
-            throw new ClientException("新增异常，请重试");
+            throw new UserException(ADD_MAJOR_COLLEGE_FAIL);                                                            //"A0622", "新增专业与学院信息失败"
         }
     }
 
@@ -467,10 +467,10 @@ public class AdminBaseInfoServiceImpl implements AdminBaseInfoService {
     public void changeMajorAcademy(ChangeMajorAcademyReqDTO requestParam) {
         Objects.requireNonNull(requestParam, "请求参数不能为空");
         if (requestParam.getMajorNum() == null) {
-            throw new ClientException("专业编号不能为空");
+            throw new UserException(MAJOR_ID_EMPTY);                                                                    //"A0607", "专业编号为空"
         }
         if (requestParam.getNewAcademyNum() == null || StringUtils.isBlank(requestParam.getNewAcademyName())) {
-            throw new ClientException("新学院编号和名称不能为空");
+            throw new UserException(COLLEGE_ID_NAME_EMPTY);                                                             //"A0606", "学院编号或名称不能为空"
         }
 
         Integer majorNum = requestParam.getMajorNum();
@@ -485,7 +485,7 @@ public class AdminBaseInfoServiceImpl implements AdminBaseInfoService {
         MajorAndAcademyDO originalMajor = majorAndAcademyMapper.selectOne(originalWrapper);
 
         if (originalMajor == null) {
-            throw new ClientException("指定的专业不存在");
+            throw new UserException(ORIG_MAJOR_MISSING);                                                                //"A0631", "不存在原始专业"
         }
 
         // 如果不是创建新学院，验证目标学院是否存在
@@ -495,7 +495,7 @@ public class AdminBaseInfoServiceImpl implements AdminBaseInfoService {
                     .eq(MajorAndAcademyDO::getDelFlag, 0);
             MajorAndAcademyDO existingAcademy = majorAndAcademyMapper.selectOne(academyWrapper);
             if (existingAcademy == null) {
-                throw new ClientException("目标学院不存在，请选择创建新学院或使用正确的学院编号");
+                throw new ClientException(COLLEGE_NOT_FOUND);                                                           //"A0633", "查询的学院不存在"
             }
             // 使用现有学院的名称
             newAcademyName = existingAcademy.getAcademy();
@@ -503,7 +503,7 @@ public class AdminBaseInfoServiceImpl implements AdminBaseInfoService {
 
         // 检查是否真的需要更新
         if (originalMajor.getAcademyNum().equals(newAcademyNum)) {
-            throw new ClientException("专业已属于该学院，无需修改");
+            throw new UserException(MAJOR_BELONGING_COLLEGE);                                                           //"A0625", "专业已属于该学院"
         }
 
         // 更新专业的学院信息
@@ -514,7 +514,7 @@ public class AdminBaseInfoServiceImpl implements AdminBaseInfoService {
 
         int updateResult = majorAndAcademyMapper.updateById(updateMajor);
         if (updateResult != 1) {
-            throw new ClientException("修改专业所属学院失败，请重试");
+            throw new UserException(UPDATE_MAJOR_BELONGED_COLLEGE_FAIL);                                                //"A0626", "修改专业所属学院失败"
         }
 
         // 清理相关缓存
