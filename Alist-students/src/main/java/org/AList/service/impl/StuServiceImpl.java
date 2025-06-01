@@ -26,6 +26,7 @@ import org.AList.domain.dto.resp.StuRegisterRemarkRespDTO;
 import org.AList.service.StuService;
 import org.AList.service.StuToken.TokenPair;
 import org.AList.service.StuToken.TokenService;
+import org.AList.utils.FieldEncryptUtil;
 import org.AList.utils.LinkUtil;
 import org.AList.utils.SentinelUtils;
 import org.redisson.api.RLock;
@@ -56,6 +57,7 @@ public class StuServiceImpl extends ServiceImpl<StudentFrameWorkMapper, StudentF
     private final RedissonClient redissonClient;
     private final AbstractChainContext<StuRegisterReqDTO> abstractChainContext;
     private final TokenService tokenService;
+    private final FieldEncryptUtil fieldEncryptUtil;
 
     @Override
     public StuLoginRespDTO login(StuLoginReqDTO requestParam, HttpServletRequest request) {
@@ -78,9 +80,10 @@ public class StuServiceImpl extends ServiceImpl<StudentFrameWorkMapper, StudentF
      * @see StuLoginRespDTO
      */
     public StuLoginRespDTO performLogin(StuLoginReqDTO requestParam, HttpServletRequest request) {
+        String password = fieldEncryptUtil.encrypt(requestParam.getPassword());
         LambdaQueryWrapper<StudentFrameworkDO> queryWrapper = Wrappers.lambdaQuery(StudentFrameworkDO.class)
                 .eq(StudentFrameworkDO::getStudentId, requestParam.getStudentId())
-                .eq(StudentFrameworkDO::getPassword, requestParam.getPassword())
+                .eq(StudentFrameworkDO::getPassword, password)
                 .eq(StudentFrameworkDO::getDelFlag, 0)
                 .eq(StudentFrameworkDO::getStatus, 1);
         StudentFrameworkDO studentFrameworkDO = studentFrameWorkMapper.selectOne(queryWrapper);
@@ -226,7 +229,7 @@ public class StuServiceImpl extends ServiceImpl<StudentFrameWorkMapper, StudentF
     @Override
     public StuRegisterRemarkRespDTO getRemark(StuRegisterRemarkReqDTO requestParam) {
         String studentId=requestParam.getStudentId();
-        String password =requestParam.getPassword();
+        String password =fieldEncryptUtil.encrypt(requestParam.getPassword());
         LambdaQueryWrapper<RegisterDO> queryWrapper = Wrappers.lambdaQuery(RegisterDO.class)
                 .eq(RegisterDO::getStudentId, studentId)
                 .eq(RegisterDO::getPassword, password)
