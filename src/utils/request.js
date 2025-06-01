@@ -8,7 +8,7 @@ import { useRouter } from 'vue-router'
 
 //学生请求实例
 export const stuInstance = axios.create({
-  baseURL: 'http://127.0.0.1:4523/m1/6274780-5968989-default',
+  baseURL: 'http://127.0.0.1:7777',
   timeout: 5000,
 })
 // 学生请求拦截器
@@ -59,7 +59,7 @@ stuInstance.interceptors.response.use(
 )
 //管理员请求实例
 export const adminInstance = axios.create({
-  baseURL: 'http://127.0.0.1:4523/m1/6274780-5968989-5f5be83e',
+  baseURL: 'http://127.0.0.1:8888',
   timeout: 5000,
 })
 //管理员请求拦截器
