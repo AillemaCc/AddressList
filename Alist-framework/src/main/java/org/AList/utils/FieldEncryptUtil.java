@@ -36,6 +36,18 @@ public class FieldEncryptUtil {
         encryptOrDecrypt(obj, true);
     }
 
+    /**
+     * 对单个字段值进行加密处理
+     * @param value 需要加密的字段值
+     * @return 加密后的字符串
+     */
+    public String encrypt(String value) {
+        if (StringUtils.isBlank(value)) {
+            return value;
+        }
+        return fieldEncryptDecryptService.encrypt(value);
+    }
+
     /**对EncryptField注解进行解密处理*/
     public void decrypt(Object obj) {
         encryptOrDecrypt(obj, false);
