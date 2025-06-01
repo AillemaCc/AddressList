@@ -2,54 +2,36 @@ import { defineStore } from 'pinia'
 import {
   getAdministrationInfo,
   setAdministrationInfo,
-  setAdministrationRefreshRequired,
-  setAdministrationAccessToken,
+  setAdministrationUsername,
+  setAdministrationAccessToken,setAdministrationRefreshToken
 } from '@/utils/storage.js'
-
+import {ref} from 'vue'
 export const useAdminInfoStore = defineStore('adminInfo', () => {
-  const adminInfo = getAdministrationInfo()
-
-  // 用来存储每个管理员的刷新状态和订阅者
-  let isRefreshing = false
-  let refreshSubscribers = []
+  const adminInfo = ref(getAdministrationInfo())
 
   function setAdminInfo(newValue) {
     adminInfo.value = newValue
     setAdministrationInfo(newValue)
   }
 
-  function setAdminRefreshRequired(newValue) {
-    adminInfo.value.refreshRequired = newValue
-    setAdministrationRefreshRequired(newValue)
+  function setAdminUsername(newValue){
+    adminInfo.value.username = newValue
+    setAdministrationUsername (newValue)
   }
 
   function setAdminAccessToken(newValue) {
     adminInfo.value.accessToken = newValue
     setAdministrationAccessToken(newValue)
   }
-
-  // 在Pinia的actions中定义操作
-  function addRefreshSubscriber(cb) {
-    refreshSubscribers.value.push(cb)
+  function setAdminRefreshToken(newValue) {
+    adminInfo.value.refreshToken = newValue
+    setAdministrationRefreshToken(newValue)
   }
-
-  function clearRefreshSubscribers() {
-    refreshSubscribers.value = []
-  }
-
-  function executeRefreshSubscribers(newToken) {
-    refreshSubscribers.value.forEach((cb) => cb(newToken))
-  }
-
   return {
     adminInfo,
-    isRefreshing,
-    refreshSubscribers,
     setAdminInfo,
-    setAdminRefreshRequired,
+    setAdminUsername,
     setAdminAccessToken,
-    addRefreshSubscriber,
-    clearRefreshSubscribers,
-    executeRefreshSubscribers,
+    setAdminRefreshToken
   }
 })

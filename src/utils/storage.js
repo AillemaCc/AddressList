@@ -8,24 +8,26 @@ export function getStudentInfo() {
         studentId: '',
         accessToken: '',
         refreshToken: '',
-        refreshRequired: false,
       }
 }
 
 export function setStudentInfo(newValue) {
   localStorage.setItem(studentInfo, JSON.stringify(newValue))
 }
-
-export function setStudentRefreshRequired(newValue) {
+export function setStudentId(newValue) {
   const info = getStudentInfo()
-  info.refreshRequired = newValue
+  info.studentId = newValue
   setStudentInfo(info)
 }
-
 export function setStudentAccessToken(newValue) {
   const info = getStudentInfo()
   info.accessToken = newValue
   setStudentInfo(info)
+}
+export function setStudentRefreshToken(newValue){
+    const info = getStudentInfo()
+    info.refreshToken = newValue
+    setStudentInfo(info)
 }
 
 export function removeStudentInfo() {
@@ -42,21 +44,27 @@ export function getAdministrationInfo() {
         username: '',
         accessToken: '',
         refreshToken: '',
-        refreshRequired: false,
       }
 }
 
 export function setAdministrationInfo(newValue) {
   localStorage.setItem(adminInfo, JSON.stringify(newValue))
 }
-export function setAdministrationRefreshRequired(newValue) {
+export function setAdministrationUsername(newValue) {
   const info = getAdministrationInfo()
-  info.refreshRequired = newValue
+  info.username = newValue
   localStorage.setItem(adminInfo, JSON.stringify(info))
 }
+
 export function setAdministrationAccessToken(newValue) {
   const info = getAdministrationInfo()
   info.accessToken = newValue
+  localStorage.setItem(adminInfo, JSON.stringify(info))
+}
+
+export function setAdministrationRefreshToken(newValue) {
+  const info = getAdministrationInfo()
+  info.refreshToken = newValue
   localStorage.setItem(adminInfo, JSON.stringify(info))
 }
 

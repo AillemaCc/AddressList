@@ -29,7 +29,7 @@ export function adminDeleteBulletinApi(data) {
 export function adminDisplayDraftApi(data) {
   return adminInstance({
     url: '/api/admin/board/queryAllDraft',
-    method: 'get',
+    method: 'post',
     data,
   })
 }
@@ -38,7 +38,7 @@ export function adminDisplayDraftApi(data) {
 export function adminDisplayReleasedApi(data) {
   return adminInstance({
     url: '/api/admin/board/queryAllReleased',
-    method: 'get',
+    method: 'post',
     data,
   })
 }
@@ -47,7 +47,7 @@ export function adminDisplayReleasedApi(data) {
 export function adminDisplayPulloffApi(data) {
   return adminInstance({
     url: '/api/admin/board/queryAllPullOff',
-    method: 'get',
+    method: 'post',
     data,
   })
 }
@@ -56,7 +56,7 @@ export function adminDisplayPulloffApi(data) {
 export function adminDisplayDeletedApi(data) {
   return adminInstance({
     url: '/api/admin/board/queryAllDeleted',
-    method: 'get',
+    method: 'post',
     data,
   })
 }
@@ -65,7 +65,7 @@ export function adminDisplayDeletedApi(data) {
 export function adminQueryBulletinApi(data) {
   return adminInstance({
     url: '/api/admin/board/queryById',
-    method: 'get',
+    method: 'post',
     data,
   })
 }

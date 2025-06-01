@@ -37,20 +37,13 @@ async function login() {
         password: password.value,
       })
       if (res.success) {
-        stuInfoStore.setStuInfo({
-          studentId: studentId.value,
-          accessToken: res.data.accessToken,
-          refreshToken: res.data.refreshToken,
-          refreshRequired: false,
-        })
+        stuInfoStore.setStuId(studentId.value)
         ElMessage({
           message: res.message,
           type: 'success',
           duration: 2000,
         })
-
-          router.push('/stu/home')
-
+        router.push('/stu/home') 
       } else {
         ElMessage.error(res.message)
       }

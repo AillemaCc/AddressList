@@ -10,10 +10,10 @@ export function adminLoginApi(data) {
 }
 
 //管理员用户登出接口
-export function adminLogoutApi(data) {
+export function adminLogoutApi(params) {
   return adminInstance({
     url: '/api/admin/logout',
     method: 'delete',
-    data,
+    params,
   })
 }

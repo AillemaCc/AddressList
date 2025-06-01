@@ -49,8 +49,6 @@ async function getDetails() {
   })
   if (res.success) {
     details.value = res.data.records
-    console.log(res.data.records)
-
     if (details.value.length > 7) {
       details.value = details.value.slice(0, 7)
     }

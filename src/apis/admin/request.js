@@ -4,7 +4,7 @@ import { adminInstance } from '@/utils/request'
 export function adminDisplayFailRequestApi(data) {
   return adminInstance({
     url: '/api/admin/info/auditList',
-    method: 'get',
+    method: 'post',
     data,
   })
 }
@@ -13,7 +13,7 @@ export function adminDisplayFailRequestApi(data) {
 export function adminDisplaySuccessRequestApi(data) {
   return adminInstance({
     url: '/api/admin/info/validList',
-    method: 'get',
+    method: 'post',
     data,
   })
 }
@@ -22,7 +22,7 @@ export function adminDisplaySuccessRequestApi(data) {
 export function adminDisplayRejectRequestApi(data) {
   return adminInstance({
     url: '/api/admin/info/refuseList',
-    method: 'get',
+    method: 'post',
     data,
   })
 }

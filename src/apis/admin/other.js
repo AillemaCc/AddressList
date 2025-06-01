@@ -1,8 +1,12 @@
 import { adminInstance } from '@/utils/request'
 
 //获取管理员主页信息
-export function adminGetHomeInfoApi() {
-  return adminInstance.get('/api/admin/homepage/data')
+export function adminGetHomeInfoApi(data) {
+  return adminInstance({
+    url: '/api/admin/homepage/data',
+    method: 'post',
+    data
+  })
 }
 
 //导出全量学生学籍信息

@@ -4,7 +4,7 @@ import { adminInstance } from '@/utils/request'
 export function adminDisplayMajorApi(data) {
   return adminInstance({
     url: '/api/admin/base/listAcademyMajor',
-    method: 'get',
+    method: 'post',
     data,
   })
 }
@@ -12,7 +12,7 @@ export function adminDisplayMajorApi(data) {
 export function adminDisplayClassApi(data) {
   return adminInstance({
     url: '/api/admin/base/listMajorClass',
-    method: 'get',
+    method: 'post',
     data,
   })
 }
@@ -20,7 +20,7 @@ export function adminDisplayClassApi(data) {
 export function adminDisplayStudentApi(data) {
   return adminInstance({
     url: '/api/admin/base/listClassStu',
-    method: 'get',
+    method: 'post',
     data,
   })
 }

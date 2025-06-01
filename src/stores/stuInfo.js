@@ -2,43 +2,37 @@ import { defineStore } from 'pinia'
 import {
   getStudentInfo,
   setStudentInfo,
-  setStudentRefreshRequired,
+  setStudentId,
   setStudentAccessToken,
+  setStudentRefreshToken
 } from '@/utils/storage.js'
-
+import {ref} from 'vue'
 export const useStuInfoStore = defineStore('stuInfo', () => {
-  const stuInfo = getStudentInfo()
-  let isRefreshing = false
-  let refreshSubscribers = []
+  const stuInfo = ref(getStudentInfo())
   function setStuInfo(newValue) {
     stuInfo.value = newValue
     setStudentInfo(newValue)
   }
-  function setStuRefreshRequired(newValue) {
-    setStudentRefreshRequired(newValue)
+
+    function setStuId(newValue) {
+      stuInfo.value.studentId = newValue
+    setStudentId(newValue)
   }
   function setStuAccessToken(newValue) {
+    stuInfo.value.accessToken = newValue
     setStudentAccessToken(newValue)
   }
-  function addRefreshSubscriber(callback) {
-    refreshSubscribers.push(callback)
-  }
-  function executeRefreshSubscribers(token) {
-    refreshSubscribers.forEach((cb) => cb(token))
-  }
-  function clearRefreshSubscribers() {
-    refreshSubscribers = []
+
+  function setStuRefreshToken(newValue){
+    stuInfo.value.refreshToken =newValue
+    setStudentRefreshToken(newValue)
   }
 
   return {
     stuInfo,
-    isRefreshing,
-    refreshSubscribers,
     setStuInfo,
-    setStuRefreshRequired,
+    setStuId,
     setStuAccessToken,
-    addRefreshSubscriber,
-    clearRefreshSubscribers,
-    executeRefreshSubscribers,
+    setStuRefreshToken
   }
 })

@@ -1,7 +1,9 @@
 <script setup>
 import { adminLoginApi } from '@/apis/admin/login'
 import { useAdminInfoStore } from '@/stores/adminInfo'
+import {useRouter}  from 'vue-router'
 import { ref } from 'vue'
+const router = useRouter()
 const adminInfoStore = useAdminInfoStore()
 const username = ref('')
 const password = ref('')
@@ -27,21 +29,15 @@ async function login() {
     username: username.value,
     password: password.value,
   })
+  
   if (res.success) {
-    adminInfoStore.setAdminInfo({
-      username: username.value,
-      accessToken: res.data.accessToken,
-      refreshToken: res.data.refreshToken,
-      refreshRequired: false,
-    })
+    adminInfoStore.setAdminUsername(username.value)
     ElMessage({
       message: res.message,
       type: 'success',
       duration: 2000,
     })
-    setTimeout(() => {
-      router.push('/admin/home')
-    }, 2000)
+    router.push('/admin/home')
   } else {
     ElMessage.error(res.message)
   }

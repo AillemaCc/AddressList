@@ -3,9 +3,10 @@ import { stuLogoutApi } from '@/apis/stu/login'
 import { stuHomePageInfoApi } from '@/apis/stu/other'
 import { useStuInfoStore } from '@/stores/stuInfo'
 import { removeStudentInfo } from '@/utils/storage'
+import {useRouter} from 'vue-router'
 
+    const router = useRouter()
 import { ref } from 'vue'
-
 const stuName = ref('')
 
 const stuInfoStore = useStuInfoStore()
@@ -16,9 +17,9 @@ async function logout() {
     refreshToken: stuInfoStore.stuInfo.refreshToken,
   })
   if (res.success) {
+    stuInfoStore.setStuInfo({})
     removeStudentInfo()
-    stuInfoStore.stuInfo = {}
-    window.location.href = '/stu/login'
+    router.push('/stu/login')
     ElMessage({
       message: res.message,
       type: 'success',

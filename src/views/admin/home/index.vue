@@ -7,8 +7,12 @@ import {
   adminExportDetailApi,
   adminGetHomeInfoApi,
 } from '@/apis/admin/other'
+import {useAdminInfoStore} from '@/stores/adminInfo'
 import { animation } from '@/utils/animation'
 import { ElMessage } from 'element-plus'
+
+const adminInfoStore = useAdminInfoStore()
+
 // 动态时间
 const time = ref(dayjs().format('YYYY-MM-DD HH:mm:ss'))
 const timer = ref(null)
@@ -51,7 +55,9 @@ const board = ref({
   pulledoff: 0,
 })
 async function getHome() {
-  const res = await adminGetHomeInfoApi()
+  const res = await adminGetHomeInfoApi({
+    username:adminInfoStore.adminInfo.username
+  })
   if (res.success) {
     username.value = res.data.username
     request.value = res.data.request

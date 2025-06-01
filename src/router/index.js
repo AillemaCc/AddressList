@@ -149,15 +149,19 @@ const adminCantAccessPath = [
   '/admin/bulletin_deleted',
   '/admin/bulletin_edit',
 ]
+
 router.beforeEach((to, from, next) => {
+
   const stuInfoStore = useStuInfoStore()
   const adminInfoStore = useAdminInfoStore()
-
   // 1. 先检查学生权限路径
   if (stuCantAccessPath.includes(to.fullPath)) {
+    
+      console.log(stuInfoStore.stuInfo.accessToken);  
     if (stuInfoStore.stuInfo.accessToken) {
       return next()
     } else {
+      
       return next('/stu/login') // 使用 return 终止后续逻辑
     }
   }

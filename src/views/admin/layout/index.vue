@@ -2,25 +2,27 @@
 import { ref } from 'vue'
 import { useAdminInfoStore } from '@/stores/adminInfo'
 import { removeAdministrationInfo } from '@/utils/storage'
-import router from '@/router'
+import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { adminLogoutApi } from '@/apis/admin/login'
 import { adminGetHomeInfoApi } from '@/apis/admin/other'
+const router = useRouter()
 const adminInfoStore = useAdminInfoStore()
 
 const failRequestCount = ref(20)
-const username = ref(adminInfoStore.adminInfo.username)
+const userName = ref('')
+const username = adminInfoStore.adminInfo.username
 const accessToken = adminInfoStore.adminInfo.accessToken
 const refreshToken = adminInfoStore.adminInfo.refreshToken
 async function loginout() {
   const res = await adminLogoutApi({
-    username: username.value,
-    accessToken: accessToken.value,
-    refreshToken: refreshToken.value,
+    username: username,
+    accessToken: accessToken,
+    refreshToken: refreshToken,
   })
   if (res.success) {
-    removeAdministrationInfo()
     adminInfoStore.setAdminInfo({})
+    removeAdministrationInfo()
     router.push('/admin/login')
     ElMessage.success(res.message)
   } else {
@@ -28,9 +30,10 @@ async function loginout() {
   }
 }
 
-adminGetHomeInfoApi().then((res) => {
+adminGetHomeInfoApi({username}).then((res) => {
   if (res.success) {
-    username.value = res.data.username
+    failRequestCount.value = res.data.request.pending
+    userName.value = res.data.username
   }
 })
 </script>
@@ -60,7 +63,7 @@ adminGetHomeInfoApi().then((res) => {
         </el-tooltip>
       </div>
       <div class="welcome-container">
-        <i class="iconfont icon-yonghu"></i> <span>{{ username }}</span>
+        <i class="iconfont icon-yonghu"></i> <span>{{ userName }}</span>
       </div>
     </div>
 
