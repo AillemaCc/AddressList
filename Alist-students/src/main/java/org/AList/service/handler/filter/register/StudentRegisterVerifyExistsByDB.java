@@ -7,12 +7,14 @@ import org.AList.common.convention.exception.UserException;
 import org.AList.domain.dao.entity.StudentDefaultInfoDO;
 import org.AList.domain.dao.mapper.StudentDefaultInfoMapper;
 import org.AList.domain.dto.req.StuRegisterReqDTO;
+import org.springframework.stereotype.Component;
 
 import java.util.Objects;
 
 import static org.AList.common.convention.errorcode.BaseErrorCode.USER_NOT_FOUND;
 
 @RequiredArgsConstructor
+@Component
 public final class StudentRegisterVerifyExistsByDB implements StudentRegisterChainFilter<StuRegisterReqDTO>{
     private final StudentDefaultInfoMapper studentDefaultInfoMapper;
     @Override

@@ -2,6 +2,7 @@ package org.AList.controller;
 
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.AList.common.convention.result.Result;
 import org.AList.common.convention.result.Results;
 import org.AList.domain.dto.req.AcceptRegistrationReqDTO;
@@ -18,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/admin/info")
 @RequiredArgsConstructor
+@Slf4j
 public class AdministerAuditController {
     private final AdministerAuditService administerAuditService;
 
@@ -27,6 +29,7 @@ public class AdministerAuditController {
      */
     @PostMapping("/auditList")
     public Result<IPage<AuditUserPageRespDTO>> listAuditRegister(@RequestBody AuditListReqDTO requestParam){
+        log.info("listAuditRegister requestParam:{}", requestParam);
         return Results.success(administerAuditService.listAuditRegister(requestParam));
     }
 

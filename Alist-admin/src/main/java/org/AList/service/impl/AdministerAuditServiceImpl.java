@@ -8,13 +8,16 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.AList.annotation.Idempotent;
 import org.AList.common.convention.exception.ClientException;
 import org.AList.common.convention.exception.ServiceException;
 import org.AList.common.generator.RedisKeyGenerator;
+import org.AList.domain.dao.entity.ContactDO;
 import org.AList.domain.dao.entity.RegisterDO;
 import org.AList.domain.dao.entity.StudentDefaultInfoDO;
 import org.AList.domain.dao.entity.StudentFrameworkDO;
+import org.AList.domain.dao.mapper.ContactMapper;
 import org.AList.domain.dao.mapper.RegisterMapper;
 import org.AList.domain.dao.mapper.StudentDefaultInfoMapper;
 import org.AList.domain.dao.mapper.StudentFrameWorkMapper;
@@ -30,27 +33,31 @@ import org.redisson.api.RReadWriteLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import static org.AList.common.convention.errorcode.BaseErrorCode.*;
 
 import java.util.Objects;
+
+import static org.AList.common.convention.errorcode.BaseErrorCode.*;
 
 /**
  * 管理员审核相关接口实现层
  */
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class AdministerAuditServiceImpl extends ServiceImpl<RegisterMapper, RegisterDO> implements AdministerAuditService {
     private final StudentFrameWorkMapper studentFrameWorkMapper;
     private final StudentDefaultInfoMapper studentDefaultInfoMapper;
     private final RedissonClient redissonClient;
     private final RegisterMapper registerMapper;
     private final IdempotencyService idempotencyService;
+    private final ContactMapper contactMapper;
 
     /**
      * @return 待审核用户列表
      */
     @Override
     public IPage<AuditUserPageRespDTO> listAuditRegister(AuditListReqDTO requestParam) {
+        log.info("listAuditRegister start");
         int current=requestParam.getCurrent()==null?1:requestParam.getCurrent();
         int size=requestParam.getSize()==null?10:requestParam.getSize();
         LambdaQueryWrapper<RegisterDO> queryWrapper = Wrappers.lambdaQuery(RegisterDO.class)
@@ -103,6 +110,11 @@ public class AdministerAuditServiceImpl extends ServiceImpl<RegisterMapper, Regi
                 .registerToken(aDo.getRegisterToken())
                 .build();
         studentFrameWorkMapper.insert(studentFrameworkDO);
+
+        ContactDO contactDO = ContactDO.builder()
+                            .studentId(aDo.getStudentId())
+                            .build();
+        contactMapper.insert(contactDO);
     }
 
     /**

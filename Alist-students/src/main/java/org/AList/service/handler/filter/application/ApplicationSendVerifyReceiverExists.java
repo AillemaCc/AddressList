@@ -12,7 +12,7 @@ public final class ApplicationSendVerifyReceiverExists implements ApplicationSen
     private final StudentIdBloomFilterService studentIdBloomFilterService;
     @Override
     public void handler(ApplicationSendMsgReqDTO requestParam) {
-        if(!studentIdBloomFilterService.contain(requestParam.getReceiver())){
+        if(studentIdBloomFilterService.contain(requestParam.getReceiver())){
             throw new UserException(USER_NOT_FOUND);                                                                        //A0201：用户不存在
         }
     }

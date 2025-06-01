@@ -2,9 +2,10 @@ package org.AList.service.handler.filter.register;
 
 import org.AList.common.convention.exception.UserException;
 import org.AList.domain.dto.req.StuRegisterReqDTO;
+import org.springframework.stereotype.Component;
 
 import static org.AList.common.convention.errorcode.BaseErrorCode.*;
-
+@Component
 public final class StudentRegisterVerifyPasswordSafe implements StudentRegisterChainFilter<StuRegisterReqDTO>{
     @Override
     public void handler(StuRegisterReqDTO requestParam) {

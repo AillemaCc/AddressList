@@ -39,15 +39,29 @@ public class AdminTransmitFilter implements Filter {
     public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain) throws IOException, ServletException {
         HttpServletRequest httpServletRequest = (HttpServletRequest) servletRequest;
         HttpServletResponse httpServletResponse = (HttpServletResponse) servletResponse;
+
+        // 添加 CORS headers
+        httpServletResponse.setHeader("Access-Control-Allow-Origin", "http://localhost:5173");
+        httpServletResponse.setHeader("Access-Control-Allow-Credentials", "true");
+        httpServletResponse.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+        httpServletResponse.setHeader("Access-Control-Allow-Headers", "*");
+        httpServletResponse.setHeader("Access-Control-Expose-Headers", "New-Access-Token, X-Refresh-Required");
+        // 处理 OPTIONS 请求（预检）
+        if ("OPTIONS".equalsIgnoreCase(httpServletRequest.getMethod())) {
+            httpServletResponse.setStatus(HttpServletResponse.SC_OK);
+            return;
+        }
+        System.out.println("请求到达过滤器: " + httpServletRequest.getMethod() + " " + httpServletRequest.getRequestURI());
+
         String requestURI = httpServletRequest.getRequestURI();
 
         if(!IGNORE_URL.contains(requestURI)){
             String username = httpServletRequest.getHeader("username");
-            String accessToken = httpServletRequest.getHeader("token");
+            String accessToken = httpServletRequest.getHeader("accessToken");
 
             // 场景1：缺少必要请求头
             if (username == null || accessToken == null) {
-                String missingField = username == null ? "username" : "token";
+                String missingField = username == null ? "username" : "accessToken";
                 sendUnauthorizedResponse(httpServletResponse,
                         "认证失败：请求头中缺少" + missingField + "字段");
                 return;

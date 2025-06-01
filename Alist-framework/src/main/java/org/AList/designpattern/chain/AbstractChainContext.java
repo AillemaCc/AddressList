@@ -1,5 +1,6 @@
 package org.AList.designpattern.chain;
 
+import lombok.extern.slf4j.Slf4j;
 import org.AList.common.holder.ApplicationContextHolder;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.core.Ordered;
@@ -12,6 +13,7 @@ import java.util.stream.Collectors;
  * 抽象责任链上下文
  * 公众号：马丁玩编程，回复：加群，添加马哥微信（备注：12306）获取项目资料
  */
+@Slf4j
 public final class AbstractChainContext<T> implements CommandLineRunner {
 
     private final Map<String, List<AbstractChainHandler>> abstractChainHandlerContainer = new HashMap<>();
@@ -24,6 +26,7 @@ public final class AbstractChainContext<T> implements CommandLineRunner {
      */
     public void handler(String mark, T requestParam) {
         List<AbstractChainHandler> abstractChainHandlers = abstractChainHandlerContainer.get(mark);
+        log.info("Current registered marks: {}", mark);
         if (CollectionUtils.isEmpty(abstractChainHandlers)) {
             throw new RuntimeException(String.format("[%s] Chain of Responsibility ID is undefined.", mark));
         }
