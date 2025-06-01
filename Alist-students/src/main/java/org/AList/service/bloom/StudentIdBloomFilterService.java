@@ -45,7 +45,7 @@ public class StudentIdBloomFilterService {
      * @return 验证结果 true为存在
      */
     public boolean contain(String studentId) {
-        return studentIdBloomFilter.contains(studentId);
+        return !studentIdBloomFilter.contains(studentId);
     }
 
     /**
