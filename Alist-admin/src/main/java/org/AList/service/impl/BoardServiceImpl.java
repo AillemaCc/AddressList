@@ -9,7 +9,6 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
-import org.AList.common.convention.exception.ClientException;
 import org.AList.common.convention.exception.ServiceException;
 import org.AList.common.convention.exception.UserException;
 import org.AList.domain.dao.entity.BoardDO;
@@ -343,7 +342,7 @@ public class BoardServiceImpl extends ServiceImpl<BoardMapper, BoardDO> implemen
         // 使用当前时间戳的后8位数字作为基础ID
         // 格式：YYYYMMDD + 3位序号 (如: 2025052201)
         LocalDateTime now = LocalDateTime.now();
-        String dateStr = now.format(DateTimeFormatter.ofPattern("yyyyMMdd"));
+        String dateStr = now.format(DateTimeFormatter.ofPattern("yyMMdd"));
 
         // 查询当天已有的最大序号
         Integer maxTodayId = boardMapper.selectMaxBoardIdByPrefix(dateStr);
@@ -361,7 +360,6 @@ public class BoardServiceImpl extends ServiceImpl<BoardMapper, BoardDO> implemen
         if (sequence > 999) {
             throw new ServiceException(ANNOUNCE_DAILY_LIMIT);                                                           //A0706：当日公告已达上限
         }
-
         return Integer.valueOf(dateStr + String.format("%03d", sequence));
     }
 
