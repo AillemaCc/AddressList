@@ -58,12 +58,14 @@ async function login() {
 
 <template>
   <div class="container">
-    <div class="header">
-      <div class="logo-container">
-        <img class="logo" src="../../../assets/imgs/txl.png" alt="" />
-      </div>
-      <div class="title-container">网上通讯录</div>
-    </div>
+    <router-link to="/">
+        <div class="header">
+          <div class="logo-container">
+            <img class="logo" src="../../../assets/imgs/txl.png" alt="" />
+         </div>
+        <div class="title-container">网上通讯录</div>
+        </div>
+      </router-link>
     <div class="main-container">
       <div class="main-box-container">
         <div class="background-container">

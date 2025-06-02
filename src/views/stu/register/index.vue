@@ -1,10 +1,12 @@
 <script setup>
 import { ref } from 'vue'
-const studentId = ref('')
-const password = ref('')
-const name = ref('')
-const phoneNumber = ref('')
-const email = ref('')
+const formData = ref({
+  studentId: '',
+  name: '',
+  phone: '',
+  email: '',
+})
+const password = ref('')  
 
 // 小眼睛状态
 const isPasswordVisible = ref(false)
@@ -16,7 +18,7 @@ function changePasswordVisible() {
 const hasFocus = ref({
   studentId: false,
   name: false,
-  phoneNumber: false,
+  phone: false,
   email: false,
   password: false,
 })
@@ -33,10 +35,10 @@ const router = useRouter()
 const stuInfoStore = useStuInfoStore()
 async function register() {
   const res = await stuRegisterApi({
-    studentId: studentId.value,
-    name: name.value,
-    phone: phoneNumber.value,
-    email: email.value,
+    studentId: formData.value.studentId,
+    name: formData.value.name,
+    phone: formData.value.phone,
+    email: formData.value.email,
     password: password.value,
   })
   if (res.success) {
@@ -55,12 +57,14 @@ async function register() {
 </script>
 <template>
   <div class="container">
-    <div class="header">
-      <div class="logo-container">
-        <img class="logo" src="../../../assets/imgs/txl.png" alt="" />
-      </div>
-      <div class="title-container">网上通讯录</div>
-    </div>
+    <router-link to="/">
+        <div class="header">
+          <div class="logo-container">
+            <img class="logo" src="../../../assets/imgs/txl.png" alt="" />
+         </div>
+        <div class="title-container">网上通讯录</div>
+        </div>
+      </router-link>
     <div class="main-container">
       <div class="main-box-container">
         <div class="background-container">
@@ -76,7 +80,7 @@ async function register() {
               v-for="(item, index) in [
                 { key: 'studentId', label: '学号', icon: 'icon-yonghu' },
                 { key: 'name', label: '姓名', icon: 'icon-zuoxixingming' },
-                { key: 'phoneNumber', label: '手机号码', icon: 'icon-dianhua' },
+                { key: 'phone', label: '手机号码', icon: 'icon-dianhua' },
                 { key: 'email', label: '邮箱', icon: 'icon-youxiang' },
               ]"
               :key="index"
@@ -86,7 +90,7 @@ async function register() {
                 :class="`${item.key}Input`"
                 :id="item.key"
                 type="text"
-                :v-model="item.key"
+                v-model="formData[item.key]"
                 @focus="handleFocus(item.key)"
               />
               <label
@@ -230,7 +234,7 @@ async function register() {
   }
   .studentId,
   .name,
-  .phoneNumber,
+  .phone,
   .email,
   .password,
   .toRigister {
@@ -239,7 +243,7 @@ async function register() {
   }
   .studentId,
   .name,
-  .phoneNumber,
+  .phone,
   .email,
   .password {
     transition: 0.3s;
@@ -263,7 +267,7 @@ async function register() {
   }
   .studentIdInput,
   .nameInput,
-  .phoneNumberInput,
+  .phoneInput,
   .emailInput,
   .passwordInput {
     width: 360px;

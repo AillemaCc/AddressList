@@ -5,15 +5,14 @@ const status = route.query.status
 </script>
 <template>
   <div class="container">
-    <div class="logo-container">
-      <div class="logo-img-container">
-        <img
-          class="logo-img"
-          src="../../../assets/imgs/academic_logo.png"
-          alt=""
-        />
-      </div>
-    </div>
+      <router-link to="/">
+        <div class="header">
+          <div class="logo-container">
+            <img class="logo" src="../../../assets/imgs/txl.png" alt="" />
+         </div>
+        <div class="title-container">网上通讯录</div>
+        </div>
+      </router-link>
     <div class="main-container">
       <div class="wait main-box" v-if="status === '0'">
         <i class="iconfont icon-dengdai"></i>
@@ -32,16 +31,27 @@ const status = route.query.status
   display: flex;
   flex-direction: column;
   background: url(../../../assets/imgs/n_b2.jpg);
-  .logo-container {
+  .header {
+    display: flex;
+    align-items: center;
     width: 100%;
-    height: 96px;
-    .logo-img-container {
-      width: 580px;
+    height: 100px;
+    .logo-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-left: 80px;
+      width: 96px;
       height: 96px;
-      .logo-img {
+      .logo {
         width: 100%;
         height: 100%;
       }
+    }
+    .title-container {
+      font-size: 24px;
+      font-weight: 600;
+      color: $mainColor;
     }
   }
   .main-container {

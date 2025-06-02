@@ -23,7 +23,7 @@ async function loginout() {
   if (res.success) {
     adminInfoStore.setAdminInfo({})
     removeAdministrationInfo()
-    router.push('/admin/login')
+    router.push('/')
     ElMessage.success(res.message)
   } else {
     ElMessage.error(res.message)

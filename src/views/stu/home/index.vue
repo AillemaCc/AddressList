@@ -178,7 +178,7 @@ async function submit() {
                 <el-carousel-item v-for="item in details" :key="item.boardId">
                   <div class="box-container">
                     <div class="bulletin-title-container">{{ item.title }}</div>
-                    <img :src="item.coverImg" alt="" />
+                    <img :src="item.coverImage" alt="" />
                   </div>
                 </el-carousel-item>
               </div>

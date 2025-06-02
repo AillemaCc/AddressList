@@ -114,6 +114,8 @@ onUnmounted(() => {
     clearTimeout(debounceTimer)
   }
 })
+
+// ![aaa](https://picsum.photos/1920/1080)
 </script>
 <template>
   <div class="container">
@@ -178,7 +180,7 @@ onUnmounted(() => {
                 id="priority"
                 v-model="bulletinPriority"
                 size="large"
-                placeholder="请输入公告优先级"
+                placeholder="请输入公告优先级（数字越大，优先级越高）"
               />
             </div>
           </div>
@@ -335,7 +337,6 @@ onUnmounted(() => {
       color: #275dbb;
       font-size: 16px;
     }
-
     .markdown-preview {
       padding: 0 20px;
       // overflow-y: auto;
@@ -344,7 +345,31 @@ onUnmounted(() => {
         Arial, sans-serif;
       line-height: 1.6;
       color: #333;
+      :deep(img) {
+         max-width: 100%!important; 
+         height: auto!important;     
+         display: block!important;   
+         margin: 10px auto!important; 
+         box-shadow: 0 2px 8px rgba(0,0,0,0.1)!important;
+         border-radius: 4px!important;
+    }
+     :deep(pre) {
+    background: #f6f8fa;
+    padding: 16px;
+    border-radius: 6px;
+    overflow: auto;
+    line-height: 1.45;
+    margin: 16px 0;
+    
+    code {
+      background: transparent;
+      padding: 0;
+      border-radius: 0;
+      font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+      font-size: 85%;
     }
   }
+  }
+}
 }
 </style>

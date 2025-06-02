@@ -19,7 +19,7 @@ async function logout() {
   if (res.success) {
     stuInfoStore.setStuInfo({})
     removeStudentInfo()
-    router.push('/stu/login')
+    router.push('/')
     ElMessage({
       message: res.message,
       type: 'success',
