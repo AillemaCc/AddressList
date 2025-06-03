@@ -339,30 +339,44 @@ public class StuContactServiceImpl extends ServiceImpl<ContactMapper, ContactDO>
     @Override
     public IPage<ContactQueryRespDTO> queryContactListAllDelete(ContactQueryAllOwnReqDTO requestParam) {
         StuIdContext.verifyLoginUser(requestParam.getOwnerId());
-        int current=requestParam.getCurrent()==null?1:requestParam.getCurrent();
-        int size=requestParam.getSize()==null?10:requestParam.getSize();
-        // 查询已删除的联系人分页数据
+        log.info("开始查询已删除联系人列表，请求参数: {}", requestParam);
+
+        int current = requestParam.getCurrent() == null ? 1 : requestParam.getCurrent();
+        int size = requestParam.getSize() == null ? 10 : requestParam.getSize();
+        log.info("分页参数解析完成，current={}, size={}", current, size);
+
+        // 分页查询已删除的联系人
         Page<ContactGotoDO> page = new Page<>(current, size);
         IPage<ContactGotoDO> gotoResult = contactGotoMapper.selectDeletedContact(page, requestParam.getOwnerId());
 
-        // 将 IPage<ContactGotoDO> 转换为 List<ContactQueryRespDTO> 并过滤 null 值
+        log.info("SQL 查询结果获取完成，共 {} 条记录", gotoResult.getTotal());
+
+        if (gotoResult.getTotal() == 0) {
+            log.warn("未查询到任何已删除联系人记录");
+        }
+
         List<ContactQueryRespDTO> dtoList = gotoResult.getRecords().stream()
                 .map(gotoRecord -> {
-                    // 找到对应的通讯信息 前提是这个通讯信息的学生用户没有删除自己的通讯信息
+                    log.debug("开始处理单条联系人记录，contactId={}", gotoRecord.getContactId());
+
+                    // 查询联系人基本信息
                     ContactDO contact = contactMapper.selectOne(Wrappers.lambdaQuery(ContactDO.class)
-                            .eq(ContactDO::getStudentId,gotoRecord.getContactId())
-                            .eq(ContactDO::getDelFlag,0));
+                            .eq(ContactDO::getStudentId, gotoRecord.getContactId())
+                            .eq(ContactDO::getDelFlag, 0));
                     if (contact == null) {
-                        return null;
+                        log.warn("联系人信息不存在或已被删除，contactId={}", gotoRecord.getContactId());
                     }
 
+                    // 查询学生框架信息
                     StudentFrameworkDO student = studentFrameWorkMapper.selectOne(Wrappers.lambdaQuery(StudentFrameworkDO.class)
                             .eq(StudentFrameworkDO::getStudentId, gotoRecord.getContactId())
                             .eq(StudentFrameworkDO::getDelFlag, 0));
                     if (student == null) {
+                        log.warn("学生信息不存在或已被删除，studentId={}", gotoRecord.getContactId());
                         return null;
                     }
 
+                    // 查询专业和学院名称
                     String majorName = "";
                     String academyName = "";
                     if (student.getMajorNum() != null) {
@@ -373,9 +387,13 @@ public class StuContactServiceImpl extends ServiceImpl<ContactMapper, ContactDO>
                         if (majorAndAcademy != null) {
                             majorName = majorAndAcademy.getMajor();
                             academyName = majorAndAcademy.getAcademy();
+                            log.debug("成功获取专业和学院信息: major={}, academy={}", majorName, academyName);
+                        } else {
+                            log.warn("未找到对应的专业信息，majorNum={}", student.getMajorNum());
                         }
                     }
 
+                    // 查询班级名称
                     String className = "";
                     if (student.getClassNum() != null) {
                         ClassInfoDO classInfo = classInfoMapper.selectOne(
@@ -384,10 +402,14 @@ public class StuContactServiceImpl extends ServiceImpl<ContactMapper, ContactDO>
                                         .eq(ClassInfoDO::getDelFlag, 0));
                         if (classInfo != null) {
                             className = classInfo.getClassName();
+                            log.debug("成功获取班级名称: className={}", className);
+                        } else {
+                            log.warn("未找到对应的班级信息，classNum={}", student.getClassNum());
                         }
                     }
 
-                    return ContactQueryRespDTO.builder()
+                    // 构建 DTO 返回对象
+                    ContactQueryRespDTO dto = ContactQueryRespDTO.builder()
                             .studentId(gotoRecord.getContactId())
                             .name(student.getName())
                             .academy(academyName)
@@ -395,18 +417,33 @@ public class StuContactServiceImpl extends ServiceImpl<ContactMapper, ContactDO>
                             .className(className)
                             .enrollmentYear(student.getEnrollmentYear())
                             .graduationYear(student.getGraduationYear())
-                            .employer(contact.getEmployer())
-                            .city(contact.getCity())
+                            .employer(contact != null ? contact.getEmployer() : null)
+                            .city(contact != null ? contact.getCity() : null)
                             .phone(student.getPhone())
                             .email(student.getEmail())
                             .build();
+
+                    log.debug("成功构建 ContactQueryRespDTO: {}", dto);
+                    return dto;
+
                 })
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
 
-        // 手动构造一个新的 Page 对象并设置转换后的数据
-        return new Page<ContactQueryRespDTO>(gotoResult.getCurrent(), gotoResult.getSize(), gotoResult.getTotal())
-                .setRecords(dtoList);
+        log.info("最终转换后的有效记录数为: {}", dtoList.size());
+
+        // 手动构造新的分页对象并设置数据
+        Page<ContactQueryRespDTO> result = new Page<>();
+        result.setCurrent(gotoResult.getCurrent());
+        result.setSize(gotoResult.getSize());
+        result.setTotal(gotoResult.getTotal());
+        result.setPages(gotoResult.getPages());
+        result.setRecords(dtoList);
+
+        log.info("分页信息构建完成，当前页码={}, 总页数={}, 总记录数={}",
+                result.getCurrent(), result.getPages(), result.getTotal());
+
+        return result;
     }
 
     /**

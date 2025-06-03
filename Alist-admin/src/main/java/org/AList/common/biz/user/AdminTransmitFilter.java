@@ -21,20 +21,15 @@ import java.util.concurrent.TimeUnit;
 public class AdminTransmitFilter implements Filter {
     private final StringRedisTemplate stringRedisTemplate;
     private final TokenService tokenService;
+
     // 管理员接口的放行路径
-    private static final List<String> IGNORE_URL= Lists.newArrayList(
+    private static final List<String> IGNORE_URL = Lists.newArrayList(
             "/api/admin/login",
             "/api/admin/checkLogin",
-            "/api/admin/refreshToken"
+            "/api/admin/refreshToken",
+            "/api/admin/board/queryAllReleased"
     );
-    /**
-     * 拦截请求验证token Filter
-     * @param servletRequest HTTP请求
-     * @param servletResponse HTTP响应
-     * @param filterChain 过滤连
-     * @throws IOException 异常
-     * @throws ServletException 异常
-     */
+
     @Override
     public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain) throws IOException, ServletException {
         HttpServletRequest httpServletRequest = (HttpServletRequest) servletRequest;
@@ -46,96 +41,126 @@ public class AdminTransmitFilter implements Filter {
         httpServletResponse.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
         httpServletResponse.setHeader("Access-Control-Allow-Headers", "*");
         httpServletResponse.setHeader("Access-Control-Expose-Headers", "New-Access-Token, X-Refresh-Required");
+
         // 处理 OPTIONS 请求（预检）
         if ("OPTIONS".equalsIgnoreCase(httpServletRequest.getMethod())) {
+            System.out.println("[CORS] 预检请求处理完成");
             httpServletResponse.setStatus(HttpServletResponse.SC_OK);
             return;
         }
-        System.out.println("请求到达过滤器: " + httpServletRequest.getMethod() + " " + httpServletRequest.getRequestURI());
 
         String requestURI = httpServletRequest.getRequestURI();
+        System.out.println("【请求开始】方法：" + httpServletRequest.getMethod() + "，路径：" + requestURI);
 
-        if(!IGNORE_URL.contains(requestURI)){
-            String username = httpServletRequest.getHeader("username");
-            String accessToken = httpServletRequest.getHeader("accessToken");
+        // 如果是白名单路径，则直接放行
+        if (IGNORE_URL.contains(requestURI)) {
+            System.out.println("✅ 路径在白名单中，跳过鉴权验证");
+            filterChain.doFilter(servletRequest, servletResponse);
+            return;
+        }
 
-            // 场景1：缺少必要请求头
-            if (username == null || accessToken == null) {
-                String missingField = username == null ? "username" : "accessToken";
+        // 获取请求头中的字段
+        String username = httpServletRequest.getHeader("username");
+        String accessToken = httpServletRequest.getHeader("accessToken");
+
+        System.out.println("🔍 收到请求头：username=" + username + "，accessToken=" + accessToken);
+
+        // 场景1：缺少必要请求头
+        if (username == null || accessToken == null) {
+            String missingField = username == null ? "username" : "accessToken";
+            System.out.println("❌ 认证失败：请求头中缺少字段：" + missingField);
+            sendUnauthorizedResponse(httpServletResponse,
+                    "认证失败：请求头中缺少" + missingField + "字段");
+            return;
+        }
+
+        // 构建 Redis Key
+        String accessRedisKey = RedisKeyGenerator.genAdministerLoginAccess(username);
+        System.out.println("🔑 正在查询 Redis Key：" + accessRedisKey);
+
+        // 场景2：验证 accessToken 是否有效
+        Object adminInfoJsonStr = stringRedisTemplate.opsForHash().get(accessRedisKey, accessToken);
+        System.out.println("📊 Redis 查询结果：" + adminInfoJsonStr);
+
+        if (adminInfoJsonStr != null) {
+            System.out.println("🟢 accessToken 有效，解析用户信息...");
+            try {
+                AdminInfoDTO adminInfoDTO = JSON.parseObject(adminInfoJsonStr.toString(), AdminInfoDTO.class);
+                AdminContext.setUsername(adminInfoDTO);
+
+                Long ttl = stringRedisTemplate.getExpire(accessRedisKey, TimeUnit.MINUTES);
+                System.out.println("⏳ accessToken 剩余过期时间：" + (ttl != null ? ttl + "分钟" : "未知"));
+
+                if (ttl != null && ttl < 5) {
+                    System.out.println("🔔 accessToken 即将过期，设置刷新标志");
+                    httpServletResponse.setHeader("X-Refresh-Required", "true");
+                }
+            } catch (Exception e) {
+                System.err.println("🔴 解析 AdminInfoDTO 异常：" + e.getMessage());
+                sendUnauthorizedResponse(httpServletResponse, "系统异常：用户信息解析失败，请重新登录");
+                return;
+            }
+        } else {
+            System.out.println("🟠 accessToken 无效，尝试使用 refreshToken 刷新...");
+
+            String refreshToken = httpServletRequest.getHeader("refreshToken");
+            System.out.println("🔄 refreshToken=" + refreshToken);
+
+            // 场景3.1：未提供 refreshToken
+            if (refreshToken == null) {
+                System.out.println("❌ 未提供 refreshToken");
                 sendUnauthorizedResponse(httpServletResponse,
-                        "认证失败：请求头中缺少" + missingField + "字段");
+                        "会话已过期：accessToken无效且未提供refreshToken，请重新登录");
                 return;
             }
 
-            // 场景2：验证accessToken有效性
-            String accessRedisKey = RedisKeyGenerator.genAdministerLoginAccess(username);
-            Object adminInfoJsonStr = stringRedisTemplate.opsForHash()
-                    .get(accessRedisKey, accessToken);
+            // 场景3.2：refreshToken 在黑名单中
+            if (tokenService.isTokenBlacklisted(refreshToken)) {
+                System.out.println("❌ refreshToken 已被拉黑");
+                sendUnauthorizedResponse(httpServletResponse,
+                        "安全警告：该refreshToken已被禁用，可能由于账号在其他设备登录");
+                return;
+            }
 
-            if(adminInfoJsonStr != null){
-                // Token有效，设置用户上下文
-                AdminInfoDTO adminInfoDTO = JSON.parseObject(adminInfoJsonStr.toString(), AdminInfoDTO.class);
-                AdminContext.setUsername(adminInfoDTO);
-                // 检查token过期时间
-                Long ttl = stringRedisTemplate.getExpire(accessRedisKey, TimeUnit.MINUTES);
+            // 场景3.3：尝试刷新 token
+            try {
+                System.out.println("🔄 正在调用 tokenService.refreshAdministerAccessToken()");
+                String newAccessToken = tokenService.refreshAdministerAccessToken(username, refreshToken);
+                System.out.println("🆕 新 accessToken：" + newAccessToken);
 
-                // 如果过期时间小于5分钟，设置一个响应头通知前端
-                if (ttl != null && ttl < 5) {
-                    httpServletResponse.setHeader("X-Refresh-Required", "true");
-                }
-            } else {
-                // 场景3：accessToken无效，尝试刷新
-                String refreshToken = httpServletRequest.getHeader("refreshToken");
+                Object newAdminInfoJsonStr = stringRedisTemplate.opsForHash()
+                        .get(RedisKeyGenerator.genAdministerLoginAccess(username), newAccessToken);
 
-                // 场景3.1：未提供refreshToken
-                if (refreshToken == null) {
+                if (newAdminInfoJsonStr != null) {
+                    AdminInfoDTO adminInfoDTO = JSON.parseObject(newAdminInfoJsonStr.toString(), AdminInfoDTO.class);
+                    AdminContext.setUsername(adminInfoDTO);
+                    httpServletResponse.setHeader("New-Access-Token", newAccessToken);
+                    System.out.println("🟢 Token 刷新成功，设置新 accessToken");
+                } else {
+                    System.err.println("🔴 刷新后无法获取用户信息");
                     sendUnauthorizedResponse(httpServletResponse,
-                            "会话已过期：accessToken无效且未提供refreshToken，请重新登录");
+                            "系统异常：Token刷新成功但用户信息获取失败，请重新登录");
                     return;
                 }
-
-                // 场景3.2：refreshToken在黑名单中
-                if (tokenService.isTokenBlacklisted(refreshToken)) {
-                    sendUnauthorizedResponse(httpServletResponse,
-                            "安全警告：该refreshToken已被禁用，可能由于账号在其他设备登录");
-                    return;
-                }
-
-                try {
-                    // 场景3.3：尝试刷新token
-                    String newAccessToken = tokenService.refreshAdministerAccessToken(username, refreshToken);
-                    Object newAdminInfoJsonStr = stringRedisTemplate.opsForHash()
-                            .get(RedisKeyGenerator.genAdministerLoginAccess(username), newAccessToken);
-
-                    if(newAdminInfoJsonStr != null){
-                        AdminInfoDTO adminInfoDTO = JSON.parseObject(newAdminInfoJsonStr.toString(), AdminInfoDTO.class);
-                        AdminContext.setUsername(adminInfoDTO);
-                        httpServletResponse.setHeader("New-Access-Token", newAccessToken);
-                    } else {
-                        // 场景3.4：刷新后仍无法获取用户信息
-                        sendUnauthorizedResponse(httpServletResponse,
-                                "系统异常：Token刷新成功但用户信息获取失败，请重新登录");
-                        return;
-                    }
-                } catch (Exception e) {
-                    // 场景3.5：refreshToken无效或过期
-                    sendUnauthorizedResponse(httpServletResponse,
-                            "会话已过期：refreshToken无效或已过期，请重新登录");
-                    return;
-                }
+            } catch (Exception e) {
+                System.err.println("🔴 Token 刷新失败：" + e.getMessage());
+                sendUnauthorizedResponse(httpServletResponse,
+                        "会话已过期：refreshToken无效或已过期，请重新登录");
+                return;
             }
         }
 
         try {
-            // 这一步是真正执行过滤器链当中的请求，也就是那些需要鉴权的请求
-            // 登录的请求也直接被放行，可以不携带token和username
+            System.out.println("✅ 鉴权通过，继续执行后续过滤器链...");
             filterChain.doFilter(servletRequest, servletResponse);
         } finally {
             AdminContext.removeUsername();
+            System.out.println("🧹 清除管理员上下文");
         }
     }
 
     private void sendUnauthorizedResponse(HttpServletResponse response, String message) throws IOException {
+        System.out.println("🚫 返回 401 响应：" + message);
         response.setContentType("application/json;charset=utf-8");
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         response.getWriter().write("{\"code\":401,\"message\":\"" + message + "\"}");

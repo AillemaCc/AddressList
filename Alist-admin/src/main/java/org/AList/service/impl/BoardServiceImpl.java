@@ -9,6 +9,7 @@ import com.baomidou.mybatisplus.core.toolkit.Wrappers;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.AList.common.convention.exception.ServiceException;
 import org.AList.common.convention.exception.UserException;
 import org.AList.domain.dao.entity.BoardDO;
@@ -17,6 +18,8 @@ import org.AList.domain.dto.baseDTO.BoardBaseDTO;
 import org.AList.domain.dto.req.*;
 import org.AList.domain.dto.resp.BoardQueryRespDTO;
 import org.AList.service.BoardService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,9 +33,11 @@ import static org.AList.common.convention.errorcode.BaseErrorCode.*;
  */
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class BoardServiceImpl extends ServiceImpl<BoardMapper, BoardDO> implements BoardService {
 
     private final BoardMapper boardMapper;
+    private static final Logger logger = LoggerFactory.getLogger(BoardServiceImpl.class);
 
     @Override
     @Transactional(rollbackFor = Exception.class)
@@ -202,11 +207,16 @@ public class BoardServiceImpl extends ServiceImpl<BoardMapper, BoardDO> implemen
         if (existingBoard == null) {
             throw new ServiceException(ANNOUNCE_NOT_FOUND);                                                             //C0373：处理的公告不存在或已删除
         }
-        LambdaUpdateWrapper<BoardDO> set = Wrappers.lambdaUpdate(BoardDO.class)
+        // 2. 构建更新条件
+        LambdaUpdateWrapper<BoardDO> wrapper = Wrappers.lambdaUpdate();
+        wrapper.eq(BoardDO::getBoardId, boardId)
+                .eq(BoardDO::getDelFlag, 0)
                 .set(BoardDO::getStatus, 1);
-        int update = boardMapper.update(existingBoard, set);
-        if (update==0) {
-            throw new ServiceException(ANNOUNCE_PUBLISH_FAIL);                                                          //C0376：处理的公告发布失败
+
+        int update = boardMapper.update(null, wrapper);
+
+        if (update == 0) {
+            throw new ServiceException(ANNOUNCE_PUBLISH_FAIL); // C0376：处理的公告发布失败
         }
 
     }
@@ -293,56 +303,80 @@ public class BoardServiceImpl extends ServiceImpl<BoardMapper, BoardDO> implemen
 
     @Override
     public BoardQueryRespDTO queryBoardById(BoardQueryByIdReqDTO requestParam) {
+        logger.info("开始查询公告详情，请求参数: {}", requestParam);
+
         Integer boardId = requestParam.getBoardId();
 
         // 1. 参数校验
         if (boardId == null || boardId <= 0) {
-            throw new UserException(INVALID_ANNOUNCE_ID);
+            logger.warn("公告ID无效，ID值为: {}", boardId);
+            throw new UserException(INVALID_ANNOUNCE_ID); // A0002：请求参数为空
         }
 
         // 2. 根据boardId查询公告
+        logger.debug("根据公告ID查询数据，boardId: {}", boardId);
         BoardDO existingBoard = lambdaQuery()
                 .eq(BoardDO::getBoardId, boardId)
                 .eq(BoardDO::getDelFlag, 0)
                 .one();
 
         if (existingBoard == null) {
-            throw new ServiceException(ANNOUNCE_NOT_FOUND);
+            logger.warn("未找到指定公告，boardId: {}", boardId);
+            throw new ServiceException(ANNOUNCE_NOT_FOUND); // 公告不存在
         }
 
         // 3. 转换为响应DTO并返回
+        logger.debug("公告数据查询成功，boardId: {}", boardId);
         return convertToBoardQueryRespDTO(existingBoard);
     }
 
     private <T extends BoardBaseDTO> void validateAOURequestParam(T requestParam) {
+        logger.info("开始校验请求参数");
+
         if (requestParam == null) {
-            throw new UserException(EMPTY_PARAM);                                                                       //A0002：请求参数为空
+            logger.warn("请求参数为空");
+            throw new UserException(EMPTY_PARAM); // A0002：请求参数为空
         }
+
         if (StringUtils.isBlank(requestParam.getTitle())) {
-            throw new UserException(ANNOUNCE_EMPTY_TITLE);                                                              //A0704：公告标题为空
+            logger.warn("公告标题为空");
+            throw new UserException(ANNOUNCE_EMPTY_TITLE); // A0704：公告标题为空
         }
+
         if (StringUtils.isBlank(requestParam.getContent())) {
-            throw new UserException(ANNOUNCE_EMPTY_CONTENT);                                                            //A0703：公告内容为空
+            logger.warn("公告内容为空");
+            throw new UserException(ANNOUNCE_EMPTY_CONTENT); // A0703：公告内容为空
         }
+
         if (requestParam.getStatus() == null) {
-            throw new UserException(ANNOUNCE_EMPTY_STATUS);                                                             //A0705：公告状态为空
+            logger.warn("公告状态为空");
+            throw new UserException(ANNOUNCE_EMPTY_STATUS); // A0705：公告状态为空
         }
+
+        logger.info("请求参数校验通过");
     }
 
     private void checkBoardIdNotExists(Integer boardId) {
+        logger.info("检查公告ID是否已存在，boardId: {}", boardId);
+
         boolean exists = lambdaQuery()
                 .eq(BoardDO::getBoardId, boardId)
                 .exists();
+
         if (exists) {
-            throw new UserException(ANNOUNCE_ID_EXIST);                                                                 //A0702：公告标识号已存在
+            logger.warn("公告ID已存在，boardId: {}", boardId);
+            throw new UserException(ANNOUNCE_ID_EXIST); // A0702：公告标识号已存在
         }
     }
 
     private Integer generateBoardId() {
+        logger.info("开始生成新的公告ID");
+
         // 使用当前时间戳的后8位数字作为基础ID
-        // 格式：YYYYMMDD + 3位序号 (如: 2025052201)
         LocalDateTime now = LocalDateTime.now();
         String dateStr = now.format(DateTimeFormatter.ofPattern("yyMMdd"));
+
+        logger.debug("日期前缀: {}", dateStr);
 
         // 查询当天已有的最大序号
         Integer maxTodayId = boardMapper.selectMaxBoardIdByPrefix(dateStr);
@@ -358,16 +392,22 @@ public class BoardServiceImpl extends ServiceImpl<BoardMapper, BoardDO> implemen
 
         // 确保序号不超过3位数（最大999）
         if (sequence > 999) {
-            throw new ServiceException(ANNOUNCE_DAILY_LIMIT);                                                           //A0706：当日公告已达上限
+            logger.error("当日公告已达上限，无法生成新ID");
+            throw new ServiceException(ANNOUNCE_DAILY_LIMIT); // A0706：当日公告已达上限
         }
-        return Integer.valueOf(dateStr + String.format("%03d", sequence));
+
+        String generatedId = dateStr + String.format("%03d", sequence);
+        logger.info("生成的新公告ID为: {}", generatedId);
+        return Integer.valueOf(generatedId);
     }
 
     private BoardDO convertToBoardDO(BoardAddReqDTO requestParam) {
+        logger.debug("将新增公告请求转换为DO对象");
         return convertRequestToBoardDO(requestParam);
     }
 
     private BoardDO convertRequestToBoardDO(BoardBaseDTO requestParam) {
+        logger.debug("构建公告DO对象，title: {}, category: {}", requestParam.getTitle(), requestParam.getCategory());
         return BoardDO.builder()
                 .boardId(requestParam.getBoardId())
                 .title(requestParam.getTitle())
@@ -380,6 +420,7 @@ public class BoardServiceImpl extends ServiceImpl<BoardMapper, BoardDO> implemen
     }
 
     private BoardQueryRespDTO convertToBoardQueryRespDTO(BoardDO boardDO) {
+        logger.debug("将公告DO对象转换为响应DTO，title: {}", boardDO.getTitle());
         return BoardQueryRespDTO.builder()
                 .title(boardDO.getTitle())
                 .boardId(boardDO.getBoardId())

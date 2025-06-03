@@ -3,11 +3,13 @@ package org.AList.service.AdminToken;
 import com.alibaba.fastjson.JSON;
 import io.jsonwebtoken.Claims;
 import lombok.RequiredArgsConstructor;
-import org.AList.common.convention.exception.ClientException;
+import lombok.extern.slf4j.Slf4j;
 import org.AList.common.convention.exception.UserException;
 import org.AList.common.generator.RedisKeyGenerator;
 import org.AList.domain.dao.entity.AdministerDO;
 import org.AList.utils.JwtUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
@@ -20,9 +22,11 @@ import static org.AList.common.convention.errorcode.BaseErrorCode.USER_NOT_LOGGE
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class TokenService {  
     private final JwtUtils jwtUtils;
     private final StringRedisTemplate stringRedisTemplate;
+    private static final Logger logger = LoggerFactory.getLogger(TokenService.class);
       
     // Access Token有效期 - 30分钟  
     private static final long ACCESS_TOKEN_EXPIRATION = 30 * 60 * 1000L;  
@@ -64,43 +68,63 @@ public class TokenService {
         stringRedisTemplate.expire(refreshKey, 7, TimeUnit.DAYS);
 
         return new TokenPair(accessToken, refreshToken);
-    }  
-      
-    /**  
-     * 刷新学生用户的Access Token  
-     */  
+    }
+
+    /**
+     * 刷新管理员用户的Access Token
+     */
     public String refreshAdministerAccessToken(String username, String refreshToken) throws Exception {
-        // 验证Refresh Token
-        // 检查Token是否在黑名单中
+        logger.info("🔄 开始刷新管理员用户 Access Token，username: {}", username);
+
+        // 检查 Refresh Token 是否在黑名单中
         if (isTokenBlacklisted(refreshToken)) {
-            throw new UserException(USER_NOT_LOGGED);
+            logger.warn("🚫 Refresh Token 已被拉黑，username: {}, refreshToken: {}", username, refreshToken);
+            throw new UserException(USER_NOT_LOGGED); // "用户未登录或 Token 失效"
         }
 
+        // 构建 Redis Key 并获取存储的 refreshToken
         String refreshKey = RedisKeyGenerator.genAdministerRefresh(username);
+        logger.debug("🔍 查询 Redis 中的 Refresh Token，key: {}", refreshKey);
+
         String storedRefreshToken = stringRedisTemplate.opsForValue().get(refreshKey);
 
         if (storedRefreshToken == null || !storedRefreshToken.equals(refreshToken)) {
-            throw new UserException(USER_NOT_LOGGED);
+            logger.warn("❌ Redis 中未找到匹配的 Refresh Token，username: {}", username);
+            throw new UserException(USER_NOT_LOGGED); // "用户未登录或 Token 失效"
         }
 
-        // 检查Access Token是否已存在且未过期
+        // 检查 Access Token 是否仍然存在（即未过期）
         String accessKey = RedisKeyGenerator.genAdministerLoginAccess(username);
+        logger.debug("⏳ 检查 Access Token 是否仍有效，key: {}", accessKey);
+
         if (Boolean.TRUE.equals(stringRedisTemplate.hasKey(accessKey))) {
-            // Access Token仍然存在，说明未过期
-            throw new UserException(TOKEN_REFRESH_INVALID);                                                             //"A0204", "用户accessToken未过期,无需刷新"
+            logger.warn("⚠️ Access Token 未过期，无需刷新，username: {}", username);
+            throw new UserException(TOKEN_REFRESH_INVALID); // "用户 accessToken 未过期，无需刷新"
         }
 
-        // 解析Refresh Token获取用户信息
-        Claims claims = jwtUtils.parseJWT(refreshToken);
-        String userJson = claims.getSubject();
+        // 解析 Refresh Token 获取用户信息
+        logger.info("🔓 正在解析 Refresh Token 内容，username: {}", username);
+        Claims claims;
+        try {
+            claims = jwtUtils.parseJWT(refreshToken);
+        } catch (Exception e) {
+            logger.error("🔴 解析 Refresh Token 失败，username: {}, error: {}", username, e.getMessage(), e);
+            throw new UserException(USER_NOT_LOGGED); // 可根据异常类型细化错误码
+        }
 
-        // 生成新的Access Token
+        String userJson = claims.getSubject();
+        logger.debug("👤 提取到用户信息：{}", userJson);
+
+        // 生成新的 Access Token
+        logger.info("🆕 正在生成新的 Access Token，username: {}", username);
         String newAccessToken = jwtUtils.generateJWT(userJson, ACCESS_TOKEN_EXPIRATION);
 
-        // 更新Redis中的Access Token
+        // 更新 Redis 中的 Access Token
+        logger.debug("💾 正在更新 Redis 中的 Access Token，key: {}", accessKey);
         stringRedisTemplate.opsForHash().put(accessKey, newAccessToken, userJson);
         stringRedisTemplate.expire(accessKey, 30, TimeUnit.MINUTES);
 
+        logger.info("✅ Access Token 刷新成功，username: {}", username);
         return newAccessToken;
     }
 
