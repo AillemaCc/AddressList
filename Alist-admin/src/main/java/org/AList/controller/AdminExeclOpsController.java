@@ -33,14 +33,10 @@ public class AdminExeclOpsController {
         return Results.success();
     }
 
-    /**
-     * 导出全部学籍信息
-     */
-    @MyLog
     @GetMapping("/exportStuDef")
-    public Result<Void> exportStuDef(HttpServletResponse response) {
+    @MyLog
+    public void exportStuDef(HttpServletResponse response) {
         adminExeclOpsService.exportStudentDefInfo(response);
-        return Results.success();
     }
 
     /**

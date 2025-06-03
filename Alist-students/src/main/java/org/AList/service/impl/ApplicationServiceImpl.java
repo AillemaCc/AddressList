@@ -175,39 +175,38 @@ public class ApplicationServiceImpl extends ServiceImpl<ApplicationMapper, Appli
      * @param requestParam 请求参数，包含发送者和接收者ID
      * @throws ClientException 如果未找到申请记录或更新失败
      */
-    @Transactional(rollbackFor = Exception.class)
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void acceptSingleApplication(ApplicationYONReqDTO requestParam) {
-        LambdaQueryWrapper<ApplicationDO> queryWrapper = Wrappers.lambdaQuery(ApplicationDO.class)
-                .eq(ApplicationDO::getReceiver, requestParam.getReceiver())
-                .eq(ApplicationDO::getSender, requestParam.getSender())
-                .eq(ApplicationDO::getStatus, 0)
-                .eq(ApplicationDO::getDelFlag, 0);
-        ApplicationDO applicationDO = baseMapper.selectOne(queryWrapper);
-        if (applicationDO != null) {
-            applicationDO.setStatus(1);
-            baseMapper.update(applicationDO, null);
+        // 构建查询并更新 application 表的状态为 1（已同意）
+        int updated = baseMapper.update(null,
+                Wrappers.<ApplicationDO>lambdaUpdate()
+                        .eq(ApplicationDO::getReceiver, requestParam.getReceiver())
+                        .eq(ApplicationDO::getSender, requestParam.getSender())
+                        .eq(ApplicationDO::getStatus, 0)
+                        .eq(ApplicationDO::getDelFlag, 0)
+                        .set(ApplicationDO::getStatus, 1));
 
-            // 创建第一个关系：发送者可以看到接收者的通讯信息
-            ContactGotoDO senderToReceiver = ContactGotoDO.builder()
-                    .contactId(requestParam.getReceiver())
-                    .ownerId(requestParam.getSender())
-                    .build();
+        if (updated<=0) {
+            throw new UserException(NO_PENDING_APPLY); // A0401: 不存在待处理申请
+        }
 
-            // 创建第二个关系：接收者可以看到发送者的通讯信息
-            ContactGotoDO receiverToSender = ContactGotoDO.builder()
-                    .contactId(requestParam.getSender())
-                    .ownerId(requestParam.getReceiver())
-                    .build();
+        // 创建双向联系关系
+        ContactGotoDO senderToReceiver = ContactGotoDO.builder()
+                .contactId(requestParam.getReceiver())
+                .ownerId(requestParam.getSender())
+                .build();
 
-            int insert1 = contactGotoMapper.insert(senderToReceiver);
-            int insert2 = contactGotoMapper.insert(receiverToSender);
+        ContactGotoDO receiverToSender = ContactGotoDO.builder()
+                .contactId(requestParam.getSender())
+                .ownerId(requestParam.getReceiver())
+                .build();
 
-            if(insert1 != 1 || insert2 != 1) {
-                throw new UserException(APPROVE_ERR);
-            }
-        } else {
-            throw new UserException(NO_PENDING_APPLY);
+        int insert1 = contactGotoMapper.insert(senderToReceiver);
+        int insert2 = contactGotoMapper.insert(receiverToSender);
+
+        if (insert1 != 1 || insert2 != 1) {
+            throw new UserException(APPROVE_ERR); // 插入失败
         }
     }
 
@@ -217,20 +216,19 @@ public class ApplicationServiceImpl extends ServiceImpl<ApplicationMapper, Appli
      * @param requestParam 请求参数，包含发送者和接收者ID
      * @throws RuntimeException 如果未找到申请记录
      */
-    @Transactional(rollbackFor = Exception.class)
     @Override
+    @Transactional(rollbackFor = Exception.class)
     public void refuseSingleApplication(ApplicationYONReqDTO requestParam) {
-        LambdaQueryWrapper<ApplicationDO> queryWrapper = Wrappers.lambdaQuery(ApplicationDO.class)
-                .eq(ApplicationDO::getReceiver, requestParam.getReceiver())
-                .eq(ApplicationDO::getSender, requestParam.getSender())
-                .eq(ApplicationDO::getStatus, 0)
-                .eq(ApplicationDO::getDelFlag, 0);
-        ApplicationDO applicationDO = baseMapper.selectOne(queryWrapper);
-        if (applicationDO != null) {
-            applicationDO.setStatus(2);
-            baseMapper.update(applicationDO,null);
-        } else {
-            throw new UserException(NO_PENDING_APPLY);                                                                   //A0401：不存在待处理申请
+        int updated = baseMapper.update(null,
+                Wrappers.<ApplicationDO>lambdaUpdate()
+                        .eq(ApplicationDO::getReceiver, requestParam.getReceiver())
+                        .eq(ApplicationDO::getSender, requestParam.getSender())
+                        .eq(ApplicationDO::getStatus, 0)
+                        .eq(ApplicationDO::getDelFlag, 0)
+                        .set(ApplicationDO::getStatus, 2));
+
+        if (updated<=0) {
+            throw new UserException(NO_PENDING_APPLY); // A0401: 不存在待处理申请
         }
     }
 
